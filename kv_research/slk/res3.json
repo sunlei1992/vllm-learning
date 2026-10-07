@@ -1,0 +1,61 @@
+{
+ "adaptive KV caching high throughput low latency LLM serving": [
+  {
+   "id": "2602.22593",
+   "title": "FLYING SERVING: On-the-Fly Parallelism Switching for Large Language Model Serving",
+   "authors": "Authors:\n      \n      Shouwei Gao, \n      \n      Junqi Yin, \n      \n      Feiyi Wang, \n      \n      Wenqian Dong",
+   "abs": "Production LLM",
+   "dates": "Submitted 2 March, 2026; v1 submitted 25 February, 2026;\n      originally announced February 2026.",
+   "comment": "Comments:\n      This paper is accepted by the 40th ACM International Conference on Supercomputing (ICS 2026)",
+   "journal": ""
+  },
+  {
+   "id": "2512.22420",
+   "title": "Nightjar: Dynamic Adaptive Speculative Decoding for Large Language Models Serving",
+   "authors": "Authors:\n      \n      Rui Li, \n      \n      Zhaoning Zhang, \n      \n      Libo Zhang, \n      \n      Huaimin Wang, \n      \n      Xiang Fu, \n      \n      Zhiquan Lai",
+   "abs": "Speculative decoding (SD) accelerates LLM",
+   "dates": "Submitted 15 June, 2026; v1 submitted 26 December, 2025;\n      originally announced December 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2511.04791",
+   "title": "DuetServe: Harmonizing Prefill and Decode for LLM Serving via Adaptive GPU Multiplexing",
+   "authors": "Authors:\n      \n      Lei Gao, \n      \n      Chaoyi Jiang, \n      \n      Hossein Entezari Zarch, \n      \n      Daniel Wong, \n      \n      Mark Hill, \n      \n      Murali Annavaram",
+   "abs": "Modern LLM",
+   "dates": "Submitted 30 May, 2026; v1 submitted 6 November, 2025;\n      originally announced November 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2501.01005",
+   "title": "FlashInfer: Efficient and Customizable Attention Engine for LLM Inference Serving",
+   "authors": "Authors:\n      \n      Zihao Ye, \n      \n      Lequn Chen, \n      \n      Ruihang Lai, \n      \n      Wuwei Lin, \n      \n      Yineng Zhang, \n      \n      Stephanie Wang, \n      \n      Tianqi Chen, \n    ",
+   "abs": "Transformers, driven by attention mechanisms, form the foundation of large language models (LLMs",
+   "dates": "Submitted 21 April, 2025; v1 submitted 1 January, 2025;\n      originally announced January 2025.",
+   "comment": "Comments:\n      Accepted by MLSys 2025, code available at http://github.com/flashinfer-ai/flashinfer",
+   "journal": ""
+  },
+  {
+   "id": "2410.03960",
+   "title": "SwiftKV: Fast Prefill-Optimized Inference with Knowledge-Preserving Model Transformation",
+   "authors": "Authors:\n      \n      Aurick Qiao, \n      \n      Zhewei Yao, \n      \n      Samyam Rajbhandari, \n      \n      Yuxiong He",
+   "abs": "LLM",
+   "dates": "Submitted 1 June, 2025; v1 submitted 4 October, 2024;\n      originally announced October 2024.",
+   "comment": "",
+   "journal": ""
+  }
+ ],
+ "KV cache reuse cross model variants fine-tuned sharing": [],
+ "prefix cache store disaggregated memory pool LLM": [
+  {
+   "id": "2606.19746",
+   "title": "SAC: Disaggregated KV Cache System for Sparse Attention LLMs with CXL",
+   "authors": "Authors:\n      \n      Ruiyang Ma, \n      \n      Teng Ma, \n      \n      Junru Li, \n      \n      Hantian Zha, \n      \n      Xuchun Shang, \n      \n      Qingda Hu, \n      \n      Zheng Liu, \n      \n      ",
+   "abs": "The scaling of LLMs",
+   "dates": "Submitted 17 June, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  }
+ ]
+}

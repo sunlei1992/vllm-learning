@@ -1,0 +1,43 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "vLLM 离线推理 (进程内调试)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/demo_inference.py",
+      "args": ["--prompt", "Hello, my name is"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "env": {
+        "UV_CACHE_DIR": "${workspaceFolder}/.uv-cache",
+        "HF_HOME": "${workspaceFolder}/.hf-cache",
+        "VLLM_CACHE_ROOT": "${workspaceFolder}/.vllm-cache",
+        "PATH": "/opt/homebrew/bin:${env:PATH}",
+        "VLLM_ENABLE_V1_MULTIPROCESSING": "0"
+      },
+      "justMyCode": true,
+      "showReturnValue": true
+    },
+    {
+      "name": "vLLM 调试: GLM-5.2 MoE (3层全MoE)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/debug_glm52.py",
+      "args": ["--moe"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "env": {
+        "UV_CACHE_DIR": "${workspaceFolder}/.uv-cache",
+        "HF_HOME": "${workspaceFolder}/.hf-cache",
+        "VLLM_CACHE_ROOT": "${workspaceFolder}/.vllm-cache",
+        "PATH": "/opt/homebrew/bin:${env:PATH}",
+        "VLLM_ENABLE_V1_MULTIPROCESSING": "0"
+      },
+      "justMyCode": true,
+      "showReturnValue": true
+    }
+  ]
+}

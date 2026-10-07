@@ -1,0 +1,60 @@
+{
+ "Preble distributed prompt scheduling": [
+  {
+   "id": "2407.00023",
+   "title": "Preble: Efficient Distributed Prompt Scheduling for LLM Serving",
+   "authors": "Authors:\n      \n      Vikranth Srivatsa, \n      \n      Zijian He, \n      \n      Reyna Abhyankar, \n      \n      Dongming Li, \n      \n      Yiying Zhang",
+   "abs": "Prompts",
+   "dates": "Submitted 3 October, 2024; v1 submitted 8 May, 2024;\n      originally announced July 2024.",
+   "comment": "",
+   "journal": ""
+  }
+ ],
+ "KVFlow prefix caching multi-agent workflow": [
+  {
+   "id": "2507.07400",
+   "title": "KVFlow: Efficient Prefix Caching for Accelerating LLM-Based Multi-Agent Workflows",
+   "authors": "Authors:\n      \n      Zaifeng Pan, \n      \n      Ajjkumar Patel, \n      \n      Zhengding Hu, \n      \n      Yipeng Shen, \n      \n      Yue Guan, \n      \n      Wan-Lu Li, \n      \n      Lianhui Qin, \n   ",
+   "abs": "Large language model (LLM) based agentic",
+   "dates": "Submitted 9 July, 2025; \n      originally announced July 2025.",
+   "comment": "",
+   "journal": ""
+  }
+ ],
+ "Cache-Craft chunk-caches retrieval augmented generation": [
+  {
+   "id": "2502.15734",
+   "title": "Cache-Craft: Managing Chunk-Caches for Efficient Retrieval-Augmented Generation",
+   "authors": "Authors:\n      \n      Shubham Agarwal, \n      \n      Sai Sundaresan, \n      \n      Subrata Mitra, \n      \n      Debabrata Mahapatra, \n      \n      Archit Gupta, \n      \n      Rounak Sharma, \n      \n  ",
+   "abs": "Retrieval",
+   "dates": "Submitted 5 February, 2025; \n      originally announced February 2025.",
+   "comment": "Comments:\n      Accepted at SIGMOD 2025",
+   "journal": ""
+  }
+ ],
+ "RAGCache multilevel dynamic caching RAG": [
+  {
+   "id": "2404.12457",
+   "title": "RAGCache: Efficient Knowledge Caching for Retrieval-Augmented Generation",
+   "authors": "Authors:\n      \n      Chao Jin, \n      \n      Zili Zhang, \n      \n      Xuanlin Jiang, \n      \n      Fangyue Liu, \n      \n      Xin Liu, \n      \n      Xuanzhe Liu, \n      \n      Xin Jin",
+   "abs": "Retrieval-Augmented Generation (RAG",
+   "dates": "Submitted 25 April, 2024; v1 submitted 18 April, 2024;\n      originally announced April 2024.",
+   "comment": "",
+   "journal": ""
+  }
+ ],
+ "StitchLLM serving LLMs one block at a time": [],
+ "3FS Fire-Flyer File System": [],
+ "SemShareKV semantically similar prompts": [
+  {
+   "id": "2509.24832",
+   "title": "SemShareKV: Efficient KVCache Sharing for Semantically Similar Prompts via Token-Level LSH Matching",
+   "authors": "Authors:\n      \n      Xinye Zhao, \n      \n      Spyridon Mastorakis",
+   "abs": "As large language models (LLMs) continue to scale, the memory footprint of key-value (KV) caches during inference has become a significant bottleneck. Existing approaches primarily focus on compressing KV caches within a single prompt",
+   "dates": "Submitted 16 December, 2025; v1 submitted 29 September, 2025;\n      originally announced September 2025.",
+   "comment": "Comments:\n      11 figures, 14pages",
+   "journal": ""
+  }
+ ],
+ "C2KV compressed composable KV cache reuse": []
+}

@@ -1,0 +1,258 @@
+diff --git a/vllm/_custom_ops.py b/vllm/_custom_ops.py
+index 5d63ffa0de..991f022b73 100644
+--- a/vllm/_custom_ops.py
++++ b/vllm/_custom_ops.py
+@@ -174,6 +174,31 @@ def mla_decode_kvcache_cpu(
+     torch.ops._C.mla_decode_kvcache(out, query, kv_cache, scale, block_tables, seq_lens)
+ 
+ 
++def gather_mla_context_cache_cpu(
++    *,
++    src_cache: torch.Tensor,
++    dst: torch.Tensor,
++    block_table: torch.Tensor,
++    starts: torch.Tensor,
++    cu_seq_lens: torch.Tensor,
++) -> None:
++    page_size = src_cache.shape[1]
++    flat_cache = src_cache.view(-1, src_cache.shape[-1])
++    seq_lens = cu_seq_lens[1:] - cu_seq_lens[:-1]
++
++    out_start = 0
++    for req_idx, (start, seq_len) in enumerate(zip(starts.tolist(), seq_lens.tolist())):
++        if seq_len <= 0:
++            continue
++        positions = torch.arange(start, start + seq_len, device=block_table.device)
++        block_ids = block_table[req_idx, positions // page_size].to(torch.long)
++        offsets = positions % page_size
++        slots = block_ids * page_size + offsets
++        out_end = out_start + seq_len
++        dst[out_start:out_end].copy_(flat_cache[slots])
++        out_start = out_end
++
++
+ # merge attn states ops
+ def merge_attn_states(
+     output: torch.Tensor,
+diff --git a/vllm/model_executor/layers/attention/mla_attention.py b/vllm/model_executor/layers/attention/mla_attention.py
+index 839f4266cd..1db1bef62d 100644
+--- a/vllm/model_executor/layers/attention/mla_attention.py
++++ b/vllm/model_executor/layers/attention/mla_attention.py
+@@ -2621,6 +2621,18 @@ class MLACommonBaseImpl(MLAAttentionImpl[A], Generic[A]):
+                     batch_size=chunk.num_requests,
+                     seq_starts=chunk.starts,
+                 )
++            elif current_platform.is_cpu():
++                assert not is_quantized_kv_cache(self.kv_cache_dtype), (
++                    "CPU MLA context gather fallback only supports "
++                    f"non-quantized KV cache, got {self.kv_cache_dtype}"
++                )
++                ops.gather_mla_context_cache_cpu(
++                    src_cache=kv_c_and_k_pe_cache,
++                    dst=workspace[:toks],
++                    block_table=block_table,
++                    starts=chunk.starts,
++                    cu_seq_lens=chunk.cu_seq_lens,
++                )
+             elif not use_fp8_prefill:
+                 ops.gather_and_maybe_dequant_cache(
+                     src_cache=kv_c_and_k_pe_cache,
+diff --git a/vllm/model_executor/models/deepseek_v2.py b/vllm/model_executor/models/deepseek_v2.py
+index 81e941d284..5d627ff1f0 100644
+--- a/vllm/model_executor/models/deepseek_v2.py
++++ b/vllm/model_executor/models/deepseek_v2.py
+@@ -1077,7 +1077,9 @@ class DeepseekV2MLAAttention(nn.Module):
+             mscale = yarn_get_mscale(scaling_factor, float(mscale_all_dim))
+             self.scaling = self.scaling * mscale * mscale
+ 
+-        self.is_v32 = hasattr(config, "index_topk")
++        # [本地实验] CPU 不支持稀疏注意力，强制关闭 (见 platforms/cpu.py:89)。
++        # 还原: git checkout vllm/model_executor/models/deepseek_v2.py
++        self.is_v32 = False
+ 
+         # IndexCache config
+         # Refer: https://arxiv.org/abs/2603.12201 for more details.
+@@ -1370,7 +1372,9 @@ class DeepseekV2Model(nn.Module):
+         self.device = current_platform.device_type
+         self.hidden_size = config.hidden_size
+         self.vocab_size = config.vocab_size
+-        self.is_v32 = hasattr(config, "index_topk")
++        # [本地实验] CPU 不支持稀疏注意力，强制关闭 (见 platforms/cpu.py:89)。
++        # 还原: git checkout vllm/model_executor/models/deepseek_v2.py
++        self.is_v32 = False
+         if self.is_v32:
+             topk_tokens = config.index_topk
+             topk_indices_buffer = torch.empty(
+diff --git a/vllm/v1/attention/backends/mla/prefill/cpu_sdpa.py b/vllm/v1/attention/backends/mla/prefill/cpu_sdpa.py
+new file mode 100644
+index 0000000000..d5c9afc0cc
+--- /dev/null
++++ b/vllm/v1/attention/backends/mla/prefill/cpu_sdpa.py
+@@ -0,0 +1,137 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""CPU MLA prefill backend implemented with dense per-request attention.
++
++This backend is selected on CPU devices, where flash-attn is unavailable. It
++computes MLA prefill attention by slicing the ragged (varlen) q/k/v tensors
++per request and evaluating dense attention in PyTorch.
++"""
++
++from typing import TYPE_CHECKING
++
++import torch
++
++from vllm.v1.attention.backends.mla.prefill.base import MLAPrefillBackend
++
++if TYPE_CHECKING:
++    from vllm.model_executor.layers.attention.mla_attention import (
++        MLACommonPrefillMetadata,
++    )
++
++
++class CPUSDPAMLAPrefillBackend(MLAPrefillBackend):
++    """MLA prefill backend for CPU using dense PyTorch attention.
++
++    flash-attn is not installable on CPU, so this backend provides an
++    equivalent prefill implementation using per-request dense attention.
++    """
++
++    @staticmethod
++    def get_name() -> str:
++        return "CPU_SDPA_MLA"
++
++    @classmethod
++    def is_available(cls) -> bool:
++        # SDPA is always available on CPU.
++        return True
++
++    def supports_out(self) -> bool:
++        return True
++
++    def _ragged_sdpa(
++        self,
++        q: torch.Tensor,
++        k: torch.Tensor,
++        v: torch.Tensor,
++        q_cu_seq_lens: torch.Tensor,
++        kv_cu_seq_lens: torch.Tensor,
++        causal: bool,
++        return_softmax_lse: bool,
++    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
++        # q/k/v: [num_tokens, num_heads, head_dim] (ragged, concatenated).
++        # q_cu_seq_lens/kv_cu_seq_lens: [num_reqs + 1] row offsets for each
++        # request's query and key/value tokens.
++        num_reqs = q_cu_seq_lens.numel() - 1
++        assert num_reqs == kv_cu_seq_lens.numel() - 1
++
++        out_chunks: list[torch.Tensor] = []
++        lse_chunks: list[torch.Tensor] = []
++        for r in range(num_reqs):
++            q_start = int(q_cu_seq_lens[r])
++            q_end = int(q_cu_seq_lens[r + 1])
++            kv_start = int(kv_cu_seq_lens[r])
++            kv_end = int(kv_cu_seq_lens[r + 1])
++
++            q_r = q[q_start:q_end].transpose(0, 1).float()  # [NH, Sq, Hq]
++            k_r = k[kv_start:kv_end].transpose(0, 1).float()  # [NH, Sk, Hq]
++            v_r = v[kv_start:kv_end].transpose(0, 1).float()  # [NH, Sk, Hv]
++
++            attn_scores = torch.matmul(q_r, k_r.transpose(-2, -1)) * self.scale
++            if causal:
++                causal_mask = torch.ones(
++                    (q_end - q_start, kv_end - kv_start),
++                    dtype=torch.bool,
++                    device=attn_scores.device,
++                ).triu(1)
++                attn_scores.masked_fill_(causal_mask.unsqueeze(0), float("-inf"))
++
++            attn_probs = torch.softmax(attn_scores, dim=-1, dtype=torch.float32)
++            out_r = torch.matmul(attn_probs, v_r).transpose(0, 1).to(v.dtype)
++            out_chunks.append(out_r)  # [Sq, NH, Hv]
++            if return_softmax_lse:
++                lse_chunks.append(torch.logsumexp(attn_scores, dim=-1))
++
++        out = torch.cat(out_chunks, dim=0)
++        if not return_softmax_lse:
++            return out
++        lse = torch.cat(lse_chunks, dim=1)
++        return out, lse
++
++    def run_prefill_new_tokens(
++        self,
++        q: torch.Tensor,
++        k: torch.Tensor,
++        v: torch.Tensor,
++        return_softmax_lse: bool,
++        out: torch.Tensor | None = None,
++        output_scale: torch.Tensor | None = None,
++    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
++        assert output_scale is None, (
++            "CPU MLA prefill backend does not support fused FP8 output"
++        )
++        out_t = self._ragged_sdpa(
++            q,
++            k,
++            v,
++            self._prefill_metadata.query_start_loc,
++            self._prefill_metadata.query_start_loc,
++            causal=True,
++            return_softmax_lse=return_softmax_lse,
++        )
++        if out is not None and not return_softmax_lse:
++            assert isinstance(out_t, torch.Tensor)
++            out.copy_(out_t)
++            return out
++        return out_t
++
++    def run_prefill_context_chunk(
++        self,
++        chunk: "MLACommonPrefillMetadata.ContextChunk",
++        q: torch.Tensor,
++        k: torch.Tensor,
++        v: torch.Tensor,
++        out: torch.Tensor | None = None,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        assert out is None, "CPU MLA context prefill does not support in-place output"
++        result = self._ragged_sdpa(
++            q,
++            k,
++            v,
++            chunk.query_start_loc,
++            chunk.cu_seq_lens,
++            causal=False,
++            return_softmax_lse=True,
++        )
++        assert isinstance(result, tuple)
++        out, lse = result
++        return out, lse
+diff --git a/vllm/v1/attention/backends/mla/prefill/registry.py b/vllm/v1/attention/backends/mla/prefill/registry.py
+index 0d818a084b..4bfbfbc232 100644
+--- a/vllm/v1/attention/backends/mla/prefill/registry.py
++++ b/vllm/v1/attention/backends/mla/prefill/registry.py
+@@ -52,6 +52,10 @@ class MLAPrefillBackendEnum(Enum, metaclass=_MLAPrefillBackendEnumMeta):
+         "vllm.v1.attention.backends.mla.prefill.aiter_flash_attn."
+         "AiterFlashAttnPrefillBackend"
+     )
++    CPU = (
++        "vllm.v1.attention.backends.mla.prefill.cpu_sdpa."
++        "CPUSDPAMLAPrefillBackend"
++    )
+     # Placeholder for third-party/custom backends - must be registered before use
+     # set to None to avoid alias with other backend, whose value is an empty string
+     CUSTOM = None
+diff --git a/vllm/v1/attention/backends/mla/prefill/selector.py b/vllm/v1/attention/backends/mla/prefill/selector.py
+index c313c90177..c7e935fa75 100644
+--- a/vllm/v1/attention/backends/mla/prefill/selector.py
++++ b/vllm/v1/attention/backends/mla/prefill/selector.py
+@@ -107,6 +107,10 @@ def get_mla_prefill_backend(
+     """
+     from vllm.platforms import current_platform
+ 
++    if current_platform.is_cpu():
++        logger.info_once("Using CPU SDPA MLA prefill backend.")
++        return MLAPrefillBackendEnum.CPU.get_class()
++
+     device_capability = current_platform.get_device_capability()
+     if device_capability is None:
+         logger.info_once(

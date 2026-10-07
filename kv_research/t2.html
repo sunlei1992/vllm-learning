@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- new favicon config and versions by realfavicongenerator.net -->
+<link rel="apple-touch-icon" sizes="180x180" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/favicon-16x16.png">
+<link rel="manifest" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/site.webmanifest">
+<link rel="mask-icon" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/safari-pinned-tab.svg" color="#b31b1b">
+<link rel="shortcut icon" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/favicon.ico">
+<meta name="msapplication-TileColor" content="#b31b1b">
+<meta name="msapplication-config" content="images/icons/browserconfig.xml">
+<meta name="theme-color" content="#b31b1b">
+<!-- end favicon config -->
+<title>Search | arXiv e-print repository</title>
+<script defer src="https://static.arxiv.org/static/base/1.0.0a5/fontawesome-free-5.11.2-web/js/all.js"></script>
+<link rel="stylesheet" href="https://static.arxiv.org/static/base/1.0.0a5/css/arxivstyle.css" />
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    messageStyle: "none",
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true,
+      ignoreClass: '.*',
+      processClass: 'mathjax.*'
+    },
+    TeX: {
+        extensions: ["AMSmath.js", "AMSsymbols.js", "noErrors.js"],
+        noErrors: {
+          inlineDelimiters: ["$","$"],
+          multiLine: false,
+          style: {
+            "font-size": "normal",
+            "border": ""
+          }
+        }
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script src='//static.arxiv.org/MathJax-2.7.3/MathJax.js'></script>
+<script src="https://static.arxiv.org/static/base/1.0.0a5/js/notification.js"></script>
+
+    
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" type="text/css" media="screen" href="https://static.arxiv.org/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626" />
+  <script defer src="https://static.arxiv.org/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+  <link rel="stylesheet" href="https://static.arxiv.org/static/search/0.5.6/css/bulma-tooltip.min.css" />
+  <link rel="stylesheet" href="https://static.arxiv.org/static/search/0.5.6/css/search.css" />
+  <script
+    src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
+    crossorigin="anonymous"></script>
+
+  <script src="https://static.arxiv.org/static/search/0.5.6/js/fieldset.js"></script>
+  <style>
+  radio#cf-customfield_11400 {
+    display: none;
+  }
+  /* Render the spinout .ds-site-footer standalone / full-bleed. search extends the
+     legacy base, whose bare wrapping <footer> (in base/base.html, outside any
+     overridable block — so it can't be removed from here) is styled by
+     arxivstyle.css with a grey background (hsl(0,0%,95%)) + 1em 2em padding,
+     boxing our warm-wash footer inside a second grey band. display:contents drops
+     the wrapper's box entirely (cleaner than zeroing individual properties) so
+     .ds-site-footer renders in its place; it inherits flex-shrink:0 from the same
+     legacy `footer` rule, so the sticky footer still works. Search-specific
+     legacy-base integration; the shared chrome CSS stays byte-identical to the SSOT. */
+  body > footer {
+    display: contents;
+  }
+  </style>
+
+  </head>
+  <body>
+  
+  
+  <header><a href="#main-container" class="is-sr-only">Skip to main content</a>
+    <div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement" data-banner-name="spinout-nonprofit">
+  <img class="ds-announcement-glyph" src="https://static.arxiv.org/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+  <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+  <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+  <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+</div>
+<header class="ds-site-header">
+  <a href="https://arxiv.org/" class="ds-site-header-logo" aria-label="archive home">
+    <img src="https://static.arxiv.org/static/base/1.0.1/images/arxiv-logo-primary-light.svg" alt="archive">
+  </a>
+  <button type="button" id="ds-nav-toggle" class="ds-site-header-nav-toggle"
+    aria-label="Open menu" aria-controls="ds-site-header-nav" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <nav class="ds-site-header-nav" id="ds-site-header-nav" aria-label="Main navigation">
+    <a id="arxiv-search-toggle" href="/search" aria-controls="arxiv-search-overlay" aria-expanded="false">
+      <svg class="ds-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Search
+    </a>
+    <a href="https://arxiv.org/user/create">Submit</a>
+    <a href="https://info.arxiv.org/about/donate.html">Donate</a>
+    <span class="ds-site-header-divider" aria-hidden="true"></span>
+    <a href="https://arxiv.org/login" class="ds-site-header-login">Log in</a>
+  </nav>
+</header>
+
+<div class="arxiv-search-overlay" id="arxiv-search-overlay" hidden>
+  <div class="arxiv-search-panel" role="search">
+    <form method="GET" action="/search">
+      <label for="arxiv-search-input" class="is-sr-only">Search arXiv</label>
+      <input type="text" name="query" id="arxiv-search-input" autocomplete="off"
+        placeholder="Search papers by title, author, abstract, or ID...">
+      <input type="hidden" name="searchtype" value="all">
+      <input type="hidden" name="source" value="header">
+    </form>
+    <div class="arxiv-search-hint">
+      Press Enter to search &middot; <a href="/search/advanced">Advanced search</a>
+    </div>
+  </div>
+</div>
+
+  </header>
+  <main class="container" id="main-container">
+    
+
+
+    
+  <div class="level is-marginless">
+    <div class="level-left">
+      <h1 class="title is-clearfix">
+    
+        Showing 1&ndash;25 of 284 results for all: <span class="mathjax">KV cache eviction</span>
+    
+</h1>
+    </div>
+    <div class="level-right is-hidden-mobile">
+      <!-- feedback for mobile is moved to footer -->
+      <span class="help" style="display: inline-block;"><a href="https://github.com/arXiv/arxiv-search/releases">Search v0.5.6 released 2020-02-24</a>&nbsp;&nbsp;</span>
+    </div>
+  </div>
+    <div class="content">
+      
+  <form method="GET" action="/search/"  aria-role="search">
+    
+
+    
+    <div class="field has-addons-tablet">
+      <div class="control is-expanded">
+        <label for="query" class="hidden-label">Search term or terms</label>
+        
+          <input class="input is-medium" id="query" name="query" placeholder="Search term..." type="text" value="KV cache eviction">
+        
+        
+      </div>
+      <div class="select control is-medium">
+        <label class="is-hidden" for="searchtype">Field</label>
+        <select class="is-medium" id="searchtype" name="searchtype"><option selected value="all">All fields</option><option value="title">Title</option><option value="author">Author(s)</option><option value="abstract">Abstract</option><option value="comments">Comments</option><option value="journal_ref">Journal reference</option><option value="acm_class">ACM classification</option><option value="msc_class">MSC classification</option><option value="report_num">Report number</option><option value="paper_id">arXiv identifier</option><option value="doi">DOI</option><option value="orcid">ORCID</option><option value="license">License (URI)</option><option value="author_id">arXiv author ID</option><option value="help">Help pages</option><option value="full_text">Full text</option></select>
+      </div>
+      <div class="control">
+          <button class="button is-link is-medium">Search</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="control is-size-7">
+        
+        <label class="radio">
+          <input checked id="abstracts-0" name="abstracts" type="radio" value="show"> Show abstracts
+        </label>
+        
+        <label class="radio">
+          <input id="abstracts-1" name="abstracts" type="radio" value="hide"> Hide abstracts
+        </label>
+        
+      </div>
+    </div>
+    <div class="is-clearfix" style="height: 2.5em"> 
+      <div class="is-pulled-right">
+        
+        <a href="/search/advanced?terms-0-term=KV+cache+eviction&amp;terms-0-field=all&amp;size=25&amp;order=-announced_date_first">Advanced Search</a>
+        
+      </div>
+    </div>
+    <input type="hidden" name="order" value="-announced_date_first">
+    <input type="hidden" name="size" value="25">
+  </form>
+
+  
+
+  
+      
+<div class="level breathe-horizontal">
+  <div class="level-left">
+    <form method="GET" action="/search/">
+      <div style="display: none;">
+        
+          
+            <select id="searchtype" name="searchtype"><option selected value="all">All fields</option><option value="title">Title</option><option value="author">Author(s)</option><option value="abstract">Abstract</option><option value="comments">Comments</option><option value="journal_ref">Journal reference</option><option value="acm_class">ACM classification</option><option value="msc_class">MSC classification</option><option value="report_num">Report number</option><option value="paper_id">arXiv identifier</option><option value="doi">DOI</option><option value="orcid">ORCID</option><option value="license">License (URI)</option><option value="author_id">arXiv author ID</option><option value="help">Help pages</option><option value="full_text">Full text</option></select>
+          
+        
+          
+            <input id="query" name="query" type="text" value="KV cache eviction">
+          
+        
+          
+        
+          
+        
+          
+            <ul id="abstracts"><li><input checked id="abstracts-0" name="abstracts" type="radio" value="show"> <label for="abstracts-0">Show abstracts</label></li><li><input id="abstracts-1" name="abstracts" type="radio" value="hide"> <label for="abstracts-1">Hide abstracts</label></li></ul>
+          
+        
+      </div>
+      <div class="box field is-grouped is-grouped-multiline level-item">
+        <div class="control">
+          <span class="select is-small">
+            <select id="size" name="size"><option selected value="25">25</option><option value="50">50</option><option value="100">100</option><option value="200">200</option></select>
+          </span>
+          <label for="size">results per page</label>.
+        </div>
+        <div class="control">
+          <label for="order">Sort results by</label>
+          <span class="select is-small">
+            <select id="order" name="order"><option selected value="-announced_date_first">Announcement date (newest first)</option><option value="announced_date_first">Announcement date (oldest first)</option><option value="-submitted_date">Submission date (newest first)</option><option value="submitted_date">Submission date (oldest first)</option><option value="">Relevance</option></select>
+          </span>
+        </div>
+        <div class="control">
+          <button class="button is-small is-link">Go</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+      
+
+
+  <nav class="pagination is-small is-centered breathe-horizontal" role="navigation" aria-label="pagination">
+    
+    <a href=""
+      class="pagination-previous is-invisible">Previous
+    </a>
+    
+    
+      <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=25&amp;size=25&amp;abstracts=show"
+        class="pagination-next" >Next
+      </a>
+    
+    <ul class="pagination-list">
+
+      <li>
+        <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=0&amp;size=25&amp;abstracts=show"
+          class="pagination-link is-current"
+          aria-label="Goto page 1">1
+        </a>
+      </li>
+
+      
+                                     
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=25&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 2"
+              aria-current="page">2
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=50&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 3"
+              aria-current="page">3
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=75&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 4"
+              aria-current="page">4
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=100&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 5"
+              aria-current="page">5
+            </a>
+          </li>
+          
+          <li><span class="pagination-ellipsis">&hellip;</span></li>
+        
+      
+    </ul>
+  </nav>
+  
+
+
+
+<ol class="breathe-horizontal" start="1"> 
+
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.14872">arXiv:2609.14872</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.14872">pdf</a>, <a href="https://arxiv.org/ps/2609.14872">ps</a>, <a href="https://arxiv.org/format/2609.14872">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        AgentKV: Phase-Aware <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Eviction</span> for Agentic LLMs
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+T+T">Taowen Tony Liu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wong%2C+J+T+H">Jeffrey T. H. Wong</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Xiao%2C+C">Can Xiao</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+B">Bowen Yang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+H+M">Hao Mark Chen</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yiren Zhao</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.14872v1-abstract-short" style="display: inline;">
+        Agentic serving can consume orders of magnitude more tokens than chatbot workloads, stressing both <span class="search-hit mathjax">KV</span>-&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.14872v1-abstract-full').style.display = 'inline'; document.getElementById('2609.14872v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.14872v1-abstract-full" style="display: none;">
+        Agentic serving can consume orders of magnitude more tokens than chatbot workloads, stressing both <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> capacity and decode-time bandwidth. Most <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">eviction</span> methods score <span class="search-hit mathjax">cached</span> keys against representative queries drawn from the most recent tokens, assuming future attention resembles recent attention. We show that agentic generation violates this assumption: future queries form a mixture over think, act, tool, and others phases, and principal-angle analysis shows these components occupy measurably different query subspaces, so recency representatives systematically undervalue keys that upcoming phases will need. We propose AGENTKV, which maintains a small query buffer per phase and scores <span class="search-hit mathjax">cached</span> keys against their union. We further implement AGENTKV in a persistent multi-turn serving path that carries compressed <span class="search-hit mathjax">KV</span> state across turns and compacts retained <span class="search-hit mathjax">KV</span> pages online. Across two models, six task domains, and three <span class="search-hit mathjax">KV</span> budgets each, AGENTKV improves task score by 5.5 points on average over R-<span class="search-hit mathjax">KV</span> and 5.3 over Tri-attention. Relative to upstream full-<span class="search-hit mathjax">KV</span> SGLang, AGENTKV improves output-token throughput by up to 1.80x. Code: https://github.com/LiuTaowen-Tony/agentkv.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.14872v1-abstract-full').style.display = 'none'; document.getElementById('2609.14872v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 13 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.14850">arXiv:2609.14850</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.14850">pdf</a>, <a href="https://arxiv.org/ps/2609.14850">ps</a>, <a href="https://arxiv.org/format/2609.14850">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Self-Orchestrating Language Models: Leveraging Semantic Dependence for Efficient Inference
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Jin%2C+T">Tian Jin</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.14850v1-abstract-short" style="display: inline;">
+        &hellip;generation. I call such models self-orchestrating language models. For each system, I design a runtime that acts on these annotations to parallelize autoregressive decoding, <span class="search-hit mathjax">evict</span> intermediate context, or derive denoising orders, achieving Pareto-optimal quality-efficiency trade-offs.
+  I demonstrate this approach through three self-orchestrating systems. Fi&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.14850v1-abstract-full').style.display = 'inline'; document.getElementById('2609.14850v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.14850v1-abstract-full" style="display: none;">
+        Large language models (LLMs) demonstrate impressive capabilities, but their deployment presents significant efficiency challenges. Autoregressive decoding imposes substantial inference latency and under-utilizes hardware accelerators in low batch size regimes. Discrete diffusion models can generate in parallel but struggle to match autoregressive quality without many diffusion denoising steps. Long-context reasoning creates memory bottlenecks that strain even state-of-the-art accelerators.
+  My thesis is that language models can direct their own inference execution strategy by annotating semantic dependence -- which tokens depend on which others -- in their generation. I call such models self-orchestrating language models. For each system, I design a runtime that acts on these annotations to parallelize autoregressive decoding, <span class="search-hit mathjax">evict</span> intermediate context, or derive denoising orders, achieving Pareto-optimal quality-efficiency trade-offs.
+  I demonstrate this approach through three self-orchestrating systems. First, PASTA uses semantic dependence to parallelize autoregressive decoding, training the model to annotate which output chunks can generate independently. Second, TIP uses semantic dependence to <span class="search-hit mathjax">evict</span> intermediate reasoning steps from the <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span>, reducing memory consumption while preserving accuracy. Third, Planned Diffusion uses semantic dependence to derive a denoising order for discrete diffusion, autoregressively generating a plan that specifies which chunks to denoise in parallel.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.14850v1-abstract-full').style.display = 'none'; document.getElementById('2609.14850v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 13 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.13537">arXiv:2609.13537</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.13537">pdf</a>, <a href="https://arxiv.org/ps/2609.13537">ps</a>, <a href="https://arxiv.org/format/2609.13537">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Distributed, Parallel, and Cluster Computing">cs.DC</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Dynamic HBM Repartitioning for Multi-Turn MoE Serving
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Kim%2C+J">Jinpyo Kim</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kwon%2C+M">Mingi Kwon</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Min%2C+Y">Younghoon Min</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kim%2C+J">Jongryool Kim</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+J">Jishen Zhao</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.13537v1-abstract-short" style="display: inline;">
+        Long-running multi-turn requests accumulate reusable key-value (<span class="search-hit mathjax">KV</span>) state. Once this state exceeds a fixed GPU&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.13537v1-abstract-full').style.display = 'inline'; document.getElementById('2609.13537v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.13537v1-abstract-full" style="display: none;">
+        Long-running multi-turn requests accumulate reusable key-value (<span class="search-hit mathjax">KV</span>) state. Once this state exceeds a fixed GPU <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> allocation, serving systems <span class="search-hit mathjax">evict</span> reusable prefixes, repeat prefill work, and may preempt requests. This pressure is particularly acute for Mixture-of-Experts (MoE) models: their expert weights occupy most GPU high-bandwidth memory (HBM), even though each token activates only a sparse subset of experts. A static boundary between weights and the <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> prevents serving systems from using expert memory to preserve reusable state as conversations grow.
+  We present VAMP, an MoE serving framework that changes this HBM boundary at runtime. When a <span class="search-hit mathjax">KV</span> allocation cannot be satisfied, VAMP compares the estimated future work of three alternatives: staging expert weights from host memory, <span class="search-hit mathjax">evicting</span> <span class="search-hit mathjax">cached</span> prefixes that may require re-prefill, or preempting and rescheduling requests. It then converts a bounded expert-weight region into <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> capacity when that action has the lowest estimated penalty. CUDA Virtual Memory Management page remapping performs this conversion without copying resident <span class="search-hit mathjax">KV</span> data.
+  We implement VAMP in the vLLM serving engine and evaluate Qwen3-Next-80B on recorded and controlled multi-turn workloads. Across five replays of a recorded 2,103-turn SWE-bench agent workload, VAMP with a 15% maximum expert-offloading ratio reduces time-to-first-token (TTFT) p90 from 26.1 s to 1.10 s (23.6 times) and increases request throughput by 20.7% relative to unmodified vLLM, while increasing time per output token (TPOT) by 31.1%.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.13537v1-abstract-full').style.display = 'none'; document.getElementById('2609.13537v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">16 pages</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.13012">arXiv:2609.13012</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.13012">pdf</a>, <a href="https://arxiv.org/ps/2609.13012">ps</a>, <a href="https://arxiv.org/format/2609.13012">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computer Vision and Pattern Recognition">cs.CV</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Pixel Decodability Is Not a Compression Signal: Causally Evaluating Importance Proxies for Visual <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span>
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Zhou%2C+C">Chenyu Zhou</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Jiang%2C+Q">Qiliang Jiang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wu%2C+S">Shuning Wu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhou%2C+X">Xu Zhou</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.13012v1-abstract-short" style="display: inline;">
+        Vision-language models retain a substantial amount of pixel-decodable visual content in their visual key-value <span class="search-hit mathjax">cache</span>. We show, in our setting, that this retention is task-inert: across our preregistered tests, how much a unit retains never positively tracks whether the computation that answers the question causally relies on it. We measure retention with a l&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.13012v1-abstract-full').style.display = 'inline'; document.getElementById('2609.13012v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.13012v1-abstract-full" style="display: none;">
+        Vision-language models retain a substantial amount of pixel-decodable visual content in their visual key-value <span class="search-hit mathjax">cache</span>. We show, in our setting, that this retention is task-inert: across our preregistered tests, how much a unit retains never positively tracks whether the computation that answers the question causally relies on it. We measure retention with a learned pixel-inversion decoder and causal use with single-super-patch <span class="search-hit mathjax">KV</span> ablation, the teacher-forced drop in gold-answer log-probability, and relate the two within images under a preregistered, sign-calibrated, held-out design. Retention is decoupled from attention and, in a well-powered null, from causal utilization. Utilization is not inert to every proxy: attention weakly but significantly tracks it, the only signal we find that does and the design&#39;s positive control. We characterize pixel-decodable retention as an informational axis of the visual <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span>, orthogonal to the functional one. How much task-inert content a <span class="search-hit mathjax">cache</span> holds differs by architecture in our model pair: the encoder-free model retains 2.7 times more than the encoder-based one. The engineering consequence is a controlled negative result. At super-patch granularity, deconfounded pixel-decodable retention ranks <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">eviction</span> no better than random; at token granularity it acquires only a weak inverse-importance signal at larger budgets, dominated at every budget by attention magnitude. In our setting, pixel-decodable reconstructability is not a competitive <span class="search-hit mathjax">KV</span>-compression signal at any granularity we test.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.13012v1-abstract-full').style.display = 'none'; document.getElementById('2609.13012v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 27 July, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">15 pages, 3 figures, 3 tables</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.12597">arXiv:2609.12597</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.12597">pdf</a>, <a href="https://arxiv.org/ps/2609.12597">ps</a>, <a href="https://arxiv.org/format/2609.12597">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Databases">cs.DB</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Operating Systems">cs.OS</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Invisible Yet Dominant: Big Stalls of Kernel I/O Mechanisms in Cloud OLTP Databases
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Kondo%2C+M">Mitsumasa Kondo</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.12597v1-abstract-short" style="display: inline;">
+        Most databases, including PostgreSQL, RocksDB, and recent AI <span class="search-hit mathjax">KV</span>-&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.12597v1-abstract-full').style.display = 'inline'; document.getElementById('2609.12597v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.12597v1-abstract-full" style="display: none;">
+        Most databases, including PostgreSQL, RocksDB, and recent AI <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> middleware, rely on buffered I/O, delegating write-back to the Linux kernel. On the distributed block storage standard in the cloud, this delegation inherits a hidden bottleneck: each device is drained by a single kernel flusher thread over a high-latency, shallow-queue path. When the drain falls behind, dirty throttling pauses write() system calls, and even reads that must <span class="search-hit mathjax">evict</span> dirty pages stall. These stalls are invisible to iostat and every standard counter. This poster observes the stall from inside the kernel, using the multi-volume data placement proposed in SteelDB as the experimental lever. eBPF probes on writeback and block tracepoints separate write-back by issuing context and count every throttle pause. Across three configurations with identical provisioned IOPS and bandwidth but 1, 2, and 4 devices, we show that adding drains, not bandwidth, cuts throttle pauses by 70%, reduces maximum transaction latency by 59%, and raises throughput by 23%.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.12597v1-abstract-full').style.display = 'none'; document.getElementById('2609.12597v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">Poster presented at SOSP 2026. Companion to arXiv:2603.29052 (SteelDB)</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.08131">arXiv:2609.08131</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.08131">pdf</a>, <a href="https://arxiv.org/ps/2609.08131">ps</a>, <a href="https://arxiv.org/format/2609.08131">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Jacap: Robust <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span> via Jacobian-Based Nonlinear Information Capacity Preservation
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+J">Jiaming Yang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Tang%2C+C">Chenwei Tang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhen%2C+L">Liangli Zhen</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+C">Chenyang Zhang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Lv%2C+J">Jiancheng Lv</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.08131v1-abstract-short" style="display: inline;">
+        Key-value (<span class="search-hit mathjax">KV</span>)&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.08131v1-abstract-full').style.display = 'inline'; document.getElementById('2609.08131v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.08131v1-abstract-full" style="display: none;">
+        Key-value (<span class="search-hit mathjax">KV</span>) <span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> is essential for scaling long-context inference in Large Language Models. However, existing policies predominantly rely on empirical heuristics, lacking a rigorous characterization of token utility under the inherently nonlinear softmax attention mechanism. In this work, we rethink <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> through the lens of local information geometry, modeling the attention process as a nonlinear Gaussian communication channel. By performing a first-order Taylor expansion of the attention mapping, we derive the Jacobian Information Capacity, a novel objective that explicitly captures query relevance, softmax sensitivity, and structural diversity. Guided by this theory, we introduce Jacap, a capacity-aware <span class="search-hit mathjax">eviction</span> method that utilizes softmax-aware importance weighting and statistical leverage scores for subset selection. Extensive experiments across diverse architectures and benchmarks demonstrate that \textsc{Jacap} delivers superior performance in most scenarios, particularly in high-compression regimes.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.08131v1-abstract-full').style.display = 'none'; document.getElementById('2609.08131v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 7 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">16 pages, 6 figures</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.06663">arXiv:2609.06663</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.06663">pdf</a>, <a href="https://arxiv.org/ps/2609.06663">ps</a>, <a href="https://arxiv.org/format/2609.06663">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computer Vision and Pattern Recognition">cs.CV</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        ECOKV: Geometry-Aware <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span> via Complementary Diversity Metrics
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Hsu%2C+C+T">Chin Ting Hsu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Xu%2C+Y">Yu-Syuan Xu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zou%2C+L">Ling Zou</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kuo%2C+H">Hsien-Kai Kuo</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Cheng%2C+W">Wen-Huang Cheng</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.06663v1-abstract-short" style="display: inline;">
+        Although multimodal Large Language Models (MLLMs) excel in diverse tasks, their scalability remains limited by the memory and computational overhead of <span class="search-hit mathjax">KV</span>&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.06663v1-abstract-full').style.display = 'inline'; document.getElementById('2609.06663v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.06663v1-abstract-full" style="display: none;">
+        Although multimodal Large Language Models (MLLMs) excel in diverse tasks, their scalability remains limited by the memory and computational overhead of <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> storage. Recent <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> approaches incorporate a cosine similarity-based diversity metric with importance metrics to selectively retain critical key-value pairs. However, cosine similarity involves normalization that discards magnitude information, and it often yields uniformly high similarity values across layers due to the anisotropy property of hidden representations. In our study ECOKV, we rigorously deconstruct the capabilities of existing diversity metrics. Moving beyond simple measurement, we propose a geometry-aware composite metric that jointly leverages Euclidean distance and cosine similarity to capture token diversity from complementary perspectives. Furthermore, we use these two metrics to estimate the redundancy level of each attention head, allowing adaptive weighting between diversity and importance scores during token selection. Finally, we demonstrate that the observation window commonly employed to preserve recent tokens can be substantially reduced, thereby allocating more <span class="search-hit mathjax">cache</span> capacity to informative tokens and yielding consistent improvements. Extensive experiments demonstrate that ECOKV achieves state-of-the-art performance under various compression ratios and can be seamlessly integrated with existing <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> methods. We further analyze the relationship between importance and diversity, and examine redundancy patterns across layers and attention heads.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.06663v1-abstract-full').style.display = 'none'; document.getElementById('2609.06663v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 6 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">18 pages, 8 figures</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.03515">arXiv:2609.03515</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.03515">pdf</a>, <a href="https://arxiv.org/ps/2609.03515">ps</a>, <a href="https://arxiv.org/format/2609.03515">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        What Matters for Aggressive Decoding-Time <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Eviction</span>? Temporal Aggregation and Ranking Preservation
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Zeng%2C+B">Bo Zeng</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yu Zhao</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yefeng Liu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Lu%2C+Z">Zhihong Lu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Ni%2C+X">Xuanfan Ni</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+X">Xintong Wang</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.03515v1-abstract-short" style="display: inline;">
+        Decoding-time <span class="search-hit mathjax">KV</span>&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.03515v1-abstract-full').style.display = 'inline'; document.getElementById('2609.03515v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.03515v1-abstract-full" style="display: none;">
+        Decoding-time <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> compression research focuses heavily on designing better token scoring functions, while the temporal rule that aggregates scores across decode steps is often treated as an implementation detail. Under aggressive <span class="search-hit mathjax">KV</span> compression, we find that exponential-moving-average (EMA) aggregation makes approximately order-preserving scorer modifications largely indistinguishable at the <span class="search-hit mathjax">eviction</span>-set level. Value-norm and entropy variants remain highly correlated with attention and produce nearly unchanged retention sets, whereas KeyDiff, key norm, recency, and a learned scorer alter the ranking and degrade substantially. We associate this stability with the evaluated aggregation, which couples layer weighting and temporal retention. Building on this observation, we introduce InertiaKV, an EMA-based decoding-time <span class="search-hit mathjax">eviction</span> method, and InertiaKV-Lazy, its periodic-refresh variant, which yields 1.34-1.46x decode throughput relative to full refresh InertiaKV. We also study Score-Free decoding as a separate empirical operating point: it scores the full context once at the first decode step, freezes that ranking, and incurs an average quality change of +0.03 while removing all subsequent scoring. Across six open-weight backbones and the LongBench, LongBench-v2, and RULER benchmarks, the results identify temporal aggregation and ranking preservation as distinct, consequential design factors; they do not imply that scoring quality is irrelevant in general.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.03515v1-abstract-full').style.display = 'none'; document.getElementById('2609.03515v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">Accepted to EMNLP 2026 Main Conference</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.03430">arXiv:2609.03430</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.03430">pdf</a>, <a href="https://arxiv.org/ps/2609.03430">ps</a>, <a href="https://arxiv.org/format/2609.03430">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Random Attention: Rethinking <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span> for Efficient Reasoning
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+H">Heng Wang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Qiu%2C+J">Jielin Qiu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+W">Wenting Zhao</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Qian%2C+C">Cheng Qian</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+L">Liangwei Yang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Han%2C+J">Jiawei Han</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Ji%2C+H">Heng Ji</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Savarese%2C+S">Silvio Savarese</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Heinecke%2C+S">Shelby Heinecke</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+H">Huan Wang</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.03430v1-abstract-short" style="display: inline;">
+        Large language models achieve superior performance on tasks that require extended reasoning, but long chains of thought make the <span class="search-hit mathjax">KV</span>&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.03430v1-abstract-full').style.display = 'inline'; document.getElementById('2609.03430v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.03430v1-abstract-full" style="display: none;">
+        Large language models achieve superior performance on tasks that require extended reasoning, but long chains of thought make the <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> a severe memory bottleneck. Existing <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> compression methods share one paradigm: score each <span class="search-hit mathjax">cached</span> token by some estimate of how much it will matter later, and keep the top-scoring ones. We show that the selection signal contributes almost nothing. Random Attention keeps the prompt and <span class="search-hit mathjax">evicts</span> uniformly at random within each attention head, computing no score at all; across four models and six reasoning tasks it matches the strongest prior evictor while serving 32-43% higher throughput than it in vLLM deployment. Controlled experiments explain this by showing that 1) the prompt is the fragile part of the <span class="search-hit mathjax">cache</span>, and most of the gap between selectors is just whether their selection signal happened to keep it; 2) the reasoning trace protects itself against <span class="search-hit mathjax">eviction</span> with redundancy at two levels, in the text (the model restates what it still needs as it works) and across attention heads (each keeps its own copy of the trace), so once the prompt is safe, a random draw retains enough copies of what the model still needs, and no score is required to pick them. Our code is publicly available at https://github.com/SalesforceAIResearch/Random-Attention.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.03430v1-abstract-full').style.display = 'none'; document.getElementById('2609.03430v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.02027">arXiv:2609.02027</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.02027">pdf</a>, <a href="https://arxiv.org/ps/2609.02027">ps</a>, <a href="https://arxiv.org/format/2609.02027">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Performance">cs.PF</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Probability">math.PR</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Multi-Turn LLM Conversations under the Least-Recently-Used Policy: Mean-Field Asymptotics and Hit Ratio Approximation
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Yao%2C+H">Heyuan Yao</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Gao%2C+C">Chutong Gao</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Lyu%2C+Y">Yuan Lyu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Grosof%2C+I">Izzy Grosof</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Simchi-Levi%2C+D">David Simchi-Levi</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.02027v1-abstract-short" style="display: inline;">
+        &hellip;to multi-turn conversations, where new responses are generated based on the whole conversation history across all previous turns. The hit ratio, i.e., the average fraction of <span class="search-hit mathjax">KV</span>&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.02027v1-abstract-full').style.display = 'inline'; document.getElementById('2609.02027v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.02027v1-abstract-full" style="display: none;">
+        The major workloads in modern large language model (LLM) serving systems have shifted from single-shot LLM calls to multi-turn conversations, where new responses are generated based on the whole conversation history across all previous turns. The hit ratio, i.e., the average fraction of <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">caches</span> accessed directly from existing <span class="search-hit mathjax">caches</span> stored in high-bandwidth memory (HBM), is hence a crucial metric that governs system performance. Estimating the hit ratio is a highly nontrivial task due to the complex system dynamics, where the <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> prefixes grow with turns and some must be <span class="search-hit mathjax">evicted</span> due to finite memory capacity. We formulate the system as a multi-turn conversation model under the least-recently-used (LRU) policy. Through a mean-field asymptotic framework, we prove that as the conversation arrival rate and the memory capacity grow proportionally to infinity, the hit ratio converges to a closed-form limit. Based on the characterization of the limit, we further propose a practical hit ratio estimator, and validate its accuracy by real LLM serving experiments on the Qwen3-8B model implemented on Ascend NPUs. Our results provide a theoretical foundation for the analysis of multi-turn LLM serving systems and a practical guideline for memory capacity provisioning.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.02027v1-abstract-full').style.display = 'none'; document.getElementById('2609.02027v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          60K25; 68M20; 90B22
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2609.01338">arXiv:2609.01338</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2609.01338">pdf</a>, <a href="https://arxiv.org/ps/2609.01338">ps</a>, <a href="https://arxiv.org/format/2609.01338">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Operating Systems">cs.OS</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Distributed, Parallel, and Cluster Computing">cs.DC</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
+          
+        </div>
+      
+        
+          <div class="is-inline-block" style="margin-left: 0.5rem">
+            <div class="tags has-addons">
+              <span class="tag is-dark is-size-7">doi</span>
+              <span class="tag is-light is-size-7"><a class="" href="https://doi.org/10.1145/3795866.3844495">10.1145/3795866.3844495 <i class="fa fa-external-link" aria-hidden="true"></i></a></span>
+            </div>
+          </div>
+        
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        mzCache: On-Device LLM Memory Management under Multitasking
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Yu%2C+H">Hongseung Yu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kim%2C+M">Minsung Kim</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Park%2C+J">Jongseok Park</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Lee%2C+K">Kyunghan Lee</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2609.01338v1-abstract-short" style="display: inline;">
+        &hellip;operate in highly dynamic multitasking environments where users frequently switch between applications. This creates memory pressure, forcing LLM memory (model weights and <span class="search-hit mathjax">KV</span>&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.01338v1-abstract-full').style.display = 'inline'; document.getElementById('2609.01338v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2609.01338v1-abstract-full" style="display: none;">
+        On-device mobile Large Language Model (LLM) inference is gaining significant attention. However, mobile devices operate in highly dynamic multitasking environments where users frequently switch between applications. This creates memory pressure, forcing LLM memory (model weights and <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span>) to be <span class="search-hit mathjax">evicted</span> by the operating system. When a new inference request arrives, the inference system must restore the <span class="search-hit mathjax">evicted</span> memory through slow storage reads or recompute the entire <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span>, severely degrading responsiveness. To address this, we present mzCache, an on-device LLM inference system with specialized memory management for multitasking environments. Under unpredictable memory pressure, mzCache elastically <span class="search-hit mathjax">evicts</span> LLM memory and leverages the unified memory of mobile SoCs to enable zero-wait inference on the GPU with concurrent CPU-side restoration. mzCache realizes this through restoration-oriented memory management: LLM memory is partitioned into fine-grained shared buffers to enable partial <span class="search-hit mathjax">eviction</span> and restoration with concurrent cross-processor access, while hybrid swap and backward-out <span class="search-hit mathjax">eviction</span> policies ensure low-latency restoration from any <span class="search-hit mathjax">eviction</span> state. Implemented on llama.cpp and deployed as an Android application, mzCache achieves 2.1-5.5$\times$ reduction in Time-to-First-Token compared to storage-backed partial offload and demonstrates its effectiveness in real multitasking scenarios.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2609.01338v1-abstract-full').style.display = 'none'; document.getElementById('2609.01338v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 September, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">MobiCom 2026</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.30386">arXiv:2608.30386</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.30386">pdf</a>, <a href="https://arxiv.org/ps/2608.30386">ps</a>, <a href="https://arxiv.org/format/2608.30386">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        DASC: Decay-Aware State Compression for Hybrid Linear-Attention Serving
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Yu%2C+Y">Yanqi Yu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Sun%2C+P">Pingwei Sun</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Tan%2C+J">Jianchao Tan</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+T">Tao Zhang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Xie%2C+Y">Yuchen Xie</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Cai%2C+X">Xunliang Cai</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yao Liu</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.30386v1-abstract-short" style="display: inline;">
+        Hybrid linear-attention architectures have recently scaled to large open-weight models, offering quality competitive with full attention while substantially reducing key/value (<span class="search-hit mathjax">KV</span>)&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.30386v1-abstract-full').style.display = 'inline'; document.getElementById('2608.30386v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.30386v1-abstract-full" style="display: none;">
+        Hybrid linear-attention architectures have recently scaled to large open-weight models, offering quality competitive with full attention while substantially reducing key/value (<span class="search-hit mathjax">KV</span>) <span class="search-hit mathjax">cache</span> growth. However, their in-place recurrent-state updates complicate <span class="search-hit mathjax">cache</span> management: prefix reuse requires state checkpoints alongside full-attention <span class="search-hit mathjax">KV</span>, while storing state checkpoints in full increases memory pressure, leading to more <span class="search-hit mathjax">evictions</span> and repeated prefill. By analyzing the decay structure of Gated DeltaNet (GDN) and Kimi Delta Attention (KDA), we find that different heads and channels retain prefix information over markedly different timescales, which we term \emph{retention horizons}. This variation suggests substantial compression potential in persistent state checkpoints. Building on this observation, we introduce \emph{Decay-Aware State Compression} (DASC), which derives retention horizons from model weights, selects long-horizon state units, and packs them into a ragged state checkpoint layout. To integrate efficiently with tensor-parallel inference engines, DASC furtherly balances compressed state checkpoints across TP ranks. On reuse, DASC either zero-fills omitted units or refreshes them from a bounded suffix with additional compute cost. Across retrieval and end-to-end reasoning benchmarks on Kimi-Linear, conservative DASC configurations remain close to full <span class="search-hit mathjax">caching</span> while compressing KDA recurrent state checkpoints by $2.63\times$. Under fixed state checkpoint memory budgets, the resulting capacity gains reduce mean Time to First Token (TTFT) by 42.6\% and improve input throughput by 68.4\%. At larger compression ratio, suffix refresh recovers much of the accuracy lost to more aggressive omission, at the cost of additional replay computation. Qwen with GDN exhibits a similar quality--efficiency trend, showing that DASC extends from channel-wise KDA to head-wise GDN.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.30386v1-abstract-full').style.display = 'none'; document.getElementById('2608.30386v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 31 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.29934">arXiv:2608.29934</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.29934">pdf</a>, <a href="https://arxiv.org/ps/2608.29934">ps</a>, <a href="https://arxiv.org/format/2608.29934">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Compression-Aware Abstention: Teaching LLMs to Refuse When <span class="search-hit mathjax">KV</span>-Compression Masks Remove Answer Evidence
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Khodabandehlou%2C+M">Mohammadali Khodabandehlou</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Krishnamachari%2C+B">Bhaskar Krishnamachari</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.29934v1-abstract-short" style="display: inline;">
+        <span class="search-hit mathjax">KV</span>-&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.29934v1-abstract-full').style.display = 'inline'; document.getElementById('2608.29934v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.29934v1-abstract-full" style="display: none;">
+        <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> compression reduces LLM inference memory by <span class="search-hit mathjax">evicting</span> context tokens, but when the <span class="search-hit mathjax">evicted</span> tokens contain answer-bearing evidence, the model may hallucinate instead of recognizing that the compressed context is insufficient. We address this failure from a behavioral perspective: to our knowledge, this is the first work to formulate compression-aware abstention as a learning problem, in which a model learns to answer when supporting evidence survives compression and abstain when it does not. We construct supervision from compressor survival masks and tight answer-bearing spans, labeling examples as Confident when evidence survives and Abstain when it is removed. A 10.1M-parameter LoRA adapter trained on ~2.6K MuSiQue 2-hop QA examples reduces base-model hallucinations by 97% under prompt-style truncation while preserving correct answering on evidence-retaining examples. Unlike prompt-only abstention baselines, which over-abstain on many answerable high-retention examples, the trained adapter learns a conditional policy. We also evaluate the method under actual compressed-<span class="search-hit mathjax">cache</span> decoding, where multi-compressor training yields a 6-22x relative lift over the unaided base on evidence-retaining examples. Controlled-deletion experiments show that the learned behavior is driven by evidence content rather than input length alone.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.29934v1-abstract-full').style.display = 'none'; document.getElementById('2608.29934v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 30 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">19 pages, 5 figures. Accepted to the GroundLM workshop at EMNLP 2026. Code, adapters, and datasets: https://github.com/mali-kh/compression-aware-abstention</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">ACM Class:</span>
+          I.2.7; I.2.6
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.28293">arXiv:2608.28293</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.28293">pdf</a>, <a href="https://arxiv.org/ps/2608.28293">ps</a>, <a href="https://arxiv.org/format/2608.28293">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        A Probabilistic Interpretation of <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span>
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Geh%2C+R">Renato Geh</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+A">Alex Chen</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Israel%2C+D">Daniel Israel</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Grover%2C+A">Aditya Grover</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Broeck%2C+G+V+d">Guy Van den Broeck</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.28293v1-abstract-short" style="display: inline;">
+        The premise and promise of <span class="search-hit mathjax">KV</span> (&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.28293v1-abstract-full').style.display = 'inline'; document.getElementById('2608.28293v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.28293v1-abstract-full" style="display: none;">
+        The premise and promise of <span class="search-hit mathjax">KV</span> (<span class="search-hit mathjax">cache</span>) <span class="search-hit mathjax">eviction</span> is simple: higher throughput can be achieved by <span class="search-hit mathjax">evicting</span> some entries from the <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span>, at a negligible cost to quality. This holds empirically for many existing methods, though most rely on creative heuristics for selecting which entries to drop. Despite recent advances, the problem of <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">eviction</span> has remained informal in the literature. This paper aims to properly formalize this problem through the lens of probabilistic reasoning and reveal what can be learned from this perspective. Concretely, we (1) formalize the problem of <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">eviction</span> and, unfortunately, prove that it is computationally hard, (2) show that by framing it probabilistically, <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">eviction</span> reduces to the problem of expectation estimation, which can be approximated through sampling, (3) show that through this probabilistic interpretation, correcting for <span class="search-hit mathjax">evicted</span> entries during decoding---a previously ignored problem---becomes feasible, and (4) reveal that existing methods in the literature are zero-variance biased estimators that can be easily adapted in order to enable decode time correction. In practice, we show that this probabilistic version of <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">eviction</span> coupled with decode time correction is more robust to different tasks compared to existing <span class="search-hit mathjax">eviction</span> methods and achieves competitive performance at the same compression budget.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.28293v1-abstract-full').style.display = 'none'; document.getElementById('2608.28293v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.27128">arXiv:2608.27128</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.27128">pdf</a>, <a href="https://arxiv.org/ps/2608.27128">ps</a>, <a href="https://arxiv.org/format/2608.27128">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        TwinKV: A Composable Repair Pass for <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span> via Pairwise Key Redundancy
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+H">Hong Chen</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zeng%2C+Y">Yudong Zeng</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Huang%2C+Y">Yongwei Huang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Ouyang%2C+Z">Zuhao Ouyang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zheng%2C+D">Dongnan Zheng</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+J">Junyan Zhang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Hu%2C+X">Xuming Hu</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.27128v2-abstract-short" style="display: inline;">
+        Long-context inference is bottlenecked by the memory footprint of the key-value (<span class="search-hit mathjax">KV</span>) <span class="search-hit mathjax">cache</span>, especially for small models under tight resource budgets. Existing <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> methods score tokens us&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.27128v2-abstract-full').style.display = 'inline'; document.getElementById('2608.27128v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.27128v2-abstract-full" style="display: none;">
+        Long-context inference is bottlenecked by the memory footprint of the key-value (<span class="search-hit mathjax">KV</span>) <span class="search-hit mathjax">cache</span>, especially for small models under tight resource budgets. Existing <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> methods score tokens using the model&#39;s attention distribution or, in attention-free variants, each key&#39;s distance from a global reference point. Using a controlled leave-one-out probe, we find that attention magnitude is unrelated to a token&#39;s causal contribution to the answer (Spearman $ρ=-0.004$), challenging the premise behind dominant <span class="search-hit mathjax">eviction</span> methods. We introduce TwinKV, a training-free, attention-free redundancy signal that detects whether a token&#39;s key has a near-duplicate elsewhere in context. Rather than replacing existing policies, TwinKV acts as a composable repair pass: given a policy&#39;s fixed retained set, it identifies <span class="search-hit mathjax">evicted</span> tokens with no surviving duplicate (\emph{orphans}) and retained tokens whose information is duplicated elsewhere (\emph{redundant donors}), then swaps them while preserving the original budget and scoring rule. We compose TwinKV with four recent <span class="search-hit mathjax">eviction</span> policies across LongBench, LooGLE, RULER, and a short-context MMLU-Pro no-harm control at compression ratios ${0.3,0.5,0.7}$. On Qwen3-4B, TwinKV improves a majority of configurations for two policies, is near-even for a third, and helps only a minority for a fourth adaptive baseline already near a performance ceiling; gains across the three non-ceiling policies are smallest at the loosest ratio. On RULER with Llama-3.2-1B, however, that fourth policy improves in every evaluated cell because its Alone score leaves substantial room to improve. More broadly, Llama-3.2-1B shows a smaller average LongBench gain but a higher fraction of improved cells on LongBench and LooGLE than Qwen3-4B, plus a clean RULER win. We also identify few-shot classification exemplars as a task structure where TwinKV does not help on either model.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.27128v2-abstract-full').style.display = 'none'; document.getElementById('2608.27128v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 30 August, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 27 August, 2026;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.25230">arXiv:2608.25230</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.25230">pdf</a>, <a href="https://arxiv.org/ps/2608.25230">ps</a>, <a href="https://arxiv.org/format/2608.25230">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Trust the Mass: Forced Weights in <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span>
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Shi%2C+J">Jack Shi</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Gu%2C+J">Jerry Gu</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.25230v2-abstract-short" style="display: inline;">
+        Every deployed sparse-attention or <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span>-<span class="search-hit mathjax">eviction</span> rule keeps a subset of the keys, discards the rest, and renormalizes the attention weights over the kept set. Enumerating the exact best subset under that constraint on $168{,}192$ attention rows from five models shows that kee&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.25230v2-abstract-full').style.display = 'inline'; document.getElementById('2608.25230v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.25230v2-abstract-full" style="display: none;">
+        Every deployed sparse-attention or <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span>-<span class="search-hit mathjax">eviction</span> rule keeps a subset of the keys, discards the rest, and renormalizes the attention weights over the kept set. Enumerating the exact best subset under that constraint on $168{,}192$ attention rows from five models shows that keeping the largest weights is already near-optimal, since the best subset closes only a median $2$ to $5\%$ of the remaining gap to full attention. If selection closes this little, published margins between <span class="search-hit mathjax">eviction</span> methods must come from elsewhere, so we measure the bytes each method holds. In the shared evaluation pipeline, the strongest query-agnostic methods hold the full <span class="search-hit mathjax">cache</span> because their per-head selections are stored as masks, and only ragged per-head storage frees that memory. Enforcing a nominal budget on one fixed selection costs $14$ to $62$ benchmark points. We trace an $87.6$-point retrieval margin to rankings computed while the question is visible. ContourKV, a training-free allocator built from the dropped-mass statistic, wins $93$ of $160$ paired comparisons against that state of the art and loses $22$ at the byte count of the budget-enforcing baselines, and it ties the strongest of them.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.25230v2-abstract-full').style.display = 'none'; document.getElementById('2608.25230v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 August, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 25 August, 2026;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">18 pages; revised wording in 2.3 for increased accuracy (main results unchanged)</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.23962">arXiv:2608.23962</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.23962">pdf</a>, <a href="https://arxiv.org/ps/2608.23962">ps</a>, <a href="https://arxiv.org/format/2608.23962">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        More GPUs or a Smaller <span class="search-hit mathjax">Cache</span>? Tensor Parallelism versus <span class="search-hit mathjax">KV</span> Compression for Memory-Bound LLM Serving
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Tumkur%2C+S+D">Srikanta Datta Tumkur</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Simhadri%2C+M">Mehar Simhadri</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Bansal%2C+A">Anshu Bansal</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Iyer%2C+J">Jay Iyer</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kumar%2C+S+P">Sai Pavan Kumar</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kumar%2C+S+K">Sai Kapil Kumar</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Nampelly%2C+R">Ramesh Nampelly</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Dandekar%2C+R">Raj Dandekar</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.23962v1-abstract-short" style="display: inline;">
+        When an LLM serving deployment runs out of KVcache room, there are two well-established ways out. Tensor parallelism shards the weights and the <span class="search-hit mathjax">KV</span>&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23962v1-abstract-full').style.display = 'inline'; document.getElementById('2608.23962v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.23962v1-abstract-full" style="display: none;">
+        When an LLM serving deployment runs out of KVcache room, there are two well-established ways out. Tensor parallelism shards the weights and the <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> across two, four, or eight devices, buying memory headroom at the price of an all-reduce on every layer and a hardware bill that grows with the device count. The algorithms community shrinks the <span class="search-hit mathjax">cache</span> in place, with <span class="search-hit mathjax">KV</span> quantisation and <span class="search-hit mathjax">eviction</span> keeping a single GPU and spending a little quality instead. Compression papers report memory ratios, parallel-scaling papers report throughput curves, and almost nobody puts the two on the same cost axis. We place tensor-parallel configurations (degree 1 to 8) and <span class="search-hit mathjax">KV</span>-compressed configurations (16/8/4-bit, keep-ratios down to 0.25) on one costnormalised axis, cost per million tokens against latency, using a profiled simulator calibrated on A100, A40, and H100 hardware, and we go looking for the cost-equivalence crossover. We do not find one. Across two models (Llama-2 at 7B and 70B), three GPU types, and every level of memory relief we could construct, compression is cheaper by 1.20x to 2.00x. A 7B model on an 80 GB device cannot exhaust its <span class="search-hit mathjax">KV</span> budget within its own context window, and the boundary that decides between the strategies is model size relative to device memory, at roughly 36B parameters for an 80 GB card. Below that wall, compression dominates and extra GPUs are largely wasted spend; above it, tensor parallelism stops being a choice and becomes an entry ticket: Llama-2-70B is infeasible on one A100 at any <span class="search-hit mathjax">KV</span> setting, because the binding resource is weights, which <span class="search-hit mathjax">KV</span> compression does not touch. Tensor parallelism is the only lever that improves latency (compression makes per-token latency worse, by 8 to 93%, through batching contention), while compression is the only lever that multiplies capacity per dollar (16.5x, against 1.21x for an eightfold spend on GPUs).
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23962v1-abstract-full').style.display = 'none'; document.getElementById('2608.23962v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 24 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.23834">arXiv:2608.23834</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.23834">pdf</a>, <a href="https://arxiv.org/ps/2608.23834">ps</a>, <a href="https://arxiv.org/format/2608.23834">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Minima-<span class="search-hit mathjax">KV</span>: Retention-Preserving <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> Compression with Mixed-Format Paged Attention
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Kozyrev%2C+S">Sergii Kozyrev</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Maiboroda%2C+D">Davyd Maiboroda</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.23834v1-abstract-short" style="display: inline;">
+        The key-value (<span class="search-hit mathjax">KV</span>)&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23834v1-abstract-full').style.display = 'inline'; document.getElementById('2608.23834v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.23834v1-abstract-full" style="display: none;">
+        The key-value (<span class="search-hit mathjax">KV</span>) <span class="search-hit mathjax">cache</span> is a primary capacity and bandwidth bottleneck in long-context LLM serving. We present Minima-<span class="search-hit mathjax">KV</span>, a retention-preserving hierarchy for mixed-format paged attention. Recent and protected Anchor pages remain in FP8, while older non-anchor pages move to packed TQ3; every live-request page remains addressable. Format-specific kernels compute partial attention states and combine them through a globally normalized online-softmax merge, enabling direct heterogeneous decode without a <span class="search-hit mathjax">cache</span>-sized dense shadow. Across separate, configuration-bound Qwen3.6-27B profiles on a single 96-GB NVIDIA RTX PRO 6000 Blackwell GPU, deployment accounting reports 18.3 KiB of attention <span class="search-hit mathjax">KV</span> per live token, corresponding to 3.50x compression relative to BF16 and 1.75x relative to FP8. A materializing quality profile matches its dense control on 16K RULER needle-in-a-haystack tasks. On the same 503-question LongBench v2 set, measured deltas are -0.80, -0.60, and -0.40 percentage points at 16K, 32K, and 64K. A separate single-pair direct-decode canary with two 59,008-token requests measures 3.625x active-<span class="search-hit mathjax">KV</span> compression and 0.9821x throughput relative to its control, routes all 16 full-attention layers without fallback, and retains no dense shadow. These results establish a practical mixed-format path for compressing long-context state without <span class="search-hit mathjax">evicting</span> live-request <span class="search-hit mathjax">KV</span> pages.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23834v1-abstract-full').style.display = 'none'; document.getElementById('2608.23834v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 24 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">13 pages, 3 figures</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.23565">arXiv:2608.23565</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.23565">pdf</a>, <a href="https://arxiv.org/ps/2608.23565">ps</a>, <a href="https://arxiv.org/format/2608.23565">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        ReWorld: An Interactive World Model with Long-Horizon Memory
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+Z">Zhifei Chen</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+L">Luozhou Wang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Shen%2C+G">Guibao Shen</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Yan%2C+D">Dongyu Yan</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+S">Shuai Yang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Xu%2C+T">Tianshuo Xu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Du%2C+Y">Yihua Du</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+W">Wei Wang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Gui%2C+T">Tianyi Gui</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Huang%2C+L">Lianghua Huang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+Y">Yingcong Chen</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.23565v1-abstract-short" style="display: inline;">
+        &hellip;capability from binding to particular heads; random chunk dropping makes sparse histories in-distribution. At inference the whole past lives under a fixed budget: a bounded <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> backed by a pose-indexed landmark bank, from which the model retrieves the landmarks nearest the current pose. A metric-scale-aligned data&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23565v1-abstract-full').style.display = 'inline'; document.getElementById('2608.23565v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.23565v1-abstract-full" style="display: none;">
+        An interactive world model must follow the user&#39;s actions, remember the places it has shown, and stream in real time. The tension is structural: control wants a short horizon, memory wants an unbounded one. ReWorld separates the two during training and bounds them at inference. Mixed per-head attention windows confine most heads to the recent past while a small set of global heads attends over the entire history, and random head routing keeps either capability from binding to particular heads; random chunk dropping makes sparse histories in-distribution. At inference the whole past lives under a fixed budget: a bounded <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> backed by a pose-indexed landmark bank, from which the model retrieves the landmarks nearest the current pose. A metric-scale-aligned data engine places eight sources -- Unreal-rendered fly-throughs, game roaming, and real-world footage -- on one physical action scale, so the same key press moves the camera the same distance in every source, and palindrome trajectories supply the revisit evidence that memory training needs. Distribution-matching distillation confined to a LoRA adapter then compresses sampling to four steps: one backbone serves both a high-fidelity multi-step mode and a real-time interactive one, streaming 704x1280 video across photorealistic, game-style, and stylized worlds. Under a three-axis protocol covering action following, long-horizon recall, and video quality, against six recent interactive world models it attains the best control fidelity ($11.95^\circ$ rotation error and the best camera-motion consistency) and the best generation quality; and on minute-long out-and-back rollouts ($64$\,s, $384$ latents), its fixed 12-chunk <span class="search-hit mathjax">cache</span> still regenerates the starting view -- at rollout lengths where a sliding window has long <span class="search-hit mathjax">evicted</span> the evidence and full-<span class="search-hit mathjax">KV</span> attention runs out of memory.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23565v1-abstract-full').style.display = 'none'; document.getElementById('2608.23565v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 24 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">21 pages, 9 figures. Project page: https://zhifeichen097.github.io/ReWorld/</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.23296">arXiv:2608.23296</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.23296">pdf</a>, <a href="https://arxiv.org/ps/2608.23296">ps</a>, <a href="https://arxiv.org/format/2608.23296">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Sigmoid Attention as a Better Substrate for Learned <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> <span class="search-hit mathjax">Eviction</span>
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Isaac"> Isaac</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Li"> Li</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.23296v1-abstract-short" style="display: inline;">
+        Learned <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> often faces a soft-to-hard mismatch: during training, differentiable gates typically attenuate token contributions, whereas inference saves memory only when <span class="search-hit mathjax">KV</span> entries are physically removed. We ask whether the att&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23296v1-abstract-full').style.display = 'inline'; document.getElementById('2608.23296v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.23296v1-abstract-full" style="display: none;">
+        Learned <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> often faces a soft-to-hard mismatch: during training, differentiable gates typically attenuate token contributions, whereas inference saves memory only when <span class="search-hit mathjax">KV</span> entries are physically removed. We ask whether the attention substrate affects this soft-to-hard transition. Using GPT-2-scale Transformers trained on OpenWebText, we run a controlled $2\times2\times2$ comparison over attention type, learned gating, and positional encoding. Although sigmoid attention is worse as a dense language model, learned hard <span class="search-hit mathjax">eviction</span> changes the useful operating points: sigmoid-gated models delete <span class="search-hit mathjax">KV</span> entries with negligible PPL change relative to their own no-<span class="search-hit mathjax">eviction</span> references. Under a matched live-<span class="search-hit mathjax">cache</span> protocol on the same dense backbones, learned sigmoid gates obtain lower PPL than our H$_2$O and KeyDiff implementations, whereas softmax gates do not uniformly beat these post-hoc methods. The results suggest that attention normalization can substantially affect whether a training-time soft gate transfers cleanly to hard <span class="search-hit mathjax">KV</span> deletion.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.23296v1-abstract-full').style.display = 'none'; document.getElementById('2608.23296v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 24 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">Accepted at the ICML 2026 Workshop on Resource-Adaptive Foundation Model Inference (AdaptFM)</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          68T07; 68T50
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">ACM Class:</span>
+          I.2.6; I.2.7
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.22704">arXiv:2608.22704</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.22704">pdf</a>, <a href="https://arxiv.org/ps/2608.22704">ps</a>, <a href="https://arxiv.org/format/2608.22704">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Sound">cs.SD</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        WnW: Waxing-and-Waning <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Cache</span> for Long-Form Speech LLMs
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Yao%2C+Y">Yiming Yao</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Lyu%2C+C">Chenyang Lyu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Ni%2C+X">Xuanfan Ni</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+L">Longyue Wang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Luo%2C+W">Weihua Luo</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+Y">Yazheng Yang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Su%2C+J">Jinsong Su</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.22704v2-abstract-short" style="display: inline;">
+        Long-form audio inputs make the <span class="search-hit mathjax">KV</span>&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.22704v2-abstract-full').style.display = 'inline'; document.getElementById('2608.22704v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.22704v2-abstract-full" style="display: none;">
+        Long-form audio inputs make the <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> the dominant memory cost of speech LLMs. Prefill-only <span class="search-hit mathjax">KV</span> compression methods permanently discard audio <span class="search-hit mathjax">KV</span> positions once <span class="search-hit mathjax">evicted</span>, with no pathway to recover them during decoding. We show this is fragile on long-form audio: prefill attention concentrates near the audio start (an attention-sink effect), while decode-time attention distributes broadly, and the two rankings overlap weakly. We propose WnW (Waxing-and-Waning <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span>), which classifies <span class="search-hit mathjax">KV</span>-heads into anchor, tidal, and fixed roles via offline calibration. Anchor heads keep all audio <span class="search-hit mathjax">KV</span> on GPU and yield a decode-time signal of which audio region each token is read from; tidal heads keep a CPU-resident complement that is recalled chunk-by-chunk based on aggregated anchor-head scores; fixed heads keep only an on-GPU subset, with the rest permanently discarded. On LibriSpeech-Long with two 3B backbones (Voxtral-mini-3b and Qwen2.5-Omni-3B), WnW preserves near-Full-<span class="search-hit mathjax">Cache</span> accuracy while keeping only 20% of audio tokens on GPU, where prefill-only baselines fail to terminate. Results generalize across language, task, and domain shifts, and CPU-GPU recall adds little decode-time overhead in our measurements.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.22704v2-abstract-full').style.display = 'none'; document.getElementById('2608.22704v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 29 August, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 23 August, 2026;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">Accepted at EMNLP 2026 Main Conference. 9 pages, 5 figures</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">ACM Class:</span>
+          I.2.7
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.21362">arXiv:2608.21362</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.21362">pdf</a>, <a href="https://arxiv.org/ps/2608.21362">ps</a>, <a href="https://arxiv.org/format/2608.21362">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Distributed, Parallel, and Cluster Computing">cs.DC</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        KVBoost: Chunk-Level Key-Value <span class="search-hit mathjax">Cache</span> Reuse with Deviation-Guided Recomputation for Efficient Large Language Model Inference
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Unnikrishnan%2C+S">Srihari Unnikrishnan</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.21362v1-abstract-short" style="display: inline;">
+        Transformer-based large language models (LLMs) incur high prefill latency because key-value (<span class="search-hit mathjax">KV</span>) tensors must be recomputed for each request. Existing prefix-&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.21362v1-abstract-full').style.display = 'inline'; document.getElementById('2608.21362v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.21362v1-abstract-full" style="display: none;">
+        Transformer-based large language models (LLMs) incur high prefill latency because key-value (<span class="search-hit mathjax">KV</span>) tensors must be recomputed for each request. Existing prefix-<span class="search-hit mathjax">caching</span> systems reduce this cost but require prompts to share a leading contiguous prefix, limiting effectiveness when shared content appears at arbitrary positions. We present KVBoost, a chunk-level <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">cache</span> reuse system for HuggingFace-compatible decoder models that enables reuse regardless of content position. KVBoost introduces a dual-hash keying scheme that separates positional identity (prefix hash) from content identity (content hash), supporting both exact and approximate <span class="search-hit mathjax">cache</span> matches. To address attention boundary errors from independently <span class="search-hit mathjax">cached</span> chunks, KVBoost employs two repair strategies: SelectiveRecompute, which re-encodes boundary regions, and CacheBlendRecompute, which identifies and recomputes high-deviation tokens after a probe pass. The system further incorporates asymmetric <span class="search-hit mathjax">KV</span> quantization (int8/int4), adaptive chunk boundary splitting, and importance-weighted <span class="search-hit mathjax">eviction</span> under a fixed memory budget. Evaluated on Qwen/Qwen2.5-3B over 1,000 bug-localization samples, KVBoost achieves a 4.49x reduction in time-to-first-token (142.4 ms vs.\ 639.1 ms) and outperforms prefix <span class="search-hit mathjax">caching</span> by 16%, with no loss in accuracy (99.2% vs.\ 99.1%). KVBoost provides a practical, memory-bounded inference acceleration layer compatible with RoPE-based models without architectural modification.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.21362v1-abstract-full').style.display = 'none'; document.getElementById('2608.21362v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 20 May, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.18098">arXiv:2608.18098</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.18098">pdf</a>, <a href="https://arxiv.org/ps/2608.18098">ps</a>, <a href="https://arxiv.org/format/2608.18098">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Fractional Decay <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">Cache</span>: Ownership-Aware Memory Management for Improved Inference Relevancy in Dialog Systems
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Ganguly%2C+S">Sukanta Ganguly</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.18098v1-abstract-short" style="display: inline;">
+        Key-value (<span class="search-hit mathjax">KV</span>)&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.18098v1-abstract-full').style.display = 'inline'; document.getElementById('2608.18098v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.18098v1-abstract-full" style="display: none;">
+        Key-value (<span class="search-hit mathjax">KV</span>) <span class="search-hit mathjax">caching</span> is essential for efficient autoregressive inference in transformer based dialog systems, yet existing strategies treat all <span class="search-hit mathjax">cached</span> entries uniformly or apply coarse <span class="search-hit mathjax">eviction</span> heuristics that fail to adapt as dialog topics evolve. We propose Fractional Decay <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">Cache</span> (FD-KVC), a novel algorithm that maintains a dual-channel scoring mechanism for each <span class="search-hit mathjax">cached</span> <span class="search-hit mathjax">KV</span> pair: a cumulative attention channel that tracks aggregate importance (akin to H2O), and a recency-weighted relevance channel governed by temporal decay and reinforcement-inspired updates. The combination enables FD-KVC to both preserve historically important tokens and rapidly adapt when dialog topics shift. An adaptive learning rate driven by an ownership loss function ensures convergence without oscillation. FD-KVC operates entirely on CPU with negligible overhead. Across five diverse multi-turn dialog scenarios with 600 dialogs each, FD-KVC outperforms H2O, the state-of-the-art heavy-hitter baseline, by +6.7% on composite late-turn alignment, with improvements of +127% on topic-shift, +87% on gradual evolution, and +30% on mixed-topic dialogs. FD-KVC adapts to new topics 3.6X faster than H2O and achieves the highest topic diversity (80.6%) across all methods. Ablation studies confirm the contribution of each component.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.18098v1-abstract-full').style.display = 'none'; document.getElementById('2608.18098v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 8 June, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">8 pages, 4 figures, 6 tables</span>
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.15797">arXiv:2608.15797</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.15797">pdf</a>, <a href="https://arxiv.org/ps/2608.15797">ps</a>, <a href="https://arxiv.org/format/2608.15797">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        <span class="search-hit mathjax">KV</span>-Rescue: Recovering Reasoning Language Model <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">Eviction</span> Loss via Stepwise Interleaving
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Cheong%2C+M">Minsoo Cheong</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Lim%2C+W">Woosang Lim</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Yun%2C+V">Vincent-Daniel Yun</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Yoo%2C+S">Sungjoo Yoo</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.15797v1-abstract-short" style="display: inline;">
+        <span class="search-hit mathjax">KV</span>-&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.15797v1-abstract-full').style.display = 'inline'; document.getElementById('2608.15797v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.15797v1-abstract-full" style="display: none;">
+        <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> caps the memory cost of long reasoning traces but is inherently lossy because the model decodes from a partial view of its history. Under aggressive budgets, this not only lowers accuracy but can also cause runaway degeneration, where the model produces incoherent or repetitive tokens until reaching the length limit. We characterize much of this loss as an information gapf caused by missing context, rather than a capability gap caused by limited model capacity. An <span class="search-hit mathjax">evicted</span> 7B model and a full-context 1.5B model make complementary errors, and an oracle choice between their answers recovers 79% of the accuracy gap to the full-<span class="search-hit mathjax">KV</span> 7B model. Based on this observation, we propose <span class="search-hit mathjax">KV</span>-Rescue, a training-free inference framework that bridges the information gap introduced by <span class="search-hit mathjax">KV</span> <span class="search-hit mathjax">eviction</span> using a lightweight full-context helper. <span class="search-hit mathjax">KV</span>-Rescue interleaves reasoning steps from the two models into a shared trajectory. An online detector uses entropy and compressibility to terminate the generation of incoherent or repetitive base-model candidates early. Across five math benchmarks with Qwen2.5-Math 7B and 72B, <span class="search-hit mathjax">KV</span>-Rescue recovers an average of 87% of the accuracy lost to <span class="search-hit mathjax">eviction</span> at <span class="search-hit mathjax">eviction</span> budget B=64. A decode-cost analysis further shows that preventing runaway degeneration cuts base-model token generation by 43% on average.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.15797v1-abstract-full').style.display = 'none'; document.getElementById('2608.15797v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 16 August, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2608.14624">arXiv:2608.14624</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2608.14624">pdf</a>, <a href="https://arxiv.org/ps/2608.14624">ps</a>, <a href="https://arxiv.org/format/2608.14624">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Learning Agent Execution for <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">Cache</span> Management in Agentic Serving
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+R">Rui Zhang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kim%2C+C">Chaeeun Kim</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Feng%2C+S">Shaoting Feng</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Du%2C+K">Kuntai Du</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yuhan Liu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhong%2C+Y">Yi Zhong</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Ching%2C+C">Cheng-Wei Ching</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Jiang%2C+J">Junchen Jiang</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Hu%2C+L">Liting Hu</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="search-hit">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2608.14624v1-abstract-short" style="display: inline;">
+        &hellip;these workflows, every agent repeatedly executes a fixed context consisting of system prompts, tool definitions, and few-shot examples, creating substantial opportunities for <span class="search-hit mathjax">KV</span>-&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.14624v1-abstract-full').style.display = 'inline'; document.getElementById('2608.14624v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2608.14624v1-abstract-full" style="display: none;">
+        Multi-agent LLM systems have emerged as an important deployment paradigm for AI services, where each user request is decomposed into a sequence of specialized agents. Across these workflows, every agent repeatedly executes a fixed context consisting of system prompts, tool definitions, and few-shot examples, creating substantial opportunities for <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> reuse. Existing LLM serving systems, however, manage <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> reactively using prefix <span class="search-hit mathjax">caching</span> and recency-based replacement, causing reusable agent contexts to be <span class="search-hit mathjax">evicted</span> before their next invocation and forcing repeated recomputation. We present CacheScout, an agent-aware <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> runtime layer for multi-agent LLM serving. The key insight is that future <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> reuse is governed by agent execution semantics rather than <span class="search-hit mathjax">cache</span> recency alone. CacheScout captures these semantics by learning agent execution transitions online, without requiring predefined workflow graphs or offline training, and uses the learned execution model to guide both <span class="search-hit mathjax">cache</span> <span class="search-hit mathjax">eviction</span> and proactive prefetching while leaving the serving critical path unchanged. We implement CacheScout on top of vLLM. Across representative real-world multi-agent workloads, CacheScout improves <span class="search-hit mathjax">KV</span>-<span class="search-hit mathjax">cache</span> hit rate by 10-18 percentage points, reduces mean TTFT by 18-45%, lowers mean per-turn latency by 29-38%, and increases peak throughput by up to 57%. These benefits also generalize to larger models, reducing TTFT by up to 54% while sustaining 37% higher throughput.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2608.14624v1-abstract-full').style.display = 'none'; document.getElementById('2608.14624v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 16 July, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> August 2026.
+      
+    </p>
+    
+
+    
+
+    
+  </li>
+
+</ol>
+
+
+  <nav class="pagination is-small is-centered breathe-horizontal" role="navigation" aria-label="pagination">
+    
+    <a href=""
+      class="pagination-previous is-invisible">Previous
+    </a>
+    
+    
+      <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=25&amp;size=25&amp;abstracts=show"
+        class="pagination-next" >Next
+      </a>
+    
+    <ul class="pagination-list">
+
+      <li>
+        <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=0&amp;size=25&amp;abstracts=show"
+          class="pagination-link is-current"
+          aria-label="Goto page 1">1
+        </a>
+      </li>
+
+      
+                                     
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=25&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 2"
+              aria-current="page">2
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=50&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 3"
+              aria-current="page">3
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=75&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 4"
+              aria-current="page">4
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=all&amp;query=KV+cache+eviction&amp;start=100&amp;size=25&amp;abstracts=show"
+              class="pagination-link "
+              aria-label="Page 5"
+              aria-current="page">5
+            </a>
+          </li>
+          
+          <li><span class="pagination-ellipsis">&hellip;</span></li>
+        
+      
+    </ul>
+  </nav>
+  
+
+  
+
+
+      <div class="is-hidden-tablet">
+        <!-- feedback for mobile only -->
+        <span class="help" style="display: inline-block;"><a href="https://github.com/arXiv/arxiv-search/releases">Search v0.5.6 released 2020-02-24</a>&nbsp;&nbsp;</span>
+      </div>
+    </div>
+
+  </main>
+  <footer>
+    
+<footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="https://static.arxiv.org/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation"></a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="https://static.arxiv.org/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International"></a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="https://static.arxiv.org/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences"></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+  </footer>
+  <script src="https://static.arxiv.org/static/base/1.0.0a5/js/member_acknowledgement.js"></script>
+  </body>
+</html>

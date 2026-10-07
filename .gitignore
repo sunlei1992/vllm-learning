@@ -1,0 +1,30 @@
+# === 上游源码仓库（体积大，从上游获取，见 README「如何复现」）===
+vllm-src/
+vllm-ascend-src/
+
+# === Python 虚拟环境与各类缓存（可重新生成）===
+.venv/
+.uv-cache/
+.hf-cache/
+.vllm-cache/
+.torchinductor-cache/
+__pycache__/
+*.py[cod]
+
+# === 模型文件（config/tokenizer 可用 dl_model.sh 重新下载，权重本就不需要）===
+models/
+
+# === 调研原始数据（体积大，可从网络重新获取；保留 conclusion/notes 类笔记）===
+kvcache-research/raw/
+kv_research/raw/
+kv_research/cache/
+
+# === 构建产物 / 临时目录 / 无关应用 ===
+anki/
+tmp/
+*.log
+bench_*.json
+
+# === 系统与编辑器 ===
+.DS_Store
+*.swp

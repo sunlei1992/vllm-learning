@@ -1,0 +1,122 @@
+[
+ {
+  "id": "2407.00079",
+  "title": "Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving",
+  "abs": "Mooncake is the serving platform for Kimi, a leading LLM service provided by Moonshot AI. It features a KVCache-centric disaggregated architecture that separates the prefill and decoding clusters. It also leverages the underutilized CPU, DRAM, and SSD resources of the GPU cluster to implement a disaggregated cache of KVCache. The core of Mooncake is its KVCache-centric scheduler, which balances maximizing overall effective throughput while meeting latency-related Service Level Objectives (SLOs). Unlike traditional studies that assume all requests will be processed, Mooncake faces challenges due to highly overloaded scenarios. To mitigate these, we developed a prediction-based early rejection policy. Experiments show that Mooncake excels in long-context scenarios. Compared to the baseline method, Mooncake can achieve up to a 525% increase in throughput in certain simulated scenarios while adhering to SLOs. Under real workloads, Mooncake's innovative architecture enables Kimi to handle 75% more requests.",
+  "comment": "23 pages, 13 figures",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Artificial Intelligence (cs.AI); Hardware Architecture (cs.AR)",
+  "dateline": "[Submitted on 24 Jun 2024 (v1), last revised 3 Sep 2025 (this version, v4)]"
+ },
+ {
+  "id": "2407.00090",
+  "title": "Fickian Insights Using Probability Theory as Logic",
+  "abs": "In Clearing Up Mysteries -- The Original Goal (Maximum Entropy and Bayesian Methods: Cambridge, England, 1988 Springer, pp. 1-27) Jaynes derived Fick's Law for a dilute binary solution from Bayes' Theorem by considering, probabilistically, the motion of dilute solute molecules. Modifying Jaynes' prior, changing the frame of reference, and allowing for multicomponent systems, one can follow Jaynes' logic to arrive at several expressions for the diffusion coefficient that are widely used in application to solvent-polymer systems. These results, however, do not generally satisfy required conditions over the full concentration range. This limitation is resolved by considering the joint motion of all components in the solution with the inclusion of known physical constraints. Doing so, one arrives at a new set of constitutive equations for binary and multicomponent diffusion that include Darken's form as a limit and provide means to characterize inter-species correlations, removing the need for the ad hoc modifications of the thermodynamic term or substitution of bulk compositions with local compositions that have been proposed in the literature. In binary systems, the Bayesian expression for the mutual diffusion coefficient provides explicit limits on non-ideal mutual diffusion behavior, given component self-diffusion coefficients, that can be attributed to inter-species correlation versus stronger intra- and inter-species clustering. Applications of the model to published data for a set of binary systems are presented, along with pointers to further directions for research.",
+  "comment": "25 pages, 14 figures",
+  "journal": "",
+  "doi": "",
+  "subjects": "Statistical Mechanics (cond-mat.stat-mech); Soft Condensed Matter (cond-mat.soft)",
+  "dateline": "[Submitted on 25 Jun 2024]"
+ },
+ {
+  "id": "2406.17565",
+  "title": "MemServe: Context Caching for Disaggregated LLM Serving with Elastic Memory Pool",
+  "abs": "Large language model (LLM) serving has transformed from stateless to stateful systems, utilizing techniques like context caching and disaggregated inference. These optimizations extend the lifespan and domain of the KV cache, necessitating a new architectural approach. We present MemServe, a unified system that integrates both inter-request and intra-request optimizations. MemServe introduces MemPool, an elastic memory pool managing distributed memory and KV caches across serving instances. Using MemPool APIs, MemServe combines context caching with disaggregated inference for the first time, supported by a global scheduler that enhances cache reuse through a global prompt tree-based locality-aware policy. Tests show that MemServe significantly improves job completion time and time-to-first-time.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 25 Jun 2024 (v1), last revised 21 Dec 2024 (this version, v3)]"
+ },
+ {
+  "id": "2312.05516",
+  "title": "Stateful Large Language Model Serving with Pensieve",
+  "abs": "Large Language Models (LLMs) are wildly popular today and it is important to serve them efficiently. Existing LLM serving systems are stateless across requests. Consequently, when LLMs are used in the common setting of multi-turn conversations, a growing log of the conversation history must be processed alongside any request by the serving system at each turn, resulting in repeated processing. In this paper, we design $Pensieve$, a system optimized for multi-turn conversation LLM serving. $Pensieve$ maintains the conversation state across requests by caching previously processed history to avoid duplicate processing. $Pensieve$'s multi-tier caching strategy can utilize both GPU and CPU memory to efficiently store and retrieve cached data. $Pensieve$ also generalizes the recent PagedAttention kernel to support attention between multiple input tokens with a GPU cache spread over non-contiguous memory. Our evaluation shows that $Pensieve$ can achieve $1.14$-$3.0\\times$ the throughput of vLLM and TensorRT-LLM and significantly reduce latency.",
+  "comment": "",
+  "journal": "",
+  "doi": "https://doi.org/10.1145/3689031.3696086 Focus to learn more DOI(s) linking to related resources",
+  "subjects": "Machine Learning (cs.LG); Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 9 Dec 2023 (v1), last revised 7 Oct 2024 (this version, v3)]"
+ },
+ {
+  "id": "2402.01869",
+  "title": "InferCept: Efficient Intercept Support for Augmented Large Language Model Inference",
+  "abs": "Large language models are increasingly integrated with external environments, tools, and agents like ChatGPT plugins to extend their capability beyond language-centric tasks. However, today's LLM inference systems are designed for standalone LLMs. They treat each external interaction as the end of LLM generation and form a new request when the interaction finishes, causing unnecessary recomputation of already computed contexts, which accounts for 37-40% of total model forwarding time. This paper presents InferCept, the first LLM inference framework targeting augmented LLMs and supporting the efficient interception of LLM generation. InferCept minimizes the GPU resource waste caused by LLM interceptions and dedicates saved memory for serving more requests. InferCept improves the overall serving throughput by 1.6x-2x and completes 2x more requests per second compared to the state-of-the-art LLM inference systems.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG); Computation and Language (cs.CL); Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 2 Feb 2024 (v1), last revised 30 May 2024 (this version, v2)]"
+ },
+ {
+  "id": "2312.07104",
+  "title": "SGLang: Efficient Execution of Structured Language Model Programs",
+  "abs": "Large language models (LLMs) are increasingly used for complex tasks that require multiple generation calls, advanced prompting techniques, control flow, and structured inputs/outputs. However, efficient systems are lacking for programming and executing these applications. We introduce SGLang, a system for efficient execution of complex language model programs. SGLang consists of a frontend language and a runtime. The frontend simplifies programming with primitives for generation and parallelism control. The runtime accelerates execution with novel optimizations like RadixAttention for KV cache reuse and compressed finite state machines for faster structured output decoding. Experiments show that SGLang achieves up to 6.4x higher throughput compared to state-of-the-art inference systems on various large language and multi-modal models on tasks including agent control, logical reasoning, few-shot learning benchmarks, JSON decoding, retrieval-augmented generation pipelines, and multi-turn chat. The code is publicly available at this https URL",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Artificial Intelligence (cs.AI); Programming Languages (cs.PL)",
+  "dateline": "[Submitted on 12 Dec 2023 (v1), last revised 6 Jun 2024 (this version, v2)]"
+ },
+ {
+  "id": "2401.09670",
+  "title": "DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving",
+  "abs": "DistServe improves the performance of large language models (LLMs) serving by disaggregating the prefill and decoding computation. Existing LLM serving systems colocate the two phases and batch the computation of prefill and decoding across all users and requests. We find that this strategy not only leads to strong prefill-decoding interferences but also couples the resource allocation and parallelism plans for both phases. LLM applications often emphasize individual latency for each phase: time to first token (TTFT) for the prefill phase and time per output token (TPOT) of each request for the decoding phase. In the presence of stringent latency requirements, existing systems have to prioritize one latency over the other, or over-provision compute resources to meet both. DistServe assigns prefill and decoding computation to different GPUs, hence eliminating prefill-decoding interferences. Given the application's TTFT and TPOT requirements, DistServe co-optimizes the resource allocation and parallelism strategy tailored for each phase. DistServe also places the two phases according to the serving cluster's bandwidth to minimize the communication caused by disaggregation. As a result, DistServe significantly improves LLM serving performance in terms of the maximum rate that can be served within both TTFT and TPOT constraints on each GPU. Our evaluations show that on various popular LLMs, applications, and latency requirements, DistServe can serve 7.4x more requests or 12.6x tighter SLO, compared to state-of-the-art systems, while staying within latency constraints for > 90% of requests.",
+  "comment": "OSDI 2024",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 18 Jan 2024 (v1), last revised 6 Jun 2024 (this version, v3)]"
+ },
+ {
+  "id": "2311.18677",
+  "title": "Splitwise: Efficient generative LLM inference using phase splitting",
+  "abs": "Recent innovations in generative large language models (LLMs) have made their applications and use-cases ubiquitous. This has led to large-scale deployments of these models, using complex, expensive, and power-hungry AI accelerators, most commonly GPUs. These developments make LLM inference efficiency an important challenge. Based on our extensive characterization, we find that there are two main phases during an LLM inference request: a compute-intensive prompt computation, and a memory-intensive token generation, each with distinct latency, throughput, memory, and power characteristics. Despite state-of-the-art batching and scheduling, the token generation phase underutilizes compute resources. Specifically, unlike compute-intensive prompt computation phases, token generation phases do not require the compute capability of the latest GPUs, and can be run with lower power and cost. With Splitwise, we propose splitting the two phases of a LLM inference request on to separate machines. This allows us to use hardware that is well-suited for each phase, and provision resources independently per phase. However, splitting an inference request across machines requires state transfer from the machine running prompt computation over to the machine generating tokens. We implement and optimize this state transfer using the fast back-plane interconnects available in today's GPU clusters. We use the Splitwise technique to design LLM inference clusters using the same or different types of machines for the prompt computation and token generation phases. Our clusters are optimized for three key objectives: throughput, cost, and power. In particular, we show that we can achieve 1.4x higher throughput at 20% lower cost than current designs. Alternatively, we can achieve 2.35x more throughput with the same cost and power budgets.",
+  "comment": "12 pages, 19 figures",
+  "journal": "",
+  "doi": "",
+  "subjects": "Hardware Architecture (cs.AR); Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 30 Nov 2023 (v1), last revised 20 May 2024 (this version, v2)]"
+ },
+ {
+  "id": "2405.19888",
+  "title": "Parrot: Efficient Serving of LLM-based Applications with Semantic Variable",
+  "abs": "The rise of large language models (LLMs) has enabled LLM-based applications (a.k.a. AI agents or co-pilots), a new software paradigm that combines the strength of LLM and conventional software. Diverse LLM applications from different tenants could design complex workflows using multiple LLM requests to accomplish one task. However, they have to use the over-simplified request-level API provided by today's public LLM services, losing essential application-level information. Public LLM services have to blindly optimize individual LLM requests, leading to sub-optimal end-to-end performance of LLM applications. This paper introduces Parrot, an LLM service system that focuses on the end-to-end experience of LLM-based applications. Parrot proposes Semantic Variable, a unified abstraction to expose application-level knowledge to public LLM services. A Semantic Variable annotates an input/output variable in the prompt of a request, and creates the data pipeline when connecting multiple LLM requests, providing a natural way to program LLM applications. Exposing Semantic Variables to the public LLM service allows it to perform conventional data flow analysis to uncover the correlation across multiple LLM requests. This correlation opens a brand-new optimization space for the end-to-end performance of LLM-based applications. Extensive evaluations demonstrate that Parrot can achieve up to an order-of-magnitude improvement for popular and practical use cases of LLM applications.",
+  "comment": "To appear on USENIX OSDI 2024",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG); Artificial Intelligence (cs.AI)",
+  "dateline": "[Submitted on 30 May 2024]"
+ },
+ {
+  "id": "2405.16444",
+  "title": "CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion",
+  "abs": "Large language models (LLMs) often incorporate multiple text chunks in their inputs to provide the necessary contexts. To speed up the prefill of the long LLM inputs, one can pre-compute the KV cache of a text and re-use the KV cache when the context is reused as the prefix of another LLM input. However, the reused text chunks are not always the input prefix, which makes precomputed KV caches not directly usable since they ignore the text's cross-attention with the preceding texts. Thus, the benefits of reusing KV caches remain largely unrealized. This paper tackles just one challenge: when an LLM input contains multiple text chunks, how to quickly combine their precomputed KV caches in order to achieve the same generation quality as the expensive full prefill (i.e., without reusing KV cache)? This challenge naturally arises in retrieval-augmented generation (RAG) where the input is supplemented with multiple retrieved texts as the context. We present CacheBlend, a scheme that reuses the precomputed KV caches, regardless prefix or not, and selectively recomputes the KV values of a small subset of tokens to partially update each reused KV cache. In the meantime, the small extra delay for recomputing some tokens can be pipelined with the retrieval of KV caches within the same job, allowing CacheBlend to store KV caches in slower devices with more storage capacity while retrieving them without increasing the inference delay. By comparing CacheBlend with the state-of-the-art KV cache reusing schemes on three open-source LLMs of various sizes and four popular benchmark datasets of different tasks, we show that CacheBlend reduces time-to-first-token (TTFT) by 2.2-3.3x and increases the inference throughput by 2.8-5x from full KV recompute without compromising generation quality. The code is available at this https URL.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 26 May 2024 (v1), last revised 3 Apr 2025 (this version, v3)]"
+ },
+ {
+  "id": "2310.07240",
+  "title": "CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving",
+  "abs": "As large language models (LLMs) take on complex tasks, their inputs are supplemented with longer contexts that incorporate domain knowledge. Yet using long contexts is challenging, as nothing can be generated until the whole context is processed by the LLM. While the context-processing delay can be reduced by reusing the KV cache of a context across different inputs, fetching the KV cache, which contains large tensors, over the network can cause high extra network delays. CacheGen is a fast context-loading module for LLM systems. First, CacheGen uses a custom tensor encoder, leveraging KV cache's distributional properties to encode a KV cache into more compact bitstream representations with negligible decoding overhead, to save bandwidth usage. Second, CacheGen adapts the compression level of different parts of a KV cache to cope with changes in available bandwidth, in order to maintain low context-loading delay and high generation quality. % When available bandwidth drops, CacheGen may raise the compression level for a part of the context or recompute its KV cache on the fly. We test CacheGen on popular LLMs and datasets. Compared to the recent systems that reuse the KV cache, CacheGen reduces the KV cache size by 3.5-4.3x and the total delay in fetching and processing contexts by 3.2-3.7x with negligible impact on the LLM response quality. Our code is at: this https URL.",
+  "comment": "SIGCOMM'24",
+  "journal": "",
+  "doi": "",
+  "subjects": "Networking and Internet Architecture (cs.NI); Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 11 Oct 2023 (v1), last revised 19 Jul 2024 (this version, v6)]"
+ },
+ {
+  "id": "2410.15332",
+  "title": "EPIC: Efficient Position-Independent Caching for Serving Large Language Models",
+  "abs": "Large Language Models (LLMs) show great capabilities in a wide range of applications, but serving them efficiently becomes increasingly challenging as requests (prompts) become more complex. Context caching improves serving performance by reusing Key-Value (KV) vectors, the intermediate representations of tokens that are repeated across requests. However, existing context caching requires exact prefix matches across requests, limiting reuse cases in settings such as few-shot learning and retrieval-augmented generation, where immutable content (e.g., documents) remains unchanged across requests but is preceded by varying prefixes. Position-Independent Caching (PIC) addresses this issue by enabling modular reuse of the KV vectors regardless of prefixes. We formalize PIC and advance prior work by introducing EPIC, a serving system incorporating our new LegoLink algorithm, which mitigates the inappropriate \"attention sink\" effect at every document beginning, to maintain accuracy with minimal computation. Experiments show that EPIC achieves up to 8x improvements in Time-To-First-Token (TTFT) and 7x throughput gains over existing systems, with negligible or no accuracy loss.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG); Computation and Language (cs.CL); Distributed, Parallel, and Cluster Computing (cs.DC); Performance (cs.PF)",
+  "dateline": "[Submitted on 20 Oct 2024 (v1), last revised 27 May 2025 (this version, v3)]"
+ }
+]

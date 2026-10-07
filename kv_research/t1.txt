@@ -1,0 +1,12 @@
+Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving
+Preble: Efficient Distributed Prompt Scheduling for LLM Serving
+MemServe: Context Caching for Disaggregated LLM Serving with Elastic Memory Pool
+Stateful Large Language Model Serving with Pensieve
+InferCept: Efficient Intercept Support for Augmented Large Language Model Inference
+DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving
+Splitwise: Efficient Generative LLM Inference Using Phase Splitting
+Arrow: Adaptive Scheduling Mechanisms for Disaggregated LLM Inference Architecture
+Parrot: Efficient Serving of LLM-based Applications with Semantic Variable
+CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion
+CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving
+EPIC: Efficient Position-Independent Caching for Serving Large Language Models

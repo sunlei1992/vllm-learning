@@ -1,0 +1,252 @@
+[
+ {
+  "id": "2602.06502",
+  "title": "DualMap: Enabling Both Cache Affinity and Load Balancing for Distributed LLM Serving",
+  "abs": "In LLM serving, reusing the KV cache of prompts across requests is critical for reducing TTFT and serving costs. Cache-affinity scheduling, which co-locates requests with the same prompt prefix to maximize KV cache reuse, often conflicts with load-balancing scheduling that distributes requests evenly across compute instances. Existing schedulers fail to reconcile this trade-off as they operate within a single mapping space, typically applying cache-affinity routing to a subset of requests and load-balanced routing to the rest, without a unified solution to achieve both goals. To address this limitation, we propose DualMap, a dual-mapping scheduling strategy for distributed LLM serving that achieves both cache affinity and load balancing. Its key idea is to map each request to two candidate instances via two independent hash functions based on the request prompt, then intelligently select the better candidate based on current system states. This design increases the likelihood that requests with shared prefixes are co-located, while evenly dispersing distinct prefixes across the cluster via ``the power of two choices''. To make DualMap robust under dynamic and skewed real-world workloads, we incorporate three techniques: 1) SLO-aware request routing, which prioritizes cache affinity but switches to load-aware scheduling when TTFT exceeds the SLO, enhancing load balance without sacrificing cache reuse; 2) hotspot-aware rebalancing, which dynamically migrates requests from overloaded to underloaded instances, mitigating hotspots and rebalancing the system; 3) lightweight dual-hash-ring scaling, which leverages a dual-hash-ring mapping to support fast and low-overhead instance scaling without costly global remapping. Experiments on real-world workloads show that DualMap improves effective request capacity by up to 2.25$\\times$ under the same TTFT SLO constraints compared with SOTA work.",
+  "comment": "23 pages, 15 figures",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 6 Feb 2026]"
+ },
+ {
+  "id": "2606.00946",
+  "title": "Lodestar: An Online-Learning LLM Inference Router",
+  "abs": "Efficiently serving large language model (LLM) inference tasks is crucial both for user-perceived latency such as time-to-first-token (TTFT) and for GPU utilization. However, LLM request routing, that is, assigning each inference request to a GPU instance, is particularly challenging: execution is highly input-dependent; batching and KV-cache reuse create strong cross-request coupling; and latency responds nonlinearly to context length, model/engine settings, and heterogeneous accelerators. As a result, simple traditional load balancing algorithms, and even heuristics tailored for LLM inference, fail to achieve good performance. We present Lodestar, a novel learning-based request routing system for distributed GPU clusters. Lodestar continuously collects a snapshot of the cluster at per-request level, including real-time instance state, request characteristics, and observed performance, and trains an online reward predictor that it uses to route inference requests to the instance that will maximize given reward (e.g., minimizing TTFT). Lodestar is cloud-native and works seamlessly with existing serving stacks (vLLM). With continuous online adaptation to changing workloads and infrastructure conditions, Lodestar achieves 1.41x lower average TTFT and 1.47x lower P99 TTFT on average (up to 2.15x/1.86x on homogeneous and 4.38x/4.42x on heterogeneous clusters) compared to a state-of-the-art prefix cache and load-aware heuristic, and learns these efficient routing strategies within about 5 minutes, based on experiments in a public cloud GPU cluster.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Artificial Intelligence (cs.AI); Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 31 May 2026]"
+ },
+ {
+  "id": "2605.23057",
+  "title": "RequestRouter: Request-Boundary Routing for Efficient Single-GPU LLM Inference",
+  "abs": "RequestRouter is a lightweight request-boundary controller for reducing the latency and energy cost of single-GPU large language model inference. Rather than serving all requests with one static configuration, the system uses cheap request-level features to select one fixed inference mode per request, including FP16, quantized inference, speculative decoding, prefix caching, continuous batching, and hybrid modes such as GPTQ plus prefix caching and INT8 plus continuous batching. We evaluate RequestRouter using an 8B instruction-tuned language model served through vLLM on NVIDIA A100 GPUs. Across the full-scale A100 evaluation--26,500 fixed-mode evaluations followed by 3,500 online-controller evaluations, for 30,000 measured inference executions in total--the controller achieves a 2.10x mean latency speedup over FP16 and a 0.48x energy ratio on deployment-style workloads. A smaller matched evaluation with repeated measurements provides a controlled statistical check of this result: RequestRouter retains a 1.93x latency speedup (95% CI: 1.88--1.98x) and a 0.523 energy ratio (95% CI: 0.506--0.540), showing that the gains persist under a more tightly controlled protocol. On a separate expanded automatic benchmark evaluation, the routed policy retains 99.6% of FP16 macro accuracy. A 100,000-call CPU microbenchmark measures only 0.00475 ms mean routing overhead (0.00532 ms p99). Thus, simple request-aware routing can recover substantial serving efficiency without retraining or modifying the underlying LLM.",
+  "comment": "5 pages, 2 figures. Accepted at the 2nd International Workshop on Low Carbon Computing (LOCO 2026), Lancaster University, United Kingdom, 10-11 September 2026. Part of the LOCO 2026 proceedings, arXiv:2608.02072",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG); Computation and Language (cs.CL); Performance (cs.PF)",
+  "dateline": "[Submitted on 21 May 2026 (v1), last revised 19 Aug 2026 (this version, v2)]"
+ },
+ {
+  "id": "2607.08057",
+  "title": "Towards Efficient Large Language Model Serving: A Survey on System-Aware KV Cache Optimization",
+  "abs": "Despite the rapid advancements of large language models (LLMs), LLM serving systems remain memory-intensive and costly. The key-value (KV) cache, which stores KV tensors during autoregressive decoding, is crucial for enabling low-latency, high-throughput LLM inference serving. In this survey, we focus on system-aware KV infrastructure for serving LLMs (abbreviated as sKis). We revisit recent work from a system behavior perspective, organizing existing efforts into three dimensions: execution and scheduling (temporal), placement and migration (spatial), and representation and retention (structural). Furthermore, we analyze cross-behavior co-design affinity and behavior-objective links, highlighting future opportunities. Our work systematizes a rapidly evolving area, providing a foundation for understanding and innovating KV cache designs in modern LLM serving infrastructure.",
+  "comment": "Accepted to ACL 2026 as a Findings paper",
+  "journal": "",
+  "doi": "https://doi.org/10.18653/v1/2026.findings-acl.1916 Focus to learn more DOI(s) linking to related resources",
+  "subjects": "Machine Learning (cs.LG); Artificial Intelligence (cs.AI); Computation and Language (cs.CL)",
+  "dateline": "[Submitted on 9 Jul 2026]"
+ },
+ {
+  "id": "2607.02574",
+  "title": "From Tensor Buffer to Distributed Memory Hierarchy: A Survey of KV Cache Management for LLM Serving",
+  "abs": "The key-value (KV) cache has become a first-order memory object in LLM serving rather than a temporary per-request tensor. This survey classifies more than thirty KV-management systems and frameworks using four axes: locality, lifetime, ownership, and substrate. The axes reveal five architectural archetypes -- local-paged, disaggregated-pipeline, shared-store, memory-pool, and hybrid-tier. Once workload and hardware are fixed, ownership accounts for much of the remaining design variance among distributed systems. The survey also audits current evaluations and identifies seven missing KV-specific measurements, linking them to open problems in fault tolerance, isolation, tiered eviction, speculative decoding, MoE serving, and shared-cache semantics.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Artificial Intelligence (cs.AI); Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 30 Jun 2026]"
+ },
+ {
+  "id": "2607.05399",
+  "title": "Benchmarking KV-Cache Optimizations across Task Quality and System Performance for Long-Context Serving",
+  "abs": "Large language model serving is increasingly limited by KV-cache growth under long-context workloads, yet existing KV-cache compression techniques are difficult to compare because they were evaluated on different models, tasks, budgets, and serving stacks. This paper presents a workload-aware benchmark of representative KV-cache optimization mechanisms spanning quantization, pruning, and merging, including KIVI, TurboQuant, SnapKV, and CaM, evaluated on LongBench-style multi-document QA, single-document QA, few-shot learning, and summarization workloads using Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3. The benchmark measures task quality, mean output throughput, mean time-to-first-token, and realized compression ratio across context-length buckets. The results show that the compression ratio alone is a poor predictor of end-to-end performance. KIVI4 provides the most stable quality across models, SnapKV delivers the strongest long-context throughput, and CaM yields large gains on selected QA workloads but exhibits substantial workload sensitivity in both quality and realized compression ratio. These findings motivate workload-aware selection of KV-cache mechanisms rather than one-size-fits-all compression and provide deployment guidance for long-context serving systems.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Computation and Language (cs.CL); Artificial Intelligence (cs.AI); Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 3 May 2026]"
+ },
+ {
+  "id": "2512.18194",
+  "title": "TraCT: Disaggregated LLM Serving with CXL Shared Memory KV Cache at Rack-Scale",
+  "abs": "Disaggregated LLM serving improves resource efficiency by separating the compute-intensive prefill phase from the latency-critical decode phase. However, this architecture introduces a fundamental bottleneck: key/value (KV) tensors generated during prefill must be transferred to decode workers, and existing systems rely on RDMA-based network paths for this exchange. As model sizes and context lengths increase, KV transfer dominates both time-to-first-token (TTFT) and peak throughput, and remains highly sensitive to network contention even when prefix reuse is high. This paper presents TraCT, a rack-scale LLM serving system that uses CXL shared memory as both a KV-transfer substrate and a rack-wide prefix-aware KV cache. TraCT enables GPUs to write and read KV blocks directly through CXL load/store and DMA operations, eliminating the NIC hop that constrains existing disaggregated pipelines. However, to realize this design, multiple new challenges such as synchronization, consistency, and data management on non-coherent CXL memory need to be addressed. TraCT proposes various software solutions such as the two-tier inter-node synchronization mechanism to address these challenges. We implement TraCT on the Dynamo LLM inference framework and show that, across static and synthetic workloads, TraCT reduces average TTFT by up to 9.8x, lowers P99 latency by up to 6.2x, and improves peak throughput by up to 1.6x compared to RDMA and DRAM-based caching baselines.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 20 Dec 2025]"
+ },
+ {
+  "id": "2606.19746",
+  "title": "SAC: Disaggregated KV Cache System for Sparse Attention LLMs with CXL",
+  "abs": "The scaling of LLMs toward long-context inference has shifted the primary serving system bottleneck from computation to memory capacity. Traditional solutions for dense attention models rely on RDMA-based disaggregated memory pools, which perform coarse-grained fetching of the entire prefix KV cache from remote storage to local memory before decoding. However, this approach is fundamentally inefficient for emerging sparse attention models. While only a small fraction of KV entries are active during decoding, these systems still fetch the full KV cache locally, leading to severe transmission bottlenecks and local memory wastage. To address this, we propose SAC, the first efficient disaggregated KV cache system optimized for sparse attention models. By leveraging the low-latency, cache-line granularity load/store semantics of Compute Express Link (CXL), SAC fetches only the required top-k KV entries on demand during inference. Evaluations on DeepSeek-V3.2 using SGLang show that SAC achieves 2.1x higher throughput, 9.7x lower TTFT, and 1.8x lower TBT compared to RDMA-based baselines, establishing CXL-based disaggregation as the superior infrastructure for emerging sparse attention models.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 18 Jun 2026]"
+ },
+ {
+  "id": "2605.22850",
+  "title": "ObjectCache: Layerwise Object-Storage Retrieval for KV Cache Reuse",
+  "abs": "Prefix KV caching has become a key mechanism in LLM serving: it reduces time to first token (TTFT) by avoiding redundant computation across requests that share a prefix (i.e., the system prompt). However, the accumulated KV cache is often larger than what GPU memory and local DRAM can hold. To preserve latency, current systems keep the KV cache in remote DRAM pools, increasing serving-cluster size and cost. In this paper, we explore a different approach: storing the KV cache in S3-compatible object storage so that capacity is no longer the constraint, while minimizing the impact on TTFT. We propose ObjectCache, which co-designs the storage protocol and transfer schedule so that the storage server delivers KV cache data in the order the GPU consumes it, overlapping data transfer with compute across concurrent requests. We prototype ObjectCache on a 100 Gbps RoCE cluster with NIXL (an inference library that abstracts storage and memory), Ceph RGW (an Object Gateway for clusters), and DAOS (an open source storage system). For 64K contexts, common in today's systems, ObjectCache adds only 5.6\\% latency over local DRAM; for 4K contexts, where less compute is available to mask transfer, ObjectCache adds 56--75\\,ms over the optimal local layerwise baseline. Under shared bandwidth caps, our scheduler reduces added TTFT by 1.2--1.8x compared with equal bandwidth sharing.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Artificial Intelligence (cs.AI)",
+  "dateline": "[Submitted on 16 May 2026]"
+ },
+ {
+  "id": "2608.30963",
+  "title": "A Universal Context-Reuse Layer for Cross-Model KV Sharing",
+  "abs": "Modern large language model (LLM) serving systems increasingly operate over repeated or shared context, yet each model typically performs its own prefill computation even when another model has already processed the same input. Existing KV-cache reuse mechanisms substantially reduce redundant computation within a single model, but generally assume that the producer and consumer of a cache are identical. We study \\emph{cross-model KV sharing}, which translates the KV state produced by a source model into a representation that can be consumed by a different target model, including models that differ in scale, architecture, attention configuration, tokenizer, and model family. We evaluate the approach in both within-family and cross-family settings. For Qwen2.5-7B $\\rightarrow$ Qwen2.5-1.5B, translated KV states improve LongBench2 accuracy from 27.59\\% to 34.48\\%, a gain of 6.89 percentage points over the native 1.5B baseline, while reducing handoff cost relative to native target prefill. For the cross-family Qwen2.5-1.5B $\\rightarrow$ Gemma-2-2B setting, KV handoff reduces target-side prefill cost by up to 67.05\\% at 4K context length while maintaining decoding perplexity close to native-model baselines. In a more heterogeneous Llama3.1-70B $\\rightarrow$ Qwen2.5-7B setting, cross-family handoff achieves 44.0\\% accuracy compared with 45.7\\% for native Qwen2.5-7B inference, while reducing measured latency from 899ms to 138ms. These results provide initial evidence that KV states can serve as transferable computational representations rather than strictly model-local caches, and motivate \\emph{context mobility} as a systems abstraction for reducing redundant prefill across heterogeneous LLM and multi-agent inference workflows.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG); Artificial Intelligence (cs.AI)",
+  "dateline": "[Submitted on 31 Aug 2026]"
+ },
+ {
+  "id": "2607.01299",
+  "title": "HYPIC: Accelerating Hybrid-Attention LLM Serving with Position-Independent Caching",
+  "abs": "In retrieval-augmented generation and agentic LLM serving, prompts are assembled from independent segments into long contexts, making the prefill stage dominate per-request cost. Two directions have emerged to reduce this cost: position-independent caching (PIC) admits KV reuse for non-contiguous segments shared across requests, while hybrid-attention models cut computation by replacing most full-attention layers with linear attention. However, they cannot coexist: applying existing PIC methods to hybrid-attention models breaks down because per-token KV-cache reuse primitives do not transfer to the per-request recurrent state. We present Hypic, the first system to accelerate hybrid-attention LLM serving with position-independent caching. For linear-attention layers, we identify the segment-cumulative transition operator as the missing algebraic primitive and cache it alongside each segment's zero-start end-state, enabling near-exact and constant-time composition of independently cached segments. For the remaining full-attention layers, existing PIC methods also fail because linear layers do not expose the per-token hidden states needed for selective recomputation. We show that the largest deviations concentrate at segment beginnings and construct a small seam window that propagates hidden states through the hybrid-attention stack to repair cross-segment attention. Finally, Hypic introduces segment parallelism, which exploits PIC's segment-level self-containment to parallelize cache-miss prefill across instances, turning long cold requests into an accelerable workload. Evaluated across four hybrid-attention models and five workloads, Hypic reduces time-to-first-token by $3.25\\times$ on average and improves QPS by $1.66\\times$ over Prefix Cache, while preserving task quality with a 1.71-point gap from Full Recompute.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 1 Jul 2026 (v1), last revised 12 Jul 2026 (this version, v2)]"
+ },
+ {
+  "id": "2504.03775",
+  "title": "FlowKV: A Disaggregated Inference Framework with Low-Latency KV Cache Transfer and Load-Aware Scheduling",
+  "abs": "Disaggregated inference has become an essential framework that separates the prefill (P) and decode (D) stages in large language model inference to improve throughput. However, the KV cache transfer faces significant delays between prefill and decode nodes. The block-wise calling method and discontinuous KV cache memory allocation increase the number of calls to the transmission kernel. Additionally, existing frameworks often fix the roles of P and D nodes, leading to computational imbalances. In this paper, we propose FlowKV, a novel disaggregated inference framework, which reduces the average transmission latency of KV cache by 96%, from 0.944s to 0.053s, almost eliminating the transfer time relative to the total request latency by optimizing the KV cache transfer. FlowKV introduces the Load-Aware Scheduler for balanced request scheduling and flexible PD node allocation. This design maximizes hardware resource utilization, achieving peak system throughput across various scenarios, including normal, computational imbalance, and extreme overload conditions. Experimental results demonstrate that FlowKV significantly accelerates inference by 15.2%-48.9% on LongBench dataset compared to the baseline and supports applications with heterogeneous GPUs.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Artificial Intelligence (cs.AI); Computation and Language (cs.CL)",
+  "dateline": "[Submitted on 3 Apr 2025]"
+ },
+ {
+  "id": "2504.19867",
+  "title": "semi-PD: Towards Efficient LLM Serving via Phase-Wise Disaggregated Computation and Unified Storage",
+  "abs": "Existing large language model (LLM) serving systems fall into two categories: 1) a unified system where prefill phase and decode phase are co-located on the same GPU, sharing the unified computational resource and storage, and 2) a disaggregated system where the two phases are disaggregated to different GPUs. The design of the disaggregated system addresses the latency interference and sophisticated scheduling issues in the unified system but leads to storage challenges including 1) replicated weights for both phases that prevent flexible deployment, 2) KV cache transfer overhead between the two phases, 3) storage imbalance that causes substantial wasted space of the GPU capacity, and 4) suboptimal resource adjustment arising from the difficulties in migrating KV cache. Such storage inefficiency delivers poor serving performance under high request rates. In this paper, we identify that the advantage of the disaggregated system lies in the disaggregated computation, i.e., partitioning the computational resource to enable the asynchronous computation of two phases. Thus, we propose a novel LLM serving system, semi-PD, characterized by disaggregated computation and unified storage. In semi-PD, we introduce a computation resource controller to achieve disaggregated computation at the streaming multi-processor (SM) level, and a unified memory manager to manage the asynchronous memory access from both phases. semi-PD has a low-overhead resource adjustment mechanism between the two phases, and a service-level objective (SLO) aware dynamic partitioning algorithm to optimize the SLO attainment. Compared to state-of-the-art systems, semi-PD maintains lower latency at higher request rates, reducing the average end-to-end latency per request by 1.27-2.58x on DeepSeek series models, and serves 1.55-1.72x more requests adhering to latency constraints on Llama series models.",
+  "comment": "18 pages, 16 figures",
+  "journal": "",
+  "doi": "",
+  "subjects": "Computation and Language (cs.CL); Distributed, Parallel, and Cluster Computing (cs.DC); Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 28 Apr 2025]"
+ },
+ {
+  "id": "2603.13358",
+  "title": "Not All Prefills Are Equal: PPD Disaggregation for Multi-turn LLM Serving",
+  "abs": "Prefill-Decode (PD) disaggregation has become the standard architecture for modern LLM inference engines, which alleviates the interference of two distinctive workloads. With the growing demand for multi-turn interactions in chatbots and agentic systems, we re-examined PD in this case and found two fundamental inefficiencies: (1) every turn requires prefilling the new prompt and response from the last turn, and (2) repeated KV transfers between prefill and decode nodes saturate the bandwidth, leading to high latency and even service degradation. Our key insight is that not all prefill operations are equally disruptive: append-prefill, which processes only the new input tokens while reusing cached KV states, incurs an order-of-magnitude smaller decoding slowdown than full prefill. This motivates routing append-prefill to decode nodes locally. However, through comprehensive analysis, we show that no single fixed routing strategy satisfies all Service Level Objectives (SLOs) simultaneously. Based on this insight, we propose Prefill Prefill-capable Decode (PPD) disaggregation, a dynamic routing system that decides when to process Turn 2+ requests locally on decode nodes using cached KV states. PPD adapts to varying SLOs via configurable weights and seamlessly integrates with traditional PD deployments. With extensive evaluations, we show that PPD reduces Turn 2+ time-to-first-token (TTFT) by $\\sim$68\\% while maintaining competitive time-per-output-token (TPOT), effectively alleviating KV transfer congestion under high load. PPD provides a flexible and efficient paradigm for multi-turn LLM serving.",
+  "comment": "19 pages, 11 figures. Accepted at ICML 2026",
+  "journal": "",
+  "doi": "",
+  "subjects": "Networking and Internet Architecture (cs.NI)",
+  "dateline": "[Submitted on 9 Mar 2026 (v1), last revised 5 May 2026 (this version, v2)]"
+ },
+ {
+  "id": "2604.15039",
+  "title": "Prefill-as-a-Service: KVCache of Next-Generation Models Could Go Cross-Datacenter",
+  "abs": "Prefill-decode (PD) disaggregation has become the standard architecture for large-scale LLM serving, but in practice its deployment boundary is still determined by KVCache transfer. In conventional dense-attention models, prefill generates huge KVCache traffics that keep prefill and decode tightly coupled within a single high-bandwidth network domain, limiting heterogeneous deployment and resource elasticity. Recent hybrid-attention architectures substantially reduce KVCache size, making cross-cluster KVCache transport increasingly plausible. However, smaller KVCache alone does not make heterogeneous cross-datacenter PD serving practical: real workloads remain bursty, request lengths are highly skewed, prefix caches are unevenly distributed, and inter-cluster bandwidth fluctuates. A naive design that fully externalizes prefill can therefore still suffer from congestion, unstable queueing, and poor utilization. We present Prefill-as-a-Service (PrfaaS), a cross-datacenter serving architecture that selectively offloads long-context prefill to standalone, compute-dense prefill clusters and transfers the resulting KVCache over commodity Ethernet to local PD clusters for decode. Rather than treating reduced KVCache as sufficient, PrfaaS combines model-side KV efficiency with system-side selective offloading, bandwidth-aware scheduling, and cache-aware request placement. This design removes the requirement that heterogeneous accelerators share the same low-latency RDMA fabric, enabling independent scaling of prefill and decode capacity across loosely coupled clusters. In a case study using an internal 1T-parameter hybrid model, a PrfaaS-augmented heterogeneous deployment achieves 54% higher serving throughput and 64% lower P90 TTFT than a homogeneous PD baseline, with approximately 15% throughput gain at equal cost, while consuming only modest cross-datacenter bandwidth.",
+  "comment": "16 pages, 5 figures, 6 tables",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 16 Apr 2026 (v1), last revised 22 Apr 2026 (this version, v2)]"
+ },
+ {
+  "id": "2607.02043",
+  "title": "Towards Load-Aware Prefill Deflection for Disaggregated LLM Serving",
+  "abs": "Disaggregated LLM serving runs prefill and decode on separate GPU pools to keep the two phases from interfering. In practice, this creates a new asymmetry: under bursty, heavy-tailed workloads prefill nodes saturate while decode nodes have compute underutilized, and on a production-style A100 cluster with 2 prefill and 2 decode nodes (2P2D), we find that prefill execution accounts for only 2-23% of P95 Time-to-First-Token (TTFT). Queuing and inter-node GPU-GPU KV-cache transfer account for the rest. We present a proactive prefill-deflecting scheduler that lets decode nodes serve prefill phase of requests as chunked-prefill steps interleaved with their in-flight decode batches. For each queued request, we estimate the TTFT it would see on the prefill node, and on every decode node, search for the largest chunk schedule that keeps in-flight decodes within their Time-Between-Tokens (TBT) SLO and deflect when the decode path helps tail latency. Because the prefill phase of deflected requests runs in place on the decode node, the inter-node KV transfer is eliminated. Implemented on vLLM and evaluated on production-style traces with DeepSeek-V2-Lite, our approach reduces P95 TTFT by upto 81% and raises SLO attainment by upto 79% over state-of-the-art disaggregated schedulers, at sub-millisecond per-request routing cost.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Artificial Intelligence (cs.AI)",
+  "dateline": "[Submitted on 2 Jul 2026]"
+ },
+ {
+  "id": "2606.03910",
+  "title": "NetKV: Network-Aware Decode Instance Selection for Disaggregated LLM Inference",
+  "abs": "Disaggregated LLM inference forces the KV cache to traverse the datacenter network before decoding begins, so transfer time enters directly into the Time to First Token (TTFT) budget. Current schedulers route on compute load and prefix-cache locality alone, ignoring the topological distance and dynamic congestion between prefill and decode instances. We close this gap with a thin operator-to-scheduler interface, the network cost oracle, and we prove that ignoring the network term renders cache-aware-only scheduling arbitrarily suboptimal as context length grows. NetKV, the O(|D|) per-request greedy that consumes this oracle, has tier rankings that are provably robust to stale telemetry. On a 64-GPU four-tier fat-tree simulator driven by Mooncake traces, NetKV reduces mean TTFT by up to 21.2% over round-robin and 17.6% over a tuned cache+load-aware scheduler, lifts SLO attainment by up to 20.1 percentage points, and keeps the Time Between Tokens overhead below 0.5 ms in every condition tested, with no changes to the transport, inference engine, or hardware.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Performance (cs.PF); Artificial Intelligence (cs.AI); Distributed, Parallel, and Cluster Computing (cs.DC); Networking and Internet Architecture (cs.NI)",
+  "dateline": "[Submitted on 2 Jun 2026]"
+ },
+ {
+  "id": "2603.08739",
+  "title": "Adaptive Multi-Objective Tiered Storage Configuration for KV Cache in LLM Service",
+  "abs": "The memory-for-computation paradigm of KV caching is essential for accelerating large language model (LLM) inference service, but limited GPU high-bandwidth memory (HBM) capacity motivates offloading the KV cache to cheaper external storage tiers. While this expands capacity, it introduces the challenge of dynamically managing heterogeneous storage resources to balance cost, throughput, and latency under varying workloads. We formulate this as a multi-objective optimization problem: identifying the Pareto frontier across these metrics within the storage configuration space. Using a high-fidelity end-to-end simulator, we observe that the objective functions are non-analytic and exhibit complex variable coupling, making the Pareto frontier difficult to approximate analytically. To obtain the frontier, we introduce Kareto, a KV-cache Adaptive REsource managemenT Optimizer. Kareto leverages a diminishing-return-guided pruning method to efficiently navigate the large configuration space and approximate the Pareto frontier. Additionally, it incorporates a fine-grained adaptive tuner that uses eviction policies in tier storage and KV block access patterns for group-specific cache management, improving cache efficiency. Experiments on real-world traces show that Kareto adapts to workload and can identify configurations of better cost efficiency, covering static strategies. Compared to the fixed setup with 1024 GB DRAM, Kareto can improve throughput by up to 9.3%, or reduce latency by up to 58.3%, or lower cost by up to 20.2% under respective optimization objectives.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Hardware Architecture (cs.AR); Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 25 Feb 2026]"
+ },
+ {
+  "id": "2602.21548",
+  "title": "DualPath: Breaking the Storage Bandwidth Bottleneck in Agentic LLM Inference",
+  "abs": "The performance of multi-turn, agentic LLM inference is increasingly dominated by KV-Cache storage I/O rather than computation. In prevalent disaggregated architectures, loading the massive KV-Cache from external storage creates a fundamental imbalance: storage NICs on prefill engines become bandwidth-saturated, while those on decoding engines remain idle. This asymmetry severely constrains overall system throughput. We present DualPath, an inference system that breaks this bottleneck by introducing dual-path KV-Cache loading. Beyond the traditional storage-to-prefill path, DualPath enables a novel storage-to-decode path, in which the KV-Cache is loaded into decoding engines and then efficiently transferred to prefill engines via RDMA over the compute network. DualPath combines this optimized data path -- which inherently avoids network congestion and avoids interference with latency-critical model execution communications -- with a global scheduler that dynamically balances load across prefill and decode engines. Our evaluation on three models with production agentic workloads demonstrates that DualPath improves offline inference throughput by up to 1.87$\\times$ on our in-house inference system. It can also improve online serving throughput by an average factor of 1.96$\\times$ without violating SLO.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 25 Feb 2026 (v1), last revised 26 Feb 2026 (this version, v2)]"
+ },
+ {
+  "id": "2606.01839",
+  "title": "Observation, Not Prediction: Conversation-Level Disaggregated Scheduling for Agentic Serving",
+  "abs": "LLM-based agents resolve a user task through many turns of dependent inference and tool calls, producing a workload whose total cost is unknown when the task arrives. Existing multi-turn systems keep the turn as the scheduling unit and decide, turn by turn, whether to disaggregate prefill from decode. That decision rests on the turn's decode length, tool behavior, and KV growth, quantities that are not observable when the scheduler must act, forcing the system to predict them. We show this dependence on prediction is imposed by the scheduling unit, not the workload. Raising the scheduling unit from the turn to the conversation converts turn-level irregularity into a stable, two-phase structure: 1) a compute-bound turn-1 prefill followed by 2) a long, memory-bound tail. Thus, with the conversation as the scheduling unit, placement reduces to reading the first-turn input length and per-decoder KV occupancy, both directly observable. We instantiate this principle in ConServe, which routes the first-turn prefill to a high-throughput prefiller, transfers the KV cache exactly once, and pins the conversation to a single decoder for its entire tail, with no learned model of decode-side cost. Against a per-turn prediction baseline, ConServe reduces p95 time-to-first-effective-token (the latency of a conversation's first user-visible output) by 51.08% and improves energy efficiency by 7.51% while preserving last-turn TBT and SLOs; mapping the two phases onto heterogeneous GPU tiers adds a further 22.75% in energy efficiency.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Hardware Architecture (cs.AR); Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 1 Jun 2026]"
+ },
+ {
+  "id": "2601.11822",
+  "title": "RAPID-Serve: Resource-efficient and Accelerated P/D Intra-GPU Disaggregation",
+  "abs": "Two widely adopted techniques for LLM inference serving systems today are hybrid batching and disaggregated serving. A hybrid batch combines prefill and decode tokens of different requests in the same batch to improve resource utilization and throughput at the cost of increased latency per token. In contrast, disaggregated serving decouples compute-bound prefill and bandwidth-bound decode phases to optimize for service level objectives (SLOs) at the cost of resource under-utilization and KV-cache transfer overheads. To address the limitations of these techniques, we propose RAPID-Serve: a technique to concurrently execute prefill and decode on the same GPU(s) to meet latency SLOs while maintaining high throughput and efficient resource utilization. Furthermore, we propose Adaptive Resource Management for runtime compute resource allocation, optionally leveraging CU masking (a fine-grained Compute Unit partitioning feature on AMD Instinct\\textsuperscript{TM} GPUs). RAPID-Serve provides up to 4.1x (average 1.7x) unconstrained throughput improvement and 32x and higher (average 4.9x) throughput improvement under SLO constraints, showing it as an effective strategy compared to the state-of-the-art approaches, particularly in resource-constrained environments.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 16 Jan 2026]"
+ },
+ {
+  "id": "2511.04791",
+  "title": "DuetServe: Harmonizing Prefill and Decode for LLM Serving via Adaptive GPU Multiplexing",
+  "abs": "Modern LLM serving systems must sustain high throughput while meeting strict latency SLOs across two distinct inference phases: compute-intensive prefill and memory-bound decode phases. Existing approaches either (1) aggregate both phases on shared GPUs, leading to interference between prefill and decode phases, which degrades Time-Between-Tokens (TBT); or (2) disaggregate the two phases across GPUs, improving latency but wasting resources through duplicated models and KV cache transfers. We present DuetServe, a unified LLM serving framework that achieves disaggregation-level isolation within a single GPU. DuetServe operates in aggregated mode by default and dynamically activates SM-level GPU spatial multiplexing when TBT degradation is predicted. Its key idea is to decouple prefill and decode execution only when needed through fine-grained, adaptive SM partitioning that provides phase isolation only when contention threatens latency service level objectives. DuetServe integrates (1) an attention-aware roofline model to forecast iteration latency, (2) a partitioning optimizer that selects the optimal SM split to maximize throughput under TBT constraints, and (3) an interruption-free execution engine that eliminates CPU-GPU synchronization overhead. Evaluations show that DuetServe improves total throughput by up to 1.3x while maintaining low generation latency compared to state-of-the-art frameworks.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 6 Nov 2025 (v1), last revised 30 May 2026 (this version, v2)]"
+ },
+ {
+  "id": "2605.01708",
+  "title": "SplitZip: Ultra Fast Lossless KV Compression for Disaggregated LLM Serving",
+  "abs": "Contemporary systems serving large language models (LLMs) have adopted prefill-decode disaggregation to load-balance between the compute-bound prefill phase and the memory-bound decode phase. Under this design, prefill workers generate a KV cache that must be transferred to decode workers before generation can begin. With these workers residing on different physical systems, this transfer becomes a significant bottleneck to serving LLMs at scale, especially for long-input and agentic workloads. Existing lossless codecs are unsuitable here as they primarily target offline weight compression, run on CPUs, or use variable-length coding whose compression cannot keep up with KV production during prefill. We introduce SplitZip, a GPU-friendly lossless compressor for KV cache transfer that preserves KV tensors bitwise and integrates into existing serving frameworks without modifying model execution. SplitZip exploits redundancy in floating-point exponents of KV activations, encoding frequent exponent values with fixed-length codes and routing rare exponents through a sparse escape stream of (position, value). A calibrated top-16 exponent codebook eliminates online histogramming, while the regular dense path and sparse escape correction make both encoding and decoding efficient on GPUs. On real BF16 activation tensors, SplitZip achieves $613.3$ GB/s compression throughput and $2181.8$ GB/s decompression throughput, outperforming prior lossless compressors on the critical codec path. End-to-end transfer experiments show up to $1.32\\times$ speedup for BF16 KV cache transfer, $1.30\\times$ speedup for TTFT, and $1.23\\times$ increase in Request Throughput. The same approach extends to FP8 KV caches, providing up to $1.14\\times$ compression over native E5M2. Code is available at this https URL",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC); Artificial Intelligence (cs.AI); Machine Learning (cs.LG)",
+  "dateline": "[Submitted on 3 May 2026 (v1), last revised 23 Jun 2026 (this version, v3)]"
+ },
+ {
+  "id": "2604.16395",
+  "title": "Stream2LLM: Overlap Context Streaming and Prefill for Reduced Time-to-First-Token (TTFT)",
+  "abs": "Context retrieval systems for LLM inference face a critical challenge: high retrieval latency creates a fundamental tension between waiting for complete context (poor time-to-first-token) and proceeding without it (reduced quality). Streaming context incrementally--overlapping retrieval with inference--can mitigate this latency, but doing so with concurrent requests introduces new challenges: requests contend for GPU compute and memory, and scheduling must adapt to dynamic context arrivals. We present Stream2LLM, a streaming-aware LLM serving system for concurrent prefill-decode disaggregated deployments. Stream2LLM introduces adaptive scheduling and preemption for two distinct retrieval patterns: append-mode (progressive context accumulation) and update-mode (iterative refinement with cache invalidation). It decouples scheduling decisions from resource acquisition, enabling flexible preemption strategies guided by hardware-specific cost models, and uses longest common prefix matching to minimize redundant computation when input changes dynamically. To evaluate Stream2LLM, we collect two large-scale, real-world streaming workloads based on web crawling and approximate nearest neighbor search. Our evaluation demonstrates that streaming architecture delivers up to 11x TTFT improvements, with cost-aware scheduling providing critical benefits under memory pressure, all while maintaining throughput parity with non-streaming baselines. Code: this https URL",
+  "comment": "Accepted to MLSys 2026. Minor formatting fixes",
+  "journal": "",
+  "doi": "",
+  "subjects": "Machine Learning (cs.LG); Computation and Language (cs.CL)",
+  "dateline": "[Submitted on 29 Mar 2026 (v1), last revised 17 May 2026 (this version, v3)]"
+ },
+ {
+  "id": "2603.23049",
+  "title": "PCR: A Prefetch-Enhanced Cache Reuse System for Low-Latency RAG Serving",
+  "abs": "Retrieval-Augmented Generation (RAG) systems enhance the performance of large language models (LLMs) by incorporating supplementary retrieved documents, enabling more accurate and context-aware responses. However, integrating these external documents often results in very long input sequences, which significantly increases computation costs during the prefill stage, where key-value (KV) representations for all input tokens are generated. This latency bottleneck becomes especially pronounced under high-throughput serving scenarios. KV-cache reuse offers a promising solution by storing previously computed KV states for shared input prefixes, thereby avoiding redundant computation across requests that contain overlapping context. Yet, the effectiveness of cache reuse is often limited by three practical challenges: low cache hit rates due to naive eviction policies, high CPU-GPU data transfer overhead, and slow SSD I/O when caches spill to storage. To address these issues, we propose PCR, a system designed to maximize KV-cache reuse efficiency through intelligent prefetching and pipelined data movement. Specifically, PCR introduces three key techniques: (1) a prefix-tree caching structure with a look-ahead LRU replacement policy that uses pending requests in the scheduler queue to improve cache hit ratios; (2) layer-wise overlapping that pipelines KV-cache loading and GPU computation across CUDA streams to hide communication latency; and (3) queue-based prefetching that proactively loads relevant KV caches from SSD into DRAM before they are needed. Extensive experiments show that PCR outperforms existing KV-cache reuse methods, achieving up to a 2.47x speedup in terms of average TTFT.",
+  "comment": "",
+  "journal": "",
+  "doi": "",
+  "subjects": "Distributed, Parallel, and Cluster Computing (cs.DC)",
+  "dateline": "[Submitted on 24 Mar 2026]"
+ }
+]

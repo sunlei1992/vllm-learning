@@ -1,0 +1,1355 @@
+{
+ "KV cache serving system": [
+  {
+   "id": "2609.13692",
+   "title": "Prefix Sharing Is a Sorting Problem",
+   "authors": "Authors:\n      \n      Rong He",
+   "abs": "LLM serving",
+   "dates": "Submitted 12 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      15 pages. Code: https://github.com/Darrenus/prefix-sharing-is-sorting",
+   "journal": ""
+  },
+  {
+   "id": "2609.13537",
+   "title": "Dynamic HBM Repartitioning for Multi-Turn MoE Serving",
+   "authors": "Authors:\n      \n      Jinpyo Kim, \n      \n      Mingi Kwon, \n      \n      Younghoon Min, \n      \n      Jongryool Kim, \n      \n      Jishen Zhao",
+   "abs": "Long-running multi-turn requests accumulate reusable key-value (KV",
+   "dates": "Submitted 11 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      16 pages",
+   "journal": ""
+  },
+  {
+   "id": "2609.10266",
+   "title": "KVShareArena: KV-Cache Reuse Across Contexts and Model Checkpoints",
+   "authors": "Authors:\n      \n      Xi Shi, \n      \n      Qian Lou",
+   "abs": "LLM serving",
+   "dates": "Submitted 9 September, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2609.07175",
+   "title": "Enabling High-Bandwidth Flash for Generative Recommendation Serving with Write-Aware KV Cache Policy",
+   "authors": "Authors:\n      \n      Danni Peng, \n      \n      Kai Wu, \n      \n      Tianyu Zuo, \n      \n      Pengfei Xia, \n      \n      Hui Zang",
+   "abs": "Generative recommendation (GR) systems",
+   "dates": "Submitted 7 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      5 pages, 7 figures",
+   "journal": ""
+  },
+  {
+   "id": "2609.07008",
+   "title": "RedKnot-MLA: Multi-Head Offline-Online Reuse for DeepSeek-V4 Long-Context Serving",
+   "authors": "Authors:\n      \n      Yang Liu, \n      \n      Zhaokai Luo, \n      \n      Huayi Jin, \n      \n      Ruozhou He, \n      \n      Chenchen Hong, \n      \n      Mingxiao Ma, \n      \n      Biao Zhang, \n      \n",
+   "abs": "Multi-head latent attention (MLA) exposes many logical query heads through one packed latent KV",
+   "dates": "Submitted 6 September, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2609.06853",
+   "title": "Characterizing Contention-Induced Reliability Collapse in KV-Cache Timing Side Channels for Multi-Tenant LLM Serving",
+   "authors": "Authors:\n      \n      Rana Abu Bakar",
+   "abs": "Shared key--value (KV",
+   "dates": "Submitted 6 September, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2609.05764",
+   "title": "Interface-Aware KV Cache Quantization for Dense On-Chip NVM in Long-Context LLM Decoding",
+   "authors": "Authors:\n      \n      Jiahao Zheng, \n      \n      Yifan Qin, \n      \n      Xiaobo Sharon Hu, \n      \n      Yiyu Shi",
+   "abs": "The key-value (KV",
+   "dates": "Submitted 4 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      IEEE/ACM International Conference on Computer-Aided Design (ICCAD 2026)",
+   "journal": ""
+  },
+  {
+   "id": "2609.05565",
+   "title": "Toward Sustainable Distributed LLM Inference: A Systems Synthesis and Research Agenda for an Energy-, Carbon-, and Cache-Aware llm-d Control Plane",
+   "authors": "Authors:\n      \n      Twinkll Sisodia",
+   "abs": "Large language model (LLM) sustainability is increasingly a serving",
+   "dates": "Submitted 3 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      13 pages, 1 figure, 1 table. Systems synthesis and research agenda for sustainability-aware distributed LLM inference. No new experimental measurements are claimed; reported results are attributed to the cited work",
+   "journal": ""
+  },
+  {
+   "id": "2609.04875",
+   "title": "Forgetting Without Restarting: Execution-State Unlearning for Stateful LLM Agents",
+   "authors": "Authors:\n      \n      Chao Yao, \n      \n      Yangbo Wei, \n      \n      Zhen Huang, \n      \n      Junhong Qian, \n      \n      Chenle Chen, \n      \n      Shaoqiang Lu, \n      \n      Chen Wu, \n      \n  ",
+   "abs": "Long-running LLM agents are stateful: beyond the transcript they accrete compressed summaries, plaintext memory, pending tool plans, and, under every serving",
+   "dates": "Submitted 4 September, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2609.02029",
+   "title": "HeadWiseKV: Budgeted Per-Head Cache Residency for Hybrid Long-Context Language Models",
+   "authors": "Authors:\n      \n      Renjie Xie, \n      \n      Juncheng Yang, \n      \n      Aoting Hu, \n      \n      Mingxi Zhang, \n      \n      Liyao Wu, \n      \n      Zheheng Hong, \n      \n      Wei Xu",
+   "abs": "Long-context inference retains a growing key--value (KV",
+   "dates": "Submitted 1 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      14 pages including appendices, 4 figures, 5 tables",
+   "journal": ""
+  },
+  {
+   "id": "2609.02027",
+   "title": "Multi-Turn LLM Conversations under the Least-Recently-Used Policy: Mean-Field Asymptotics and Hit Ratio Approximation",
+   "authors": "Authors:\n      \n      Heyuan Yao, \n      \n      Chutong Gao, \n      \n      Yuan Lyu, \n      \n      Izzy Grosof, \n      \n      David Simchi-Levi",
+   "abs": "The major workloads in modern large language model (LLM) serving",
+   "dates": "Submitted 1 September, 2026; \n      originally announced September 2026.",
+   "comment": "MSC Class:\n          60K25; 68M20; 90B22",
+   "journal": ""
+  },
+  {
+   "id": "2608.30963",
+   "title": "A Universal Context-Reuse Layer for Cross-Model KV Sharing",
+   "authors": "Authors:\n      \n      Yi Li, \n      \n      Dongming Jiang, \n      \n      Yi Zhao, \n      \n      Bingzhe Li",
+   "abs": "Modern large language model (LLM) serving",
+   "dates": "Submitted 31 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.25523",
+   "title": "TOPAS: Workflow-Aware Prefix-State Scheduling for Multi-Agent LLM Serving",
+   "authors": "Authors:\n      \n      Hongqiu Ni, \n      \n      Han Tian, \n      \n      Chi Zhang, \n      \n      Guopeng Li, \n      \n      Haisheng Tan",
+   "abs": "Prefix caching",
+   "dates": "Submitted 26 August, 2026; \n      originally announced August 2026.",
+   "comment": "Comments:\n      8 pages",
+   "journal": ""
+  },
+  {
+   "id": "2608.21719",
+   "title": "PowerSlider: Exploiting Phase Asymmetry for LLM Serving under Demand Response",
+   "authors": "Authors:\n      \n      Yueying Li, \n      \n      Jiayang Chen, \n      \n      Yuanfan Chen, \n      \n      Leo Han, \n      \n      Haoran Qiu, \n      \n      Esha Choukse, \n      \n      Rodrigo Fonseca, \n ",
+   "abs": "AI inference clusters are increasingly constrained by instantaneous power, not just energy: grid operators condition new capacity on demand response, imposing time-varying power caps. Existing LLM serving",
+   "dates": "Submitted 21 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.21247",
+   "title": "Just Noticeable Difference Modeling for Token Compression in Vision-Language-Action Models",
+   "authors": "Authors:\n      \n      Zhuoyuan Li, \n      \n      Rui Zhao, \n      \n      Jin Wang, \n      \n      Hanwei Zhu, \n      \n      Cong Zhang, \n      \n      Giuseppe Valenzise, \n      \n      Weisi Lin, \n     ",
+   "abs": "Token compression has become a key technique for reducing the inference cost of large foundation models, with approaches such as token pruning and KV",
+   "dates": "Submitted 21 August, 2026; \n      originally announced August 2026.",
+   "comment": "Comments:\n      15 pages, 5 figures",
+   "journal": ""
+  },
+  {
+   "id": "2608.20961",
+   "title": "TreeWY: Speculative Verification for Gated DeltaNet Hybrids",
+   "authors": "Authors:\n      \n      Sneha Murthy Ghantasala",
+   "abs": "Modern open models are hybrids: most layers are linear-attention (Gated DeltaNet, GDN) layers carrying a small fixed-size recurrent state instead of a growing key-value (KV",
+   "dates": "Submitted 21 August, 2026; \n      originally announced August 2026.",
+   "comment": "Comments:\n      10 pages, 3 figures",
+   "journal": ""
+  },
+  {
+   "id": "2608.15584",
+   "title": "GraniKV: Asymmetric Granularity KV-Cache Paging for Multi-Agent Systems with Long Shared Prefix",
+   "authors": "Authors:\n      \n      Jinhyun Jeon, \n      \n      Sungjoo Yoo",
+   "abs": "Production paged-serving",
+   "dates": "Submitted 23 August, 2026; v1 submitted 16 August, 2026;\n      originally announced August 2026.",
+   "comment": "Comments:\n      An error in throughput measurement methods was found. The paper's details are deprecated",
+   "journal": ""
+  },
+  {
+   "id": "2608.14624",
+   "title": "Learning Agent Execution for KV-Cache Management in Agentic Serving",
+   "authors": "Authors:\n      \n      Rui Zhang, \n      \n      Chaeeun Kim, \n      \n      Shaoting Feng, \n      \n      Kuntai Du, \n      \n      Yuhan Liu, \n      \n      Yi Zhong, \n      \n      Cheng-Wei Ching, \n     ",
+   "abs": "Multi-agent LLM systems",
+   "dates": "Submitted 16 July, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.14575",
+   "title": "HW-Router: Hardware-Aware Routing for Scalable Multi-LLM Serving",
+   "authors": "Authors:\n      \n      Ahasan Kabir, \n      \n      Jiaqi Xue, \n      \n      Mengxin Zheng, \n      \n      Qian Lou",
+   "abs": "Modern large language model (LLM) serving",
+   "dates": "Submitted 10 June, 2026; \n      originally announced August 2026.",
+   "comment": "Comments:\n      Preprint",
+   "journal": ""
+  },
+  {
+   "id": "2608.13127",
+   "title": "Potential Applications of HBF in LLM Serving Systems",
+   "authors": "Authors:\n      \n      Yihan Yin, \n      \n      Yinlun Zhao, \n      \n      Zhixin Yun, \n      \n      Guanying Wu, \n      \n      Feng Zhu, \n      \n      Kai Tao, \n      \n      Shu Li, \n      \n      Fei ",
+   "abs": "LLM serving",
+   "dates": "Submitted 14 August, 2026; v1 submitted 13 August, 2026;\n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.11593",
+   "title": "Luna-TTS Family Technical Report",
+   "authors": "Authors:\n      \n      Feng Yin, \n      \n      Shuai Shi, \n      \n      Junjie Zheng, \n      \n      Kechenying Zhou, \n      \n      Yiqiu Wang, \n      \n      Chenyang He, \n      \n      Qiuhua Jiang, \n  ",
+   "abs": "Modern text-to-speech (TTS) is dominated by autoregressive (AR) codec language models, whose left-to-right decoding brings latency that grows with utterance length, error accumulation along the committed prefix, and an artificial generation order imposed on the Residual Vector Quantization (RVQ) token grid. We propose Luna-TTS Family, diffusion-language-model-based TTS systems",
+   "dates": "Submitted 11 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.08097",
+   "title": "OasisKV: Scaling In-Decode KV Cache Beyond HBM with Lookahead Sparse Prefetching",
+   "authors": "Authors:\n      \n      Can Xiao, \n      \n      Sukmin Cho, \n      \n      Junbong We, \n      \n      Zhixiong Niu, \n      \n      Jianyi Cheng, \n      \n      Yiren Zhao, \n      \n      Youngjin Kwon, \n    ",
+   "abs": "Large language model (LLM) inference serving",
+   "dates": "Submitted 8 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.07009",
+   "title": "HiSparse: Scaling Sparse-Attention Decoding with Hierarchical KV Cache Management",
+   "authors": "Authors:\n      \n      Zhiqiang Xie, \n      \n      Zhangheng Huang, \n      \n      Tingwei Huang, \n      \n      Ziyi Xu, \n      \n      Ruiyang Ma, \n      \n      Christos Kozyrakis",
+   "abs": "Top-k sparse attention makes long-context LLM decoding cheap to compute: each step reads only a few thousand selected KV",
+   "dates": "Submitted 7 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.06557",
+   "title": "Cascade: Exploiting SLO-Aware latency budget for fair and high goodput LLM inference serving",
+   "authors": "Authors:\n      \n      Muhammad Adnan, \n      \n      Rohan Mahapatra, \n      \n      Prashant J. Nair, \n      \n      Daniel Berger, \n      \n      Pantea Zardoshti, \n      \n      Rodrigo Fonseca, \n      ",
+   "abs": "The reasoning and agentic capabilities of large language models have expanded the range of applications they support, from short interactive exchanges to long, compute-heavy requests. LLM serving",
+   "dates": "Submitted 6 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.05863",
+   "title": "Runtime Observability for Heterogeneous Attention Memory",
+   "authors": "Authors:\n      \n      Fanzhe Wei, \n      \n      Li Liu, \n      \n      Ziyang Wang, \n      \n      Chenyu Wang",
+   "abs": "Modern models no longer keep a plain KV",
+   "dates": "Submitted 16 August, 2026; v1 submitted 6 August, 2026;\n      originally announced August 2026.",
+   "comment": "Comments:\n      29 pages, 5 figures. Code, artifacts, and Lean 4 development: https://github.com/metask-ai/witprobe-attention-memory",
+   "journal": ""
+  },
+  {
+   "id": "2608.05483",
+   "title": "PLoRA: An NDP-Enhanced Pooled-Memory System for Cost-Efficient Multi-LoRA Serving",
+   "authors": "Authors:\n      \n      Zhongkai Yu, \n      \n      Ohm Rishabh Venkatachalam, \n      \n      Zheng Wang, \n      \n      Yikai Li, \n      \n      Yichen Lin, \n      \n      Zihao Yu, \n      \n      Yuke Wang,",
+   "abs": "Multi-LoRA serving",
+   "dates": "Submitted 5 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.03555",
+   "title": "Heterogeneous LLM Serving with General-Purpose Processing-Near-Memory for Retrieval-Based Sparse Attention",
+   "authors": "Authors:\n      \n      Hyungkyu Ham, \n      \n      Junhyeong Bae, \n      \n      Seungheon Lee, \n      \n      Myeongjae Jeon, \n      \n      Gwangsun Kim",
+   "abs": "This paper presents a heterogeneous decode-phase serving",
+   "dates": "Submitted 4 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.02244",
+   "title": "Efficiency and Cost Alignment in Batched LLM Serving via Resource-Fair Scheduling",
+   "authors": "Authors:\n      \n      Dayi Yao, \n      \n      Zijie Zhou",
+   "abs": "This paper studies a resource-allocation inefficiency in batched large language model (LLM) serving",
+   "dates": "Submitted 3 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.01651",
+   "title": "Bole: Efficient Tree Speculation for Hybrid-Attention Language Models",
+   "authors": "Authors:\n      \n      Li Wang, \n      \n      Yi Su, \n      \n      Xiabao Wu, \n      \n      Chiran You, \n      \n      Yongchao Liu, \n      \n      Zhan Qiu, \n      \n      Juelu Zhang, \n      \n      Jiaj",
+   "abs": "Hybrid-attention large language models combine full attention with recurrent linear attention to reduce long-context inference costs, yet their autoregressive decoding remains memory-bound. Tree speculative decoding offers an attractive acceleration path, but existing tree-speculation systems",
+   "dates": "Submitted 2 August, 2026; \n      originally announced August 2026.",
+   "comment": "Comments:\n      14 pages, 12 figures, 7 tables",
+   "journal": ""
+  },
+  {
+   "id": "2608.00938",
+   "title": "GRACE: Generative Recommender Acceleration Engine for Real-Time Ads Retrieval",
+   "authors": "Authors:\n      \n      Zhou Fang, \n      \n      Yuhang Huang, \n      \n      Ang Zhang, \n      \n      Yihan He, \n      \n      Ruichao Xiao, \n      \n      Chao Li, \n      \n      Yavuz Yetim, \n      \n    ",
+   "abs": "Productionizing generative recommenders for high-volume, real-time ads retrieval creates two serving",
+   "dates": "Submitted 4 August, 2026; v1 submitted 1 August, 2026;\n      originally announced August 2026.",
+   "comment": "Comments:\n      13 pages, 3 figures",
+   "journal": ""
+  },
+  {
+   "id": "2608.00423",
+   "title": "Diagnose Before You Compress: Prediction-Independent Bottleneck Witness Refinement for LLM Serving Traces",
+   "authors": "Authors:\n      \n      Liming Liu, \n      \n      Chao Hu, \n      \n      Mingfei Lu, \n      \n      Cong Tan, \n      \n      Yiwei Ge, \n      \n      Chijin Zhou, \n      \n      Yongjun Xie, \n      \n      R",
+   "abs": "Production LLM serving",
+   "dates": "Submitted 31 July, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.00101",
+   "title": "Agentic Coding in the Wild: Characterizing GitHub Copilot Traces at Production Scale",
+   "authors": "Authors:\n      \n      Banruo Liu, \n      \n      Haoran Qiu, \n      \n      Íñigo Goiri, \n      \n      Rodrigo Fonseca, \n      \n      Ricardo Bianchini, \n      \n      Esha Choukse",
+   "abs": "AI coding agents like GitHub Copilot, Claude Code, and Codex interleave multi-step LLM inference with tool execution, creating a workload different from chatbots. We present the first production-scale characterization of this workload using sampled GitHub Copilot traces from June 2026, comprising 3.2M users, 13M sessions, 761M LLM calls, and 95T tokens.\n  Our analysis reveals distinctive workload properties with important systems",
+   "dates": "Submitted 30 July, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.28699",
+   "title": "WitCert: Sound Runtime Risk Observability and Gating for KV-Cache Quantization",
+   "authors": "Authors:\n      \n      Fanzhe Wei, \n      \n      Li Liu, \n      \n      Ziyang Wang, \n      \n      Chenyu Wang",
+   "abs": "KV",
+   "dates": "Submitted 16 August, 2026; v1 submitted 30 July, 2026;\n      originally announced July 2026.",
+   "comment": "Comments:\n      39 pages, 7 figures. Code, artifacts, and Lean proofs: https://github.com/metask-ai/witcert-kv-certificates",
+   "journal": ""
+  },
+  {
+   "id": "2607.28150",
+   "title": "SmartGen: Seamless Disaggregated LLM Inference with Selective KV Cache Transfer",
+   "authors": "Authors:\n      \n      Xuchuan Luo, \n      \n      Jiacheng Shen, \n      \n      Xin Wang, \n      \n      Yangfan Zhou",
+   "abs": "Disaggregating the prefill and decoding stages of large language model (LLM) inference into two separate sets of nodes is widely adopted in today's LLM serving",
+   "dates": "Submitted 30 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.27090",
+   "title": "InferScale: GPU-Native KV Injection for Personalized LLM Serving",
+   "authors": "Authors:\n      \n      Peter Li, \n      \n      Prashant Pandey",
+   "abs": "Large language models are increasingly deployed with persistent personalized context, such as accumulated memory profiles or long conversation histories, that is shared across a user's many requests. Production memory systems",
+   "dates": "Submitted 29 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.26475",
+   "title": "DualDecoder: Accelerate Long Context LLM Inference by Predictive Prefetch",
+   "authors": "Authors:\n      \n      Zuning Liang, \n      \n      Zhiyi Yao, \n      \n      Qi Chen, \n      \n      Yuedong Xu, \n      \n      Hao Dai, \n      \n      Zhiqiang Ding, \n      \n      Tongkai Yang, \n      \n  ",
+   "abs": "Long-context inference is becoming a fundamental capability for modern LLM serving",
+   "dates": "Submitted 29 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.23815",
+   "title": "Kalypso: Relational LLM Serving",
+   "authors": "Authors:\n      \n      Hojae Son, \n      \n      Md Ashraful Islam, \n      \n      Huy Gia Cao, \n      \n      Hui Guan, \n      \n      Marco Serafini",
+   "abs": "Large language models are increasingly used as semantic operators for filtering, extracting, ranking, joining, and transforming unstructured data. Existing semantic query processing systems",
+   "dates": "Submitted 13 August, 2026; v1 submitted 26 July, 2026;\n      originally announced July 2026.",
+   "comment": "Comments:\n      14 pages, 12 figures",
+   "journal": ""
+  },
+  {
+   "id": "2607.23693",
+   "title": "Compute Globally, Materialize Locally: The Memory Contract of Sparse Event-KV",
+   "authors": "Authors:\n      \n      Zefeng Cai, \n      \n      Zerui Cai",
+   "abs": "Long-horizon agents increasingly reuse their KV",
+   "dates": "Submitted 26 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.21475",
+   "title": "Error Certificates for KV-Cache Eviction via Randomized Design",
+   "authors": "Authors:\n      \n      Peng Xie Amr Alanwar",
+   "abs": "Deterministic KV",
+   "dates": "Submitted 29 August, 2026; v1 submitted 23 July, 2026;\n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.16892",
+   "title": "Robust KV Cache Management for LLM Serving under Output Token Length Uncertainty",
+   "authors": "Authors:\n      \n      Jiaming Cheng, \n      \n      Duong The Do, \n      \n      Duong Tung Nguyen",
+   "abs": "KV",
+   "dates": "Submitted 18 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      10 figures, 10 pages",
+   "journal": ""
+  },
+  {
+   "id": "2607.14952",
+   "title": "LongStraw: Long-Context RL Beyond 2M Tokens under a Fixed GPU Budget",
+   "authors": "Authors:\n      \n      Changhai Zhou, \n      \n      Kieran Liu, \n      \n      Yuhua Zhou, \n      \n      Qian Qiao, \n      \n      Jun Gao, \n      \n      Harry Zhang, \n      \n      Irvine Lu, \n      \n   ",
+   "abs": "Long-context RL post-training is constrained by the lifetime of state and gradients, not attention cost alone. In GRPO, one multi-million-token prompt must serve",
+   "dates": "Submitted 27 July, 2026; v1 submitted 16 July, 2026;\n      originally announced July 2026.",
+   "comment": "Comments:\n      44 pages, 10 figures, 11 tables. Code: https://github.com/MindLab-Research/longstraw",
+   "journal": ""
+  },
+  {
+   "id": "2607.12875",
+   "title": "Automatic Model-Hardware Co-Adaptation for Heterogeneous AI Accelerators",
+   "authors": "Authors:\n      \n      Tian Chen, \n      \n      Mingheng Mi, \n      \n      Pu Wang, \n      \n      Chen Hu, \n      \n      Hai Zhang",
+   "abs": "Large language models now evolve faster than production inference systems",
+   "dates": "Submitted 1 September, 2026; v1 submitted 14 July, 2026;\n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.10987",
+   "title": "[AAFLOW+] Stateful Operator Abstraction with Zero-Copy Distributed KV Cache Orchestration for Multi-Agent Workflows",
+   "authors": "Authors:\n      \n      Arup Kumar Sarker, \n      \n      Alexander James Halpern, \n      \n      Mills Staylor, \n      \n      Aymen Alsaadi, \n      \n      Gregor von Laszewski, \n      \n      Yue Cheng, \n",
+   "abs": "Multi-agent LLM systems",
+   "dates": "Submitted 12 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      21 pages, 10 Figures, 12 Tables",
+   "journal": ""
+  },
+  {
+   "id": "2607.09686",
+   "title": "MawForge: Memory-Bounded Expert Materialization for Local Mixture-of-Experts Inference",
+   "authors": "Authors:\n      \n      Craig Opie",
+   "abs": "Sparse Mixture-of-Experts (MoE) language models separate total parameter count from per-token active computation, but local inference systems",
+   "dates": "Submitted 16 June, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      7 pages",
+   "journal": ""
+  },
+  {
+   "id": "2607.08057",
+   "title": "Towards Efficient Large Language Model Serving: A Survey on System-Aware KV Cache Optimization",
+   "authors": "Authors:\n      \n      Jiantong Jiang, \n      \n      Peiyu Yang, \n      \n      Rui Zhang, \n      \n      Feng Liu",
+   "abs": "Despite the rapid advancements of large language models (LLMs), LLM serving",
+   "dates": "Submitted 8 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      Accepted to ACL 2026 as a Findings paper",
+   "journal": ""
+  },
+  {
+   "id": "2607.05399",
+   "title": "Benchmarking KV-Cache Optimizations across Task Quality and System Performance for Long-Context Serving",
+   "authors": "Authors:\n      \n      Nikita Agrawal, \n      \n      Ruben Mayer",
+   "abs": "Large language model serving",
+   "dates": "Submitted 3 May, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.04206",
+   "title": "Sangam: Efficiently Serving Diffusion LLMs with the AR Stack",
+   "authors": "Authors:\n      \n      Nitin Kedia, \n      \n      Saurabh Agarwal, \n      \n      Myungjin Lee, \n      \n      Aditya Akella",
+   "abs": "Diffusion language models (dLLMs) generate text by iteratively denoising a masked response and can commit multiple output positions per model invocation. Their bidirectional attention prevents exact autoregressive-style KV",
+   "dates": "Submitted 5 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.02574",
+   "title": "From Tensor Buffer to Distributed Memory Hierarchy: A Survey of KV Cache Management for LLM Serving",
+   "authors": "Authors:\n      \n      Jie Li, \n      \n      Tongyang Wang, \n      \n      Yong Chen",
+   "abs": "The key-value (KV",
+   "dates": "Submitted 30 June, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.01831",
+   "title": "Lynx: Progressive Speculative Quantization for accelerating KV Transfer in Long-Context Inference",
+   "authors": "Authors:\n      \n      Wenchen Han, \n      \n      Gingfung Matthew Yeung, \n      \n      Marco Barletta, \n      \n      William Toner, \n      \n      Amory Hoste, \n      \n      Adam Barker",
+   "abs": "Long-context inference is increasingly common in large language model (LLM) serving",
+   "dates": "Submitted 2 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      15 pages, 12 figures. This manuscript was originally submitted to SIGCOMM '26 in February 2026",
+   "journal": ""
+  },
+  {
+   "id": "2607.01617",
+   "title": "3DLS: A 3D Logic-Stacked Architecture for Disaggregated LLM Serving",
+   "authors": "Authors:\n      \n      Jaehun Lee, \n      \n      In-Jun Jung, \n      \n      Joo-Young Kim",
+   "abs": "Large language model (LLM) serving",
+   "dates": "Submitted 1 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      Accepted to IEEE Computer Architecture Letters (CAL), 2026",
+   "journal": ""
+  }
+ ],
+ "disaggregated prefill decode KV cache transfer": [
+  {
+   "id": "2609.13161",
+   "title": "PDD: Unleashing Economical and Flexible Heterogeneous LLM Inference via Cross-Datacenter Prefill-Decode Disaggregation",
+   "authors": "Authors:\n      \n      Yida Wang, \n      \n      Xiuhong Li, \n      \n      Jianping Ma, \n      \n      Gan Sun, \n      \n      Yunshen Xu, \n      \n      Buhe Han, \n      \n      Jingxu Ng, \n      \n      Yu",
+   "abs": "Interconnecting geographically dispersed clusters over wide-area Ethernet provides a scalable and cost-effective alternative to dedicated intra-datacenter heterogeneous clusters for Large Language Model (LLM) inference. However, this cross-datacenter disaggregation",
+   "dates": "Submitted 18 July, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2609.00993",
+   "title": "AInfer-PD: Communication-Safe In-Place Prefill-Decode Multiplexing for Distributed MoE Rollouts",
+   "authors": "Authors:\n      \n      Guowei Wang, \n      \n      Chaokun Yang, \n      \n      Zhenxuan Pan, \n      \n      Yuhong Guo, \n      \n      Minghua Zhu, \n      \n      Zhechuan Zhang, \n      \n      Shuo Wan, \n ",
+   "abs": "Rollout inference often dominates the wall-clock time of large-scale reinforcement learning (RL). In agentic RL, each trajectory alternates between model generation and environment interaction over multiple turns. Asynchronous trajectories consequently introduce new prefill",
+   "dates": "Submitted 1 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      12 pages, 9 figures",
+   "journal": ""
+  },
+  {
+   "id": "2608.08097",
+   "title": "OasisKV: Scaling In-Decode KV Cache Beyond HBM with Lookahead Sparse Prefetching",
+   "authors": "Authors:\n      \n      Can Xiao, \n      \n      Sukmin Cho, \n      \n      Junbong We, \n      \n      Zhixiong Niu, \n      \n      Jianyi Cheng, \n      \n      Yiren Zhao, \n      \n      Youngjin Kwon, \n    ",
+   "abs": "Large language model (LLM) inference serving is increasingly constrained by memory rather than compute. As long-context and long-form reasoning workloads become more prevalent, the key-value (KV",
+   "dates": "Submitted 8 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.28633",
+   "title": "Topology-Aware Data Movement for Disaggregated GPU Inference",
+   "authors": "Authors:\n      \n      Sanjeev Rao Ganjihal",
+   "abs": "Disaggregated",
+   "dates": "Submitted 7 August, 2026; v1 submitted 19 April, 2026;\n      originally announced July 2026.",
+   "comment": "Comments:\n      8 pages, 4 tables, 1 algorithm. v2: corrects MLA compression to 57x (576 dims per DeepSeek); fixes a factor-of-two in GQA sizing rows and all dependent transfer numbers (Llama-70B 4K = 1.3 GB); pipelining band recomputed (76 to 100 percent); PCIe on Gen5; NIXL positioning added; NVLink 5 and 2026 model notes (bandwidth- and bytes-parametric); wording fixes",
+   "journal": ""
+  },
+  {
+   "id": "2607.28150",
+   "title": "SmartGen: Seamless Disaggregated LLM Inference with Selective KV Cache Transfer",
+   "authors": "Authors:\n      \n      Xuchuan Luo, \n      \n      Jiacheng Shen, \n      \n      Xin Wang, \n      \n      Yangfan Zhou",
+   "abs": "Disaggregating",
+   "dates": "Submitted 30 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.02043",
+   "title": "Towards Load-Aware Prefill Deflection for Disaggregated LLM Serving",
+   "authors": "Authors:\n      \n      Shrikara Arun, \n      \n      Anjaly Parayil, \n      \n      Srikant Bharadwaj, \n      \n      Renee St. Amant, \n      \n      Victor Rühle",
+   "abs": "Disaggregated",
+   "dates": "Submitted 2 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.01617",
+   "title": "3DLS: A 3D Logic-Stacked Architecture for Disaggregated LLM Serving",
+   "authors": "Authors:\n      \n      Jaehun Lee, \n      \n      In-Jun Jung, \n      \n      Joo-Young Kim",
+   "abs": "Large language model (LLM) serving increasingly combines prefill",
+   "dates": "Submitted 1 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      Accepted to IEEE Computer Architecture Letters (CAL), 2026",
+   "journal": ""
+  },
+  {
+   "id": "2606.29986",
+   "title": "HBM Is Not All You Need: Efficient Disaggregated LLM Serving across Memory-heterogeneous Accelerators",
+   "authors": "Authors:\n      \n      Zhixiang Wei, \n      \n      Yun Wang, \n      \n      James Yen, \n      \n      Mingyuan Xia, \n      \n      Zhengwei Qi",
+   "abs": "LLM inference comprises a compute-bound prefill",
+   "dates": "Submitted 29 June, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.17081",
+   "title": "The Price of Anarchy in Disaggregated Inference",
+   "authors": "Authors:\n      \n      Athos Georgiou",
+   "abs": "Disaggregated",
+   "dates": "Submitted 11 June, 2026; \n      originally announced June 2026.",
+   "comment": "Comments:\n      38 pages, 7 figures, 8 tables. Measurements on a 3-node NVIDIA B200 cluster running NVIDIA Dynamo v0.9.0",
+   "journal": ""
+  },
+  {
+   "id": "2606.08635",
+   "title": "SpectrumKV: Per-Token Mixed-Precision KV Cache Transfer for Prefill-Decode Disaggregated LLM Serving",
+   "authors": "Authors:\n      \n      Yang Pengju",
+   "abs": "Prefill",
+   "dates": "Submitted 7 June, 2026; \n      originally announced June 2026.",
+   "comment": "Comments:\n      28 pages,13 figures,8 tables",
+   "journal": ""
+  },
+  {
+   "id": "2606.03910",
+   "title": "NetKV: Network-Aware Decode Instance Selection for Disaggregated LLM Inference",
+   "authors": "Authors:\n      \n      Mubarak Adetunji Ojewale",
+   "abs": "Disaggregated",
+   "dates": "Submitted 2 June, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.01839",
+   "title": "Observation, Not Prediction: Conversation-Level Disaggregated Scheduling for Agentic Serving",
+   "authors": "Authors:\n      \n      Jianru Ding, \n      \n      Ryien Hosseini, \n      \n      Pouya Mahdi Gholami, \n      \n      Mingyuan Xiang, \n      \n      Henry Hoffmann",
+   "abs": "LLM-based agents resolve a user task through many turns of dependent inference and tool calls, producing a workload whose total cost is unknown when the task arrives. Existing multi-turn systems keep the turn as the scheduling unit and decide, turn by turn, whether to disaggregate",
+   "dates": "Submitted 1 June, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.16637",
+   "title": "HexAGenT: Efficient Agentic LLM Serving via Workflow- and Heterogeneity-Aware Scheduling",
+   "authors": "Authors:\n      \n      You Peng, \n      \n      Youhe Jiang, \n      \n      Wenshuang Li, \n      \n      Xu Xu, \n      \n      Ke Zhou, \n      \n      Jiawei Jiang, \n      \n      Chen Wang, \n      \n      Bi",
+   "abs": "Agentic LLM applications increasingly execute user requests as multi-step workflows involving planning, tool use, branching, refinement, and synthesis. In such settings, users experience the end-to-end latency of an entire workflow, not the latency of any single LLM call. In this paper, we study how to schedule online agentic workflows across heterogeneous prefill",
+   "dates": "Submitted 15 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.01708",
+   "title": "SplitZip: Ultra Fast Lossless KV Compression for Disaggregated LLM Serving",
+   "authors": "Authors:\n      \n      Yipin Guo, \n      \n      Siddharth Joshi",
+   "abs": "Contemporary systems serving large language models (LLMs) have adopted prefill",
+   "dates": "Submitted 23 June, 2026; v1 submitted 3 May, 2026;\n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2604.15039",
+   "title": "Prefill-as-a-Service: KVCache of Next-Generation Models Could Go Cross-Datacenter",
+   "authors": "Authors:\n      \n      Ruoyu Qin, \n      \n      Weiran He, \n      \n      Yaoyu Wang, \n      \n      Zheming Li, \n      \n      Xinran Xu, \n      \n      Yongwei Wu, \n      \n      Weimin Zheng, \n      \n   ",
+   "abs": "Prefill",
+   "dates": "Submitted 21 April, 2026; v1 submitted 16 April, 2026;\n      originally announced April 2026.",
+   "comment": "Comments:\n      16 pages, 5 figures, 6 tables",
+   "journal": ""
+  },
+  {
+   "id": "2603.13358",
+   "title": "Not All Prefills Are Equal: PPD Disaggregation for Multi-turn LLM Serving",
+   "authors": "Authors:\n      \n      Zongze Li, \n      \n      Jingyu Liu, \n      \n      Zhen Xu, \n      \n      Yineng Zhang, \n      \n      Tahseen Rabbani, \n      \n      Ce Zhang",
+   "abs": "Prefill",
+   "dates": "Submitted 5 May, 2026; v1 submitted 9 March, 2026;\n      originally announced March 2026.",
+   "comment": "Comments:\n      19 pages, 11 figures. Accepted at ICML 2026",
+   "journal": ""
+  },
+  {
+   "id": "2602.21548",
+   "title": "DualPath: Breaking the Storage Bandwidth Bottleneck in Agentic LLM Inference",
+   "authors": "Authors:\n      \n      Yongtong Wu, \n      \n      Shaoyuan Chen, \n      \n      Yinmin Zhong, \n      \n      Rilin Huang, \n      \n      Yixuan Tan, \n      \n      Wentao Zhang, \n      \n      Liyue Zhang, ",
+   "abs": "The performance of multi-turn, agentic LLM inference is increasingly dominated by KV",
+   "dates": "Submitted 25 February, 2026; v1 submitted 24 February, 2026;\n      originally announced February 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2601.11822",
+   "title": "RAPID-Serve: Resource-efficient and Accelerated P/D Intra-GPU Disaggregation",
+   "authors": "Authors:\n      \n      Amna Masood, \n      \n      Pratishtha Gaur, \n      \n      Nuwan Jayasena",
+   "abs": "Two widely adopted techniques for LLM inference serving systems today are hybrid batching and disaggregated",
+   "dates": "Submitted 16 January, 2026; \n      originally announced January 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2601.08833",
+   "title": "Revisiting Disaggregated Large Language Model Serving for Performance and Energy Implications",
+   "authors": "Authors:\n      \n      Jiaxi Li, \n      \n      Yue Zhu, \n      \n      Eun Kyung Lee, \n      \n      Klara Nahrstedt",
+   "abs": "Different from traditional Large Language Model (LLM) serving that colocates the prefill",
+   "dates": "Submitted 14 November, 2025; \n      originally announced January 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2512.18194",
+   "title": "TraCT: Disaggregated LLM Serving with CXL Shared Memory KV Cache at Rack-Scale",
+   "authors": "Authors:\n      \n      Dongha Yoon, \n      \n      Younghoon Min, \n      \n      Hoshik Kim, \n      \n      Sam H. Noh, \n      \n      Jongryool Kim",
+   "abs": "Disaggregated",
+   "dates": "Submitted 19 December, 2025; \n      originally announced December 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2511.04791",
+   "title": "DuetServe: Harmonizing Prefill and Decode for LLM Serving via Adaptive GPU Multiplexing",
+   "authors": "Authors:\n      \n      Lei Gao, \n      \n      Chaoyi Jiang, \n      \n      Hossein Entezari Zarch, \n      \n      Daniel Wong, \n      \n      Mark Hill, \n      \n      Murali Annavaram",
+   "abs": "Modern LLM serving systems must sustain high throughput while meeting strict latency SLOs across two distinct inference phases: compute-intensive prefill",
+   "dates": "Submitted 30 May, 2026; v1 submitted 6 November, 2025;\n      originally announced November 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2510.09665",
+   "title": "LMCache: An Efficient KV Cache Layer for Enterprise-Scale LLM Inference",
+   "authors": "Authors:\n      \n      Yuhan Liu, \n      \n      Yihua Cheng, \n      \n      Jiayi Yao, \n      \n      Yuwei An, \n      \n      Xiaokun Chen, \n      \n      Shaoting Feng, \n      \n      Yuyang Huang, \n     ",
+   "abs": "KV",
+   "dates": "Submitted 4 December, 2025; v1 submitted 7 October, 2025;\n      originally announced October 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2504.19867",
+   "title": "semi-PD: Towards Efficient LLM Serving via Phase-Wise Disaggregated Computation and Unified Storage",
+   "authors": "Authors:\n      \n      Ke Hong, \n      \n      Lufang Chen, \n      \n      Zhong Wang, \n      \n      Xiuhong Li, \n      \n      Qiuli Mao, \n      \n      Jianping Ma, \n      \n      Chao Xiong, \n      \n    ",
+   "abs": "Existing large language model (LLM) serving systems fall into two categories: 1) a unified system where prefill",
+   "dates": "Submitted 28 April, 2025; \n      originally announced April 2025.",
+   "comment": "Comments:\n      18 pages, 16 figures",
+   "journal": ""
+  },
+  {
+   "id": "2504.03775",
+   "title": "FlowKV: A Disaggregated Inference Framework with Low-Latency KV Cache Transfer and Load-Aware Scheduling",
+   "authors": "Authors:\n      \n      Weiqing Li, \n      \n      Guochao Jiang, \n      \n      Xiangyong Ding, \n      \n      Zhangcheng Tao, \n      \n      Chuzhan Hao, \n      \n      Chenfeng Xu, \n      \n      Yuewei Zh",
+   "abs": "Disaggregated",
+   "dates": "Submitted 3 April, 2025; \n      originally announced April 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2501.14743",
+   "title": "KVDirect: Distributed Disaggregated LLM Inference",
+   "authors": "Authors:\n      \n      Shiyang Chen, \n      \n      Rain Jiang, \n      \n      Dezhi Yu, \n      \n      Jinlai Xu, \n      \n      Mengyuan Chao, \n      \n      Fanlong Meng, \n      \n      Chenyu Jiang, \n   ",
+   "abs": "Large Language Models (LLMs) have become the new foundation for many applications, reshaping human society like a storm. Disaggregated",
+   "dates": "Submitted 13 December, 2024; \n      originally announced January 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2501.05460",
+   "title": "Efficiently Serving Large Multimodal Models Using EPD Disaggregation",
+   "authors": "Authors:\n      \n      Gursimran Singh, \n      \n      Xinglu Wang, \n      \n      Yifan Hu, \n      \n      Timothy Yu, \n      \n      Linzi Xing, \n      \n      Wei Jiang, \n      \n      Zhefeng Wang, \n    ",
+   "abs": "Large Multimodal Models (LMMs) extend Large Language Models (LLMs) by handling diverse inputs such as images, audio, and video, but at the cost of adding a multimodal encoding stage that increases both computational and memory overhead. This step negatively affects key Service Level Objectives (SLOs), such as time to first token (TTFT) and time per output token (TPOT). We introduce Encode-Prefill",
+   "dates": "Submitted 27 June, 2025; v1 submitted 25 December, 2024;\n      originally announced January 2025.",
+   "comment": "Comments:\n      17 pages, 12 figures, 9 tables",
+   "journal": ""
+  },
+  {
+   "id": "2412.12488",
+   "title": "A System for Microserving of LLMs",
+   "authors": "Authors:\n      \n      Hongyi Jin, \n      \n      Ruihang Lai, \n      \n      Charlie F. Ruan, \n      \n      Yingcheng Wang, \n      \n      Todd C. Mowry, \n      \n      Xupeng Miao, \n      \n      Zhihao J",
+   "abs": "The recent advances in LLMs bring a strong demand for efficient system support to improve overall serving efficiency. As LLM inference scales towards multiple GPUs and even multiple compute nodes, various coordination patterns, such as prefill",
+   "dates": "Submitted 16 December, 2024; \n      originally announced December 2024.",
+   "comment": "",
+   "journal": ""
+  }
+ ],
+ "prefix cache aware routing LLM serving": [
+  {
+   "id": "2609.04774",
+   "title": "Adaptive Context Parallelism for Production LLM Serving",
+   "authors": "Authors:\n      \n      Jiarui Guo, \n      \n      Rongle Wang, \n      \n      Peijun Huang, \n      \n      Zongwei Lv, \n      \n      Ziqing Wang, \n      \n      Kan Liu, \n      \n      Tao Lan, \n      \n    ",
+   "abs": "As LLM",
+   "dates": "Submitted 4 September, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.11152",
+   "title": "Scheduling Mixed RL Rollouts Beyond Prefix Locality",
+   "authors": "Authors:\n      \n      Zetao Hong, \n      \n      Song Yuan, \n      \n      Yuanhao Ding, \n      \n      Yibo Zhu, \n      \n      Daxin Jiang, \n      \n      Zhibin Wang, \n      \n      Chen Tian",
+   "abs": "Modern reinforcement learning (RL) post-training pipelines for large language models (LLMs",
+   "dates": "Submitted 11 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.00466",
+   "title": "ELDR: Expert-Locality-Aware Decode Routing for PD-Disaggregated MoE Serving",
+   "authors": "Authors:\n      \n      Sangjin Choi, \n      \n      Sukmin Cho, \n      \n      Yifan Xiong, \n      \n      Ziyue Yang, \n      \n      Youngjin Kwon, \n      \n      Peng Cheng",
+   "abs": "In prefill-decode (PD) disaggregated LLM",
+   "dates": "Submitted 2 July, 2026; v1 submitted 1 July, 2026;\n      originally announced July 2026.",
+   "comment": "Comments:\n      15 pages, 18 figures",
+   "journal": ""
+  },
+  {
+   "id": "2606.17059",
+   "title": "Towards Distributed Inference of LLMs on a P2P Network",
+   "authors": "Authors:\n      \n      Shabari S Nair, \n      \n      Krishanu Saini",
+   "abs": "Prefix",
+   "dates": "Submitted 7 May, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.00946",
+   "title": "Lodestar: An Online-Learning LLM Inference Router",
+   "authors": "Authors:\n      \n      Gangmuk Lim, \n      \n      Wanyu Zhao, \n      \n      Brighten Godfrey, \n      \n      Jiaxin Shan, \n      \n      Le Xu, \n      \n      Liguang Xie",
+   "abs": "Efficiently serving",
+   "dates": "Submitted 30 May, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.23057",
+   "title": "RequestRouter: Request-Boundary Routing for Efficient Single-GPU LLM Inference",
+   "authors": "Authors:\n      \n      Aman Sunesh, \n      \n      Ali Alshehhi, \n      \n      Hivansh Dhakne",
+   "abs": "RequestRouter is a lightweight request-boundary controller for reducing the latency and energy cost of single-GPU large language model inference. Rather than serving",
+   "dates": "Submitted 19 August, 2026; v1 submitted 21 May, 2026;\n      originally announced May 2026.",
+   "comment": "Comments:\n      5 pages, 2 figures. Accepted at the 2nd International Workshop on Low Carbon Computing (LOCO 2026), Lancaster University, United Kingdom, 10-11 September 2026. Part of the LOCO 2026 proceedings, arXiv:2608.02072",
+   "journal": ""
+  },
+  {
+   "id": "2605.18825",
+   "title": "Not All Tokens Are Worth Caching: Learning Semantic-Aware Eviction for LLM Prefix Caches",
+   "authors": "Authors:\n      \n      Shaoke Fang, \n      \n      Ziang Li, \n      \n      Wenfei Wu, \n      \n      Jiatong Ji, \n      \n      Qingsong Liu, \n      \n      Ruizhi Pu",
+   "abs": "Prefix",
+   "dates": "Submitted 12 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.00528",
+   "title": "SAGA: Workflow-Atomic Scheduling for AI Agent Inference on GPU Clusters",
+   "authors": "Authors:\n      \n      Dongxin Guo, \n      \n      Jikun Wu, \n      \n      Siu Ming Yiu",
+   "abs": "AI agents execute tens to hundreds of chained LLM",
+   "dates": "Submitted 18 June, 2026; v1 submitted 1 May, 2026;\n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2602.21626",
+   "title": "Multi-Layer Scheduling for MoE-Based LLM Reasoning",
+   "authors": "Authors:\n      \n      Yifan Sun, \n      \n      Gholamreza Haffari, \n      \n      Minxian Xu, \n      \n      Rajkumar Buyya, \n      \n      Adel N. Toosi",
+   "abs": "Large Language Models (LLMs",
+   "dates": "Submitted 2 March, 2026; v1 submitted 25 February, 2026;\n      originally announced February 2026.",
+   "comment": "Comments:\n      12 pages, 10 figures",
+   "journal": ""
+  },
+  {
+   "id": "2602.06502",
+   "title": "DualMap: Enabling Both Cache Affinity and Load Balancing for Distributed LLM Serving",
+   "authors": "Authors:\n      \n      Ying Yuan, \n      \n      Pengfei Zuo, \n      \n      Bo Wang, \n      \n      Zhangyu Chen, \n      \n      Zhipeng Tan, \n      \n      Zhou Yu",
+   "abs": "In LLM",
+   "dates": "Submitted 6 February, 2026; \n      originally announced February 2026.",
+   "comment": "Comments:\n      23 pages, 15 figures",
+   "journal": ""
+  },
+  {
+   "id": "2510.13223",
+   "title": "BanaServe: Unified KV Cache and Dynamic Module Migration for Balancing Disaggregated LLM Serving in AI Infrastructure",
+   "authors": "Authors:\n      \n      Yiyuan He, \n      \n      Minxian Xu, \n      \n      Jingfeng Wu, \n      \n      Jianmin Hu, \n      \n      Chong Ma, \n      \n      Min Shen, \n      \n      Le Chen, \n      \n      Che",
+   "abs": "Large language models (LLMs",
+   "dates": "Submitted 15 October, 2025; \n      originally announced October 2025.",
+   "comment": "Comments:\n      23 pages",
+   "journal": ""
+  },
+  {
+   "id": "2504.03648",
+   "title": "AIBrix: Towards Scalable, Cost-Effective Large Language Model Inference Infrastructure",
+   "authors": "Authors:\n      \n       The AIBrix Team, \n      \n      Jiaxin Shan, \n      \n      Varun Gupta, \n      \n      Le Xu, \n      \n      Haiyang Shi, \n      \n      Jingyuan Zhang, \n      \n      Ning Wang, \n  ",
+   "abs": "We introduce AIBrix, a cloud-native, open-source framework designed to optimize and simplify large-scale LLM",
+   "dates": "Submitted 22 February, 2025; \n      originally announced April 2025.",
+   "comment": "",
+   "journal": ""
+  }
+ ],
+ "KV cache offloading tiered storage LLM": [
+  {
+   "id": "2606.12556",
+   "title": "ITME: Inference Tiered Memory Expansion with Disaggregated CXL-Hybrid Memories",
+   "authors": "Authors:\n      \n      Hakbeom Jang, \n      \n      Younghoon Min, \n      \n      Sunwoong Kim, \n      \n      Taeyoung Ahn, \n      \n      Hanyee Kim, \n      \n      Youngpyo Joo, \n      \n      Hoshik Kim,",
+   "abs": "The rapid shift toward agentic and long-context workloads in Large Language Models (LLMs",
+   "dates": "Submitted 16 June, 2026; v1 submitted 10 June, 2026;\n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.24022",
+   "title": "Adaptive KV Cache Reuse for Fast Long-Context LLM Serving",
+   "authors": "Authors:\n      \n      Fei li, \n      \n      Song Liu, \n      \n      Yan Liu, \n      \n      Jinhua Cui, \n      \n      Shiqiang Nie, \n      \n      Jinyu Wang, \n      \n      Weiguo Wu",
+   "abs": "In long-context Large Language Model (LLM",
+   "dates": "Submitted 20 May, 2026; \n      originally announced May 2026.",
+   "comment": "Comments:\n      14 pages, Machine Learning",
+   "journal": ""
+  },
+  {
+   "id": "2604.18529",
+   "title": "HybridGen: Efficient LLM Generative Inference via CPU-GPU Hybrid Computing",
+   "authors": "Authors:\n      \n      Mao Lin, \n      \n      Xi Wang, \n      \n      Guilherme Cox, \n      \n      Dong Li, \n      \n      Hyeran Jeon",
+   "abs": "As modern LLMs",
+   "dates": "Submitted 20 April, 2026; \n      originally announced April 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2603.08739",
+   "title": "Adaptive Multi-Objective Tiered Storage Configuration for KV Cache in LLM Service",
+   "authors": "Authors:\n      \n      Xianzhe Zheng, \n      \n      Zhengheng Wang, \n      \n      Ruiyan Ma, \n      \n      Rui Wang, \n      \n      Xiyu Wang, \n      \n      Rui Chen, \n      \n      Peng Zhang, \n      \n ",
+   "abs": "The memory-for-computation paradigm of KV",
+   "dates": "Submitted 25 February, 2026; \n      originally announced March 2026.",
+   "comment": "",
+   "journal": ""
+  }
+ ],
+ "context caching LLM serving system": [
+  {
+   "id": "2609.13692",
+   "title": "Prefix Sharing Is a Sorting Problem",
+   "authors": "Authors:\n      \n      Rong He",
+   "abs": "LLM",
+   "dates": "Submitted 12 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      15 pages. Code: https://github.com/Darrenus/prefix-sharing-is-sorting",
+   "journal": ""
+  },
+  {
+   "id": "2609.10266",
+   "title": "KVShareArena: KV-Cache Reuse Across Contexts and Model Checkpoints",
+   "authors": "Authors:\n      \n      Xi Shi, \n      \n      Qian Lou",
+   "abs": "LLM",
+   "dates": "Submitted 9 September, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2609.05764",
+   "title": "Interface-Aware KV Cache Quantization for Dense On-Chip NVM in Long-Context LLM Decoding",
+   "authors": "Authors:\n      \n      Jiahao Zheng, \n      \n      Yifan Qin, \n      \n      Xiaobo Sharon Hu, \n      \n      Yiyu Shi",
+   "abs": "The key-value (KV) cache",
+   "dates": "Submitted 4 September, 2026; \n      originally announced September 2026.",
+   "comment": "Comments:\n      IEEE/ACM International Conference on Computer-Aided Design (ICCAD 2026)",
+   "journal": ""
+  },
+  {
+   "id": "2609.04774",
+   "title": "Adaptive Context Parallelism for Production LLM Serving",
+   "authors": "Authors:\n      \n      Jiarui Guo, \n      \n      Rongle Wang, \n      \n      Peijun Huang, \n      \n      Zongwei Lv, \n      \n      Ziqing Wang, \n      \n      Kan Liu, \n      \n      Tao Lan, \n      \n    ",
+   "abs": "As LLM",
+   "dates": "Submitted 4 September, 2026; \n      originally announced September 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.30963",
+   "title": "A Universal Context-Reuse Layer for Cross-Model KV Sharing",
+   "authors": "Authors:\n      \n      Yi Li, \n      \n      Dongming Jiang, \n      \n      Yi Zhao, \n      \n      Bingzhe Li",
+   "abs": "Modern large language model (LLM",
+   "dates": "Submitted 31 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.15127",
+   "title": "From LLM Inference to Agentic Workloads: Characterization and Implications for Serving Systems",
+   "authors": "Authors:\n      \n      Chaokun Chang, \n      \n      Yukun Zhou, \n      \n      Kaihua Fu, \n      \n      Dakai An, \n      \n      Tianyu Feng, \n      \n      Hanfeng Lu, \n      \n      Sheng Yao, \n      \n  ",
+   "abs": "Agentic applications are shifting AI serving",
+   "dates": "Submitted 15 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.14624",
+   "title": "Learning Agent Execution for KV-Cache Management in Agentic Serving",
+   "authors": "Authors:\n      \n      Rui Zhang, \n      \n      Chaeeun Kim, \n      \n      Shaoting Feng, \n      \n      Kuntai Du, \n      \n      Yuhan Liu, \n      \n      Yi Zhong, \n      \n      Cheng-Wei Ching, \n     ",
+   "abs": "Multi-agent LLM",
+   "dates": "Submitted 16 July, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.14561",
+   "title": "A Biophysically-Inspired Feedback Controller for Multi-Class Cache Fairness",
+   "authors": "Authors:\n      \n      Matt R. Flax",
+   "abs": "Cache",
+   "dates": "Submitted 26 May, 2026; \n      originally announced August 2026.",
+   "comment": "Comments:\n      24 pages, 1 figure",
+   "journal": ""
+  },
+  {
+   "id": "2608.08097",
+   "title": "OasisKV: Scaling In-Decode KV Cache Beyond HBM with Lookahead Sparse Prefetching",
+   "authors": "Authors:\n      \n      Can Xiao, \n      \n      Sukmin Cho, \n      \n      Junbong We, \n      \n      Zhixiong Niu, \n      \n      Jianyi Cheng, \n      \n      Yiren Zhao, \n      \n      Youngjin Kwon, \n    ",
+   "abs": "Large language model (LLM",
+   "dates": "Submitted 8 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.07009",
+   "title": "HiSparse: Scaling Sparse-Attention Decoding with Hierarchical KV Cache Management",
+   "authors": "Authors:\n      \n      Zhiqiang Xie, \n      \n      Zhangheng Huang, \n      \n      Tingwei Huang, \n      \n      Ziyi Xu, \n      \n      Ruiyang Ma, \n      \n      Christos Kozyrakis",
+   "abs": "Top-k sparse attention makes long-context",
+   "dates": "Submitted 7 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.03555",
+   "title": "Heterogeneous LLM Serving with General-Purpose Processing-Near-Memory for Retrieval-Based Sparse Attention",
+   "authors": "Authors:\n      \n      Hyungkyu Ham, \n      \n      Junhyeong Bae, \n      \n      Seungheon Lee, \n      \n      Myeongjae Jeon, \n      \n      Gwangsun Kim",
+   "abs": "This paper presents a heterogeneous decode-phase serving",
+   "dates": "Submitted 4 August, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2608.01651",
+   "title": "Bole: Efficient Tree Speculation for Hybrid-Attention Language Models",
+   "authors": "Authors:\n      \n      Li Wang, \n      \n      Yi Su, \n      \n      Xiabao Wu, \n      \n      Chiran You, \n      \n      Yongchao Liu, \n      \n      Zhan Qiu, \n      \n      Juelu Zhang, \n      \n      Jiaj",
+   "abs": "Hybrid-attention large language models combine full attention with recurrent linear attention to reduce long-context",
+   "dates": "Submitted 2 August, 2026; \n      originally announced August 2026.",
+   "comment": "Comments:\n      14 pages, 12 figures, 7 tables",
+   "journal": ""
+  },
+  {
+   "id": "2608.00101",
+   "title": "Agentic Coding in the Wild: Characterizing GitHub Copilot Traces at Production Scale",
+   "authors": "Authors:\n      \n      Banruo Liu, \n      \n      Haoran Qiu, \n      \n      Íñigo Goiri, \n      \n      Rodrigo Fonseca, \n      \n      Ricardo Bianchini, \n      \n      Esha Choukse",
+   "abs": "AI coding agents like GitHub Copilot, Claude Code, and Codex interleave multi-step LLM",
+   "dates": "Submitted 30 July, 2026; \n      originally announced August 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.27090",
+   "title": "InferScale: GPU-Native KV Injection for Personalized LLM Serving",
+   "authors": "Authors:\n      \n      Peter Li, \n      \n      Prashant Pandey",
+   "abs": "Large language models are increasingly deployed with persistent personalized context",
+   "dates": "Submitted 29 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.26491",
+   "title": "LLMET: Enabling Cross-Layer Evaluation of Emerging M3D Memories for Energy-Efficient LLM Serving",
+   "authors": "Authors:\n      \n      Ming-Yen Lee, \n      \n      Hanchen Yang, \n      \n      Faaiq Waqar, \n      \n      Harsono Simka, \n      \n      Tushar Krishna, \n      \n      Muhammed Ahosan Ul Karim, \n      \n  ",
+   "abs": "The energy consumption of Large Language Model (LLM",
+   "dates": "Submitted 29 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      6 pages",
+   "journal": ""
+  },
+  {
+   "id": "2607.26475",
+   "title": "DualDecoder: Accelerate Long Context LLM Inference by Predictive Prefetch",
+   "authors": "Authors:\n      \n      Zuning Liang, \n      \n      Zhiyi Yao, \n      \n      Qi Chen, \n      \n      Yuedong Xu, \n      \n      Hao Dai, \n      \n      Zhiqiang Ding, \n      \n      Tongkai Yang, \n      \n  ",
+   "abs": "Long-context",
+   "dates": "Submitted 29 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.20507",
+   "title": "CacheSpec: Finding the Sweet Spot for Small Models in Large Language Models",
+   "authors": "Authors:\n      \n      Jingquan Chen, \n      \n      Jie Feng, \n      \n      Jinghua Piao, \n      \n      Shaogang Hu, \n      \n      Yong Li",
+   "abs": "Large language models (LLMs",
+   "dates": "Submitted 22 August, 2026; v1 submitted 3 July, 2026;\n      originally announced July 2026.",
+   "comment": "Comments:\n      Accepted by EMNLP 2026, codes via https://github.com/chenjqQAQ/CacheSpec",
+   "journal": ""
+  },
+  {
+   "id": "2607.10987",
+   "title": "[AAFLOW+] Stateful Operator Abstraction with Zero-Copy Distributed KV Cache Orchestration for Multi-Agent Workflows",
+   "authors": "Authors:\n      \n      Arup Kumar Sarker, \n      \n      Alexander James Halpern, \n      \n      Mills Staylor, \n      \n      Aymen Alsaadi, \n      \n      Gregor von Laszewski, \n      \n      Yue Cheng, \n",
+   "abs": "Multi-agent LLM",
+   "dates": "Submitted 12 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      21 pages, 10 Figures, 12 Tables",
+   "journal": ""
+  },
+  {
+   "id": "2607.01831",
+   "title": "Lynx: Progressive Speculative Quantization for accelerating KV Transfer in Long-Context Inference",
+   "authors": "Authors:\n      \n      Wenchen Han, \n      \n      Gingfung Matthew Yeung, \n      \n      Marco Barletta, \n      \n      William Toner, \n      \n      Amory Hoste, \n      \n      Adam Barker",
+   "abs": "Long-context",
+   "dates": "Submitted 2 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      15 pages, 12 figures. This manuscript was originally submitted to SIGCOMM '26 in February 2026",
+   "journal": ""
+  },
+  {
+   "id": "2607.01617",
+   "title": "3DLS: A 3D Logic-Stacked Architecture for Disaggregated LLM Serving",
+   "authors": "Authors:\n      \n      Jaehun Lee, \n      \n      In-Jun Jung, \n      \n      Joo-Young Kim",
+   "abs": "Large language model (LLM",
+   "dates": "Submitted 1 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      Accepted to IEEE Computer Architecture Letters (CAL), 2026",
+   "journal": ""
+  },
+  {
+   "id": "2607.01299",
+   "title": "HYPIC: Accelerating Hybrid-Attention LLM Serving with Position-Independent Caching",
+   "authors": "Authors:\n      \n      Yifei Liu, \n      \n      Juntong Wu, \n      \n      Yang Liu, \n      \n      Junhao Hu, \n      \n      Minghao Li, \n      \n      Xiaoxu Chen, \n      \n      Weihang Chen",
+   "abs": "In retrieval-augmented generation and agentic LLM",
+   "dates": "Submitted 12 July, 2026; v1 submitted 1 July, 2026;\n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.00760",
+   "title": "MosaicKV: Serving Long-Context LLM with Dynamic Two-D KV Cache Compression",
+   "authors": "Authors:\n      \n      Sheng Qiang, \n      \n      Ruiwei Chen, \n      \n      Yinpeng Wu, \n      \n      Jinyu Gu, \n      \n      Zhichao Hua, \n      \n      Yubin Xia, \n      \n      Binyu Zang, \n      \n  ",
+   "abs": "Long-context",
+   "dates": "Submitted 1 July, 2026; \n      originally announced July 2026.",
+   "comment": "Comments:\n      15 pages, 10 figures",
+   "journal": ""
+  },
+  {
+   "id": "2607.00151",
+   "title": "SmoothAgent: Efficient Long-Horizon LLM-Based Agent Serving with Lookahead Context Engineering",
+   "authors": "Authors:\n      \n      Zaifeng Pan, \n      \n      Qianxu Wang, \n      \n      Zhengding Hu, \n      \n      Chang Chen, \n      \n      Yue Guan, \n      \n      Yanbo Zhou, \n      \n      Steven Swanson, \n   ",
+   "abs": "LLM",
+   "dates": "Submitted 30 June, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.30560",
+   "title": "TraceLab: Characterizing Coding Agent Workloads for LLM Serving",
+   "authors": "Authors:\n      \n      Kan Zhu, \n      \n      Mathew Jacob, \n      \n      Chenxi Ma, \n      \n      Yi Pan, \n      \n      Stephanie Wang, \n      \n      Arvind Krishnamurthy, \n      \n      Baris Kasikci",
+   "abs": "Coding agents are rapidly becoming a major application of agentic LLMs",
+   "dates": "Submitted 30 June, 2026; v1 submitted 29 June, 2026;\n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.26666",
+   "title": "PersistentKV: Page-Aware Decode Scheduling for Long-Context LLM Serving on Commodity GPUs",
+   "authors": "Authors:\n      \n      Muhammad Ahmed",
+   "abs": "Autoregressive large language model (LLM",
+   "dates": "Submitted 1 July, 2026; v1 submitted 25 June, 2026;\n      originally announced June 2026.",
+   "comment": "Comments:\n      7 pages, 3 tables; workshop paper",
+   "journal": ""
+  },
+  {
+   "id": "2606.24506",
+   "title": "CrossPool: Efficient Multi-LLM Serving for Cold MoE Models through KV-Cache and Weight Disaggregation",
+   "authors": "Authors:\n      \n      Zhuoren Ye, \n      \n      Tianyu Wo, \n      \n      Dinghao Xue, \n      \n      Mingming Zhang, \n      \n      Yuchen Teng, \n      \n      Chunming Hu, \n      \n      Renyu Yang",
+   "abs": "Emerging LLM",
+   "dates": "Submitted 26 June, 2026; v1 submitted 23 June, 2026;\n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.21633",
+   "title": "HERALD: High-Throughput Block Diffusion LLM Serving via CPU-GPU Cooperative KV Cache Retrieval",
+   "authors": "Authors:\n      \n      Omin Kwon, \n      \n      Doyeon Kim, \n      \n      Jongseok Park, \n      \n      Seung Yul Lee, \n      \n      Ion Stoica, \n      \n      Jae W. Lee",
+   "abs": "The KV cache",
+   "dates": "Submitted 3 August, 2026; v1 submitted 19 June, 2026;\n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.19746",
+   "title": "SAC: Disaggregated KV Cache System for Sparse Attention LLMs with CXL",
+   "authors": "Authors:\n      \n      Ruiyang Ma, \n      \n      Teng Ma, \n      \n      Junru Li, \n      \n      Hantian Zha, \n      \n      Xuchun Shang, \n      \n      Qingda Hu, \n      \n      Zheng Liu, \n      \n      ",
+   "abs": "The scaling of LLMs",
+   "dates": "Submitted 17 June, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.04302",
+   "title": "LazyAttention: Efficient Retrieval-Augmented Generation with Deferred Positional Encoding",
+   "authors": "Authors:\n      \n      Haocheng Xia, \n      \n      Mihir Pamnani, \n      \n      Hanxi Fang, \n      \n      Supawit Chockchowwat, \n      \n      Yongjoo Park",
+   "abs": "Key-value (KV) caching",
+   "dates": "Submitted 2 June, 2026; \n      originally announced June 2026.",
+   "comment": "Comments:\n      ICML 2026",
+   "journal": ""
+  },
+  {
+   "id": "2606.02964",
+   "title": "Multi-Segment Attention: Enabling Efficient KV-Cache Management for Faster Large Language Model Serving",
+   "authors": "Authors:\n      \n      Chunan Shi, \n      \n      Yilei Chen, \n      \n      Yilin Chen, \n      \n      Xupeng Miao, \n      \n      Bin Cui",
+   "abs": "Large Language Model (LLM",
+   "dates": "Submitted 1 June, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.00946",
+   "title": "Lodestar: An Online-Learning LLM Inference Router",
+   "authors": "Authors:\n      \n      Gangmuk Lim, \n      \n      Wanyu Zhao, \n      \n      Brighten Godfrey, \n      \n      Jiaxin Shan, \n      \n      Le Xu, \n      \n      Liguang Xie",
+   "abs": "Efficiently serving",
+   "dates": "Submitted 30 May, 2026; \n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.30571",
+   "title": "Memory-Bound but Not Bandwidth-Limited: The Physical AI Inference Gap in Batch-1 LLM Decode",
+   "authors": "Authors:\n      \n      Josef Chen",
+   "abs": "Physical AI systems",
+   "dates": "Submitted 28 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.24022",
+   "title": "Adaptive KV Cache Reuse for Fast Long-Context LLM Serving",
+   "authors": "Authors:\n      \n      Fei li, \n      \n      Song Liu, \n      \n      Yan Liu, \n      \n      Jinhua Cui, \n      \n      Shiqiang Nie, \n      \n      Jinyu Wang, \n      \n      Weiguo Wu",
+   "abs": "In long-context",
+   "dates": "Submitted 20 May, 2026; \n      originally announced May 2026.",
+   "comment": "Comments:\n      14 pages, Machine Learning",
+   "journal": ""
+  },
+  {
+   "id": "2605.22850",
+   "title": "ObjectCache: Layerwise Object-Storage Retrieval for KV Cache Reuse",
+   "authors": "Authors:\n      \n      Yu Zhu, \n      \n      Aditya Dhakal, \n      \n      Yunming Xiao, \n      \n      Dejan Milojicic, \n      \n      Gustavo Alonso",
+   "abs": "Prefix KV caching",
+   "dates": "Submitted 16 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.17757",
+   "title": "OSCAR: Offline Spectral Covariance-Aware Rotation for 2-bit KV Cache Quantization",
+   "authors": "Authors:\n      \n      Zhongzhu Zhou, \n      \n      Donglin Zhuang, \n      \n      Jisen Li, \n      \n      Ziyan Chen, \n      \n      Shuaiwen Leon Song, \n      \n      Ben Athiwaratkun, \n      \n      Xia",
+   "abs": "INT2 KV-cache",
+   "dates": "Submitted 17 May, 2026; \n      originally announced May 2026.",
+   "comment": "Comments:\n      35 pages, 10 figures",
+   "journal": ""
+  },
+  {
+   "id": "2605.17613",
+   "title": "VeriCache: Turning Lossy KV Cache into Lossless LLM Inference",
+   "authors": "Authors:\n      \n      Jiayi Yao, \n      \n      Samuel Shen, \n      \n      Kuntai Du, \n      \n      Shaoting Feng, \n      \n      Dongjoo Seo, \n      \n      Rui Zhang, \n      \n      Yuyang Huang, \n     ",
+   "abs": "The large size of the KV cache",
+   "dates": "Submitted 17 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.17170",
+   "title": "TriAxialKV: Toward Extreme Low-Precision KV-Cache Quantization for Agentic Inference Tasks",
+   "authors": "Authors:\n      \n      Hanzhang Shen, \n      \n      Haoran Wu, \n      \n      Yiren Zhao, \n      \n      Robert Mullins",
+   "abs": "Agentic workloads have emerged as a major workload for LLM",
+   "dates": "Submitted 16 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.13839",
+   "title": "Good Agentic Friends Do Not Just Give Verbal Advice: They Can Update Your Weights",
+   "authors": "Authors:\n      \n      Wenrui Bao, \n      \n      Huan Wang, \n      \n      Jian Wang, \n      \n      Zhangyang Wang, \n      \n      Kai Wang, \n      \n      Yuzhang Shang",
+   "abs": "Multi-agent LLM",
+   "dates": "Submitted 13 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.11232",
+   "title": "Rethinking LLMOps for Fraud and AML: Building a Compliance-Grade LLM Serving Stack",
+   "authors": "Authors:\n      \n      Prathamesh Vasudeo Naik, \n      \n      Naresh Dintakurthi, \n      \n      Yue Wang",
+   "abs": "Fraud detection and anti-money-laundering (AML) compliance are high-value domains for large language models (LLMs",
+   "dates": "Submitted 11 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2605.07443",
+   "title": "RcLLM: Accelerating Generative Recommendation via Beyond-Prefix KV Caching",
+   "authors": "Authors:\n      \n      Zhan Zhao, \n      \n      Yuxin Wang, \n      \n      Amelie Chi Zhou",
+   "abs": "Large Language Models (LLMs",
+   "dates": "Submitted 8 May, 2026; \n      originally announced May 2026.",
+   "comment": "Comments:\n      Accepted by ICDCS 2026",
+   "journal": ""
+  },
+  {
+   "id": "2605.06472",
+   "title": "Efficient Serving for Dynamic Agent Workflows with Prediction-based KV-Cache Management",
+   "authors": "Authors:\n      \n      Haoyu Zheng, \n      \n      Fangcheng Fu, \n      \n      Jia Wu, \n      \n      Binhang Yuan, \n      \n      Yongqiang Zhang, \n      \n      Hao Wang, \n      \n      Yuanyuan Zhu, \n   ",
+   "abs": "LLM",
+   "dates": "Submitted 7 May, 2026; \n      originally announced May 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2604.26837",
+   "title": "Unifying Sparse Attention with Hierarchical Memory for Scalable Long-Context LLM Serving",
+   "authors": "Authors:\n      \n      Zihan Zhao, \n      \n      Baotong Lu, \n      \n      Shengjie Lin, \n      \n      Yizou Chen, \n      \n      Jing Liu, \n      \n      Yanqi Zhang, \n      \n      Ziming Miao, \n      \n",
+   "abs": "Long-context",
+   "dates": "Submitted 29 April, 2026; \n      originally announced April 2026.",
+   "comment": "Comments:\n      15 pages",
+   "journal": ""
+  },
+  {
+   "id": "2604.25899",
+   "title": "Pythia: Exploiting Workflow Predictability for Efficient Agent-Native LLM Serving",
+   "authors": "Authors:\n      \n      Shan Yu, \n      \n      Junyi Shu, \n      \n      Yuanjiang Ni, \n      \n      Kun Qian, \n      \n      Xue Li, \n      \n      Yang Wang, \n      \n      Jinyuan Zhang, \n      \n      Zi",
+   "abs": "As LLM",
+   "dates": "Submitted 14 May, 2026; v1 submitted 28 April, 2026;\n      originally announced April 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2604.16583",
+   "title": "POLAR: Online Learning for LoRA Adapter Caching and Routing in Edge LLM Serving",
+   "authors": "Authors:\n      \n      Shaoang Li, \n      \n      Jian Li",
+   "abs": "Edge deployment of large language models (LLMs",
+   "dates": "Submitted 17 April, 2026; \n      originally announced April 2026.",
+   "comment": "Comments:\n      15pages",
+   "journal": ""
+  },
+  {
+   "id": "2604.16395",
+   "title": "Stream2LLM: Overlap Context Streaming and Prefill for Reduced Time-to-First-Token (TTFT)",
+   "authors": "Authors:\n      \n      Rajveer Bachkaniwala, \n      \n      Chengqi Luo, \n      \n      Richard So, \n      \n      Divya Mahajan, \n      \n      Kexin Rong",
+   "abs": "Context",
+   "dates": "Submitted 17 May, 2026; v1 submitted 29 March, 2026;\n      originally announced April 2026.",
+   "comment": "Comments:\n      Accepted to MLSys 2026. Minor formatting fixes",
+   "journal": ""
+  },
+  {
+   "id": "2604.15039",
+   "title": "Prefill-as-a-Service: KVCache of Next-Generation Models Could Go Cross-Datacenter",
+   "authors": "Authors:\n      \n      Ruoyu Qin, \n      \n      Weiran He, \n      \n      Yaoyu Wang, \n      \n      Zheming Li, \n      \n      Xinran Xu, \n      \n      Yongwei Wu, \n      \n      Weimin Zheng, \n      \n   ",
+   "abs": "Prefill-decode (PD) disaggregation has become the standard architecture for large-scale LLM",
+   "dates": "Submitted 21 April, 2026; v1 submitted 16 April, 2026;\n      originally announced April 2026.",
+   "comment": "Comments:\n      16 pages, 5 figures, 6 tables",
+   "journal": ""
+  },
+  {
+   "id": "2604.06370",
+   "title": "ForkKV: Scaling Multi-LoRA Agent Serving via Copy-on-Write Disaggregated KV Cache",
+   "authors": "Authors:\n      \n      Shao Wang, \n      \n      Rui Ren, \n      \n      Lin Gui",
+   "abs": "The serving",
+   "dates": "Submitted 7 April, 2026; \n      originally announced April 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2604.03143",
+   "title": "TokenDance: Scaling Multi-Agent LLM Serving via Collective KV Cache Sharing",
+   "authors": "Authors:\n      \n      Zhuohang Bian, \n      \n      Feiyang Wu, \n      \n      Chengrui Zhang, \n      \n      Hangcheng Dong, \n      \n      Yun Liang, \n      \n      Youwei Zhuo",
+   "abs": "Multi-agent LLM",
+   "dates": "Submitted 3 April, 2026; \n      originally announced April 2026.",
+   "comment": "Comments:\n      14 pages, 14 figures, arXiv:submit/7438760 [cs.DC], preprint under review",
+   "journal": ""
+  },
+  {
+   "id": "2603.23049",
+   "title": "PCR: A Prefetch-Enhanced Cache Reuse System for Low-Latency RAG Serving",
+   "authors": "Authors:\n      \n      Wenfeng Wang, \n      \n      Xiaofeng Hou, \n      \n      Peng Tang, \n      \n      Hengyi Zhou, \n      \n      Jing Wang, \n      \n      Xinkai Wang, \n      \n      Chao Li, \n      \n ",
+   "abs": "Retrieval-Augmented Generation (RAG) systems",
+   "dates": "Submitted 24 March, 2026; \n      originally announced March 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2603.22774",
+   "title": "Characterizing CPU-Induced Slowdowns in Multi-GPU LLM Inference",
+   "authors": "Authors:\n      \n      Euijun Chung, \n      \n      Yuxiao Jia, \n      \n      Aaron Jezghani, \n      \n      Hyesoon Kim",
+   "abs": "Large-scale machine learning workloads increasingly rely on multi-GPU systems",
+   "dates": "Submitted 27 August, 2026; v1 submitted 24 March, 2026;\n      originally announced March 2026.",
+   "comment": "Comments:\n      Accepted to IISWC 2026. Camera-ready version with updated experiments and discussion on agentic LLM workloads",
+   "journal": ""
+  }
+ ],
+ "KV cache management survey": [
+  {
+   "id": "2607.08032",
+   "title": "What to Keep, What to Forget: A Rate--Distortion View of Memory Compaction in LLMs and Agents",
+   "authors": "Authors:\n      \n      Ashwin Gerard Colaco, \n      \n      Nada Lahjouji",
+   "abs": "Large language models, and the agents built on them, spend an ever-growing share of their compute and memory on remembering: caching",
+   "dates": "Submitted 8 July, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2607.02574",
+   "title": "From Tensor Buffer to Distributed Memory Hierarchy: A Survey of KV Cache Management for LLM Serving",
+   "authors": "Authors:\n      \n      Jie Li, \n      \n      Tongyang Wang, \n      \n      Yong Chen",
+   "abs": "The key-value (KV",
+   "dates": "Submitted 30 June, 2026; \n      originally announced July 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2606.00288",
+   "title": "Model-Native Computing Architecture: Envisioning Future System Architecture Through the Lens of Computer Architecture",
+   "authors": "Authors:\n      \n      Hai Lin, \n      \n      Hoilam Pao, \n      \n      Shaoxiong Zhan, \n      \n      Hai-Tao Zheng",
+   "abs": "Large language models are undergoing a transition from model technology to system technology. Engineering challenges like cache",
+   "dates": "Submitted 24 June, 2026; v1 submitted 29 May, 2026;\n      originally announced June 2026.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2512.23914",
+   "title": "Hardware Acceleration for Neural Networks: A Comprehensive Survey",
+   "authors": "Authors:\n      \n      Bin Xu, \n      \n      Ayan Banerjee, \n      \n      Sandeep Gupta",
+   "abs": "Neural networks have become dominant computational workloads across cloud and edge platforms, but their rapid growth in model size and deployment diversity has exposed hardware bottlenecks increasingly dominated by memory movement, communication, and irregular operators rather than peak arithmetic throughput. This survey",
+   "dates": "Submitted 15 January, 2026; v1 submitted 29 December, 2025;\n      originally announced December 2025.",
+   "comment": "",
+   "journal": ""
+  },
+  {
+   "id": "2505.18458",
+   "title": "A Survey of LLM $\\times$ DATA",
+   "authors": "Authors:\n      \n      Xuanhe Zhou, \n      \n      Junxuan He, \n      \n      Wei Zhou, \n      \n      Haodong Chen, \n      \n      Zirui Tang, \n      \n      Haoyu Zhao, \n      \n      Xin Tong, \n      \n   ",
+   "abs": "The integration of large language model (LLM) and data management",
+   "dates": "Submitted 1 June, 2025; v1 submitted 23 May, 2025;\n      originally announced May 2025.",
+   "comment": "Comments:\n      Please refer to the paper list at: https://github.com/weAIDB/awesome-data-llm",
+   "journal": ""
+  },
+  {
+   "id": "2412.19442",
+   "title": "A Survey on Large Language Model Acceleration based on KV Cache Management",
+   "authors": "Authors:\n      \n      Haoyang Li, \n      \n      Yiming Li, \n      \n      Anxin Tian, \n      \n      Tianhao Tang, \n      \n      Zhanchao Xu, \n      \n      Xuejia Chen, \n      \n      Nicole Hu, \n      \n",
+   "abs": "Large Language Models (LLMs) have revolutionized a wide range of domains such as natural language processing, computer vision, and multi-modal tasks due to their ability to comprehend context and perform logical reasoning. However, the computational and memory demands of LLMs, particularly during inference, pose significant challenges when scaling them to real-world, long-context, and real-time applications. Key-Value (KV",
+   "dates": "Submitted 30 July, 2025; v1 submitted 26 December, 2024;\n      originally announced December 2024.",
+   "comment": "Comments:\n      Accepted to TMLR 2025. The revised version incorporates more papers and has been further polished",
+   "journal": ""
+  }
+ ]
+}
