@@ -182,3 +182,55 @@ git config --list | grep user   # 提交身份
 git config user.name "你的名字"     # 修改身份
 git config user.email "you@example.com"
 ```
+
+---
+
+## 10. 推送到自己的 GitHub 仓库（本工作区）
+
+**远程地址**：`git@github.com:sunlei1992/vllm-learning.git`（本工作区根目录就是这个仓库）
+
+> 关键：**github.com 的 HTTPS / git 协议在本机不通，但 SSH 可用**（密钥已配好，认证 `sunlei1992`）。
+> 因此 remote 必须用 SSH 形式（`git@github.com:...`），**不能**用 `https://github.com/...`。
+
+### 日常推送三步
+
+```bash
+cd ~/code/dsh/vllm
+
+# 若 ssh 报 known_hosts 无法写入（沙箱/权限限制），先设这一行：
+export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+git add -A
+git commit -m "这次改了什么"
+git push
+```
+
+### 首次配置（已完成，备忘）
+
+```bash
+git init -b main
+git config user.name "sunlei1992"
+git config user.email "sunlei1992@users.noreply.github.com"   # noreply 邮箱才会关联 GitHub 账号
+git remote add origin git@github.com:sunlei1992/vllm-learning.git
+git push -u origin main
+```
+
+### 哪些内容不入库（根目录 `.gitignore`）
+
+| 排除项 | 原因 |
+|---|---|
+| `vllm-src/`、`vllm-ascend-src/` | 上游源码（765M / 259M），随时可重新拉取 |
+| `.venv/`、`.uv-cache/`、`.hf-cache/`、`.vllm-cache/`、`.torchinductor-cache/` | 环境与缓存，可重新生成 |
+| `models/` | 模型 config/tokenizer，可用 `dl_model.sh` 重新下载 |
+| `kvcache-research/raw/`、`kv_research/raw/`、`kv_research/cache/` | 抓取的原始数据（约 450M），笔记中留有来源链接 |
+| `anki/`、`tmp/` | 无关应用 / 临时目录 |
+
+> 入库规模约 **116 文件 / 3.2 MB**（笔记 + 补丁 + 脚本）。
+
+### 状态检查
+
+```bash
+git status -sb                 # 本地 vs 远程
+git log --oneline -5           # 最近提交
+git ls-remote --heads origin   # 远程分支指向的 commit（验证推送成功）
+```
