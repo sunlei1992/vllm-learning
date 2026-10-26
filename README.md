@@ -17,7 +17,7 @@
 | `git使用指南.md` | git 用法 + **国内网络方案**（github.com 直连不通 → gh-proxy 代理、gitee 镜像、SSH 可用） |
 | `git考古方法.md` | 用 git 历史考古代码演进的方法（blame / log -p / worktree） |
 | `vscode调试指南.md` | 断点调试配置（`VLLM_ENABLE_V1_MULTIPROCESSING=0` 进程内调试）+ 断点地图 |
-| `vllm架构笔记/` | 架构学习路线图、笔记模板、模块笔记（`00-模型加载与dummy机制`、`03-KV Cache 与注意力`、`实验A-截断加载GLM52`） |
+| `vllm架构笔记/` | 架构学习路线图、笔记模板、模块笔记（`00-模型加载与dummy机制`、`03-KV Cache 与注意力`、`实验A-截断加载GLM52`、`实验B-simulate-forward仿真环境`） |
 | `ascend对照笔记/` | 主仓 vs **vllm-ascend** 对照：硬件插件接入机制、PCP 对照、MLA 的 NPU vs CPU 实现对照 |
 | `PCP_dir/` | PCP（Prefill Context Parallel）特性相关代码文档索引 |
 | `开源贡献实战记录.md` | 完整贡献历程：本地定位 CPU MLA bug → 发现社区已有 PR → 转向「验证 + 提 issue」的差异化路径 |

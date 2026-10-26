@@ -4,6 +4,7 @@ vllm-ascend-src/
 
 # === Python 虚拟环境与各类缓存（可重新生成）===
 .venv/
+.venv-*/
 .uv-cache/
 .hf-cache/
 .vllm-cache/

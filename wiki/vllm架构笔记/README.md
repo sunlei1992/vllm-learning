@@ -24,6 +24,7 @@
 | 07 | **服务层（可选）** | `vllm serve` 的 OpenAI API 怎么映射到引擎？ | `vllm/entrypoints/openai/api_server.py` | —（进程内模式不支持 serve，看代码即可） |
 | 08 | **进阶特性（可选）** | 前缀缓存、投机解码、多模态各自怎么实现？ | `vllm/v1/core/sched/`、`vllm/spec_decode/` | — |
 | 实验A | **截断加载实验 GLM-5.2** ✅已写 | 大模型怎么本地跑？dense/MoE 两种调试模式怎么配？ | `models/zai-org_GLM-5.2` + 本地补丁 | `debug_glm52.py --moe` |
+| 实验B | **simulate-forward 仿真环境** ✅已写 | 没有 NPU/权重怎么跑真 Scheduler？Triton JIT 为什么让单次请求慢 146s？ | PR #47922 + `tmp/vllm-030`（分支 `sim`） | `vllm/v1/worker/simulated/model_runner.py:44` |
 
 ---
 
