@@ -49,7 +49,7 @@
 - 远程：`origin` = gh-proxy 镜像的上游（只读），`fork` = `sunlei1992/vllm-ascend`（SSH 可写）。
 - 详细笔记：`wiki/ascend对照笔记/003-layerwise-KV-buffer复用.md`
 
-### vLLM 原生 simulator 实验环境（PR #47922）
+### 空跑模式（dry run，PR #47922 simulate-forward）
 
 - 分支 `sim` 在 `tmp/vllm-030`（基于 `a98247ab`），提交 `16ab166382`，已应用 #47922 并跑通。
 - **macOS 原生不可用**：MRV2 依赖 triton，而 triton-cpu 只有 Linux wheel。

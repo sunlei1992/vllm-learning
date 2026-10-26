@@ -1,5 +1,6 @@
 # 实验B — vLLM 原生 simulator（PR #47922）跑通与 60s 停顿排查
 
+> 代号：**空跑**（dry run）——引擎照跑、模型不真算（`--simulate-forward`，PR #47922）
 > 日期：2026-10-26
 > 目标：在本地（Mac M3 / 无 NPU）跑通 vLLM 的 `--simulate-forward`，
 > 让真实 Scheduler/KVCacheManager 在没有模型计算、没有 GPU 的情况下跑起来。
