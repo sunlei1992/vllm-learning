@@ -111,6 +111,11 @@
   （`Ascend config is not initialized`），因为 CPU 平台没人调 `init_ascend_config`。
   VA 自带的 `ShortRequestFirstAsyncScheduler` 还要求 `async_scheduling=True`，而空跑强制 False。
   **结论：空跑=兼容性脚手架，不是 VA 策略评估器；评估策略请用 `sim_policy.py`。**
+- **复刻 VA 短请求优先（T-012）**：`sim_srs.py`（同时到达）/ `sim_srs_arrivals.py`（错峰到达）。
+  同时到达（budget=256）：短请求均值 83.83→25.65（-69%），长请求 +5%，老化**完全不触发**
+  （短请求早已做完，提权时 `short=0`）。错峰 + 竞争：mean TTFT 209.95→147.68（-30%），
+  短请求 -50%，长请求 +4%，makespan 不变。老化阈值是**悬崖**：≤100 全退化为 FCFS，≥120 等价纯 SRS，
+  没有中间态（同批长请求等待时间相同）。
 
 ## 4. 已知环境问题（不是代码 bug）
 

@@ -170,6 +170,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 时间模型（TTFT/TPOT） | ✅（`sim_timing.py`，初版、未标定） |
 | 策略对比（FCFS/短优先/长优先） | ✅（`sim_policy.py`，makespan 不变、延迟重新分配） |
 | 加载 vllm-ascend main（无 NPU） | ✅（`va/run_va_dry_run.sh`，见 [004](../ascend对照笔记/004-在空跑环境加载vllm-ascend.md)） |
+| 复刻 VA 短请求优先策略 | ✅（`sim_srs.py` / `sim_srs_arrivals.py`，短请求 -50%~-69%） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -676,7 +677,80 @@ items.sort(key=lambda r: (r.priority, r.num_prompt_tokens))
 
 改完直接跑，脚本会自动输出对比表。
 
-## 14. 待办
+## 14. 复刻 vllm-ascend 的短请求优先策略（T-012）（2026-10-26 追加）
+
+VA 自带的 `ShortRequestFirstAsyncScheduler` 在空跑里用不了
+（要求 `async_scheduling=True`，空跑强制关；MLA 模型还要求 `AscendConfig`）。
+所以按它的规则在 `sim_policy` 里复刻一份。
+
+### 14.1 策略规则（对齐 VA）
+
+```
+短请求队列：num_prompt_tokens <= threshold
+长请求队列：其余
+老化提权  ：长请求等待 >= long_max_wait_ms 时，排到短请求之前（最老的优先）
+```
+
+脚本：
+
+- `assets/simulate-forward/sim_srs.py` —— 全部请求同时到达
+- `assets/simulate-forward/sim_srs_arrivals.py` —— 错峰到达（长请求先排队，短请求陆续来）
+
+### 14.2 实验 A：同时到达（threshold=100，budget=256）
+
+| 策略 | steps | mean TTFT | p50 | max | 短请求均值 | 长请求均值 | mean TPOT | makespan |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| fcfs | 13 | 90.94 | 83.25 | 171.10 | 83.83 | 102.78 | 14.98 | 205.45 |
+| srs | 13 | **56.50** | **25.65** | 181.10 | **25.65** | 107.92 | 20.39 | 205.45 |
+| srs_aged | 13 | 56.50 | 25.65 | 181.10 | 25.65 | 107.92 | 20.39 | 205.45 |
+
+- 短请求均值 **83.83 → 25.65（-69%）**
+- 长请求均值 102.78 → 107.92（+5%）
+- **老化完全没生效**：短请求在老化阈值到达前就已全部完成，`waiting` 里只剩长请求，
+  此时提权没有意义（调试日志显示触发时 `short=0`）
+
+### 14.3 实验 B：错峰到达 + 资源竞争
+
+4 个长请求（400/800/400/800）先排队，短请求在 step 2 / 4 陆续到达（budget=256）。
+
+| 策略 | steps | mean TTFT | max | 短请求均值 | 长请求均值 | mean TPOT | makespan |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| fcfs | 17 | 209.95 | 262.30 | 262.30 | 157.60 | 11.54 | 303.65 |
+| srs | 17 | **147.68** | 282.30 | **130.95** | 164.40 | 20.74 | 303.65 |
+| srs_aged | 17 | 见下表 | | | | | |
+
+- mean TTFT **209.95 → 147.68（-30%）**
+- 短请求均值 **262.30 → 130.95（-50%）**
+- 长请求 157.60 → 164.40（+4%）
+- makespan 仍相同（303.65）
+
+### 14.4 老化阈值扫描：是个"悬崖"，不是"旋钮"
+
+| `long_max_wait_ms` | 行为 | mean TTFT |
+| :-- | :-- | :-- |
+| 10 / 30 / 40 / 60 / 100 | 全部长请求都已等够 → 退化为 **FCFS** | 209.95 |
+| 120 / 150 / 180 / 200 | 没有长请求等够 → 等价于 **纯 SRS** | 147.68 |
+
+**没有中间态。** 原因：4 个长请求是同一时刻到达的，等待时间几乎一样，
+老化阈值要么全部覆盖、要么全部不覆盖。
+
+要得到渐进效果，需要让长请求**错峰到达**（等待时间不同），只提权最老的那个。
+这属于后续（见想法池）。
+
+### 14.5 结论
+
+| 观察 | 含义 |
+| :-- | :-- |
+| SRS 大幅改善短请求延迟（-50%~-69%） | 符合设计预期 |
+| 长请求只轻微变差（+4%~+5%） | 因为长请求本来就要等 |
+| TPOT 变差（14.98→20.74） | 短请求快速结束后，decode batch 变小 |
+| makespan 完全不变 | 策略只重新分配延迟 |
+| 老化是二值开关 | 同批到达时无法精细调节 |
+
+**对 VA 的意义**：`short_request_first` 在"短请求多、长请求少"的负载下收益明显；
+`long_max_wait_ms` 更适合作为"防饿死开关"而不是"调参旋钮"。
+
+## 15. 待办
 
 1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
@@ -685,12 +759,13 @@ items.sort(key=lambda r: (r.priority, r.num_prompt_tokens))
 5. ✅ 前缀缓存实验（`assets/simulate-forward/sim_prefix.py`）：prefill token 2968→1176，窄预算下步数 4→2
 6. ✅ 时间模型初版（`assets/simulate-forward/sim_timing.py`）：step 定价 + TTFT/TPOT，扫成本比例
 7. ✅ 策略对比框架（`sim_policy.py`）：三种策略、makespan 相同、TTFT 分布差异显著
-8. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
-9. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+8. ✅ 复刻 VA 短请求优先 + 老化（`sim_srs.py` / `sim_srs_arrivals.py`）
+9. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
+10. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 15. 参考
+## 16. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

@@ -26,6 +26,9 @@
 | `sim_prefix.py` | 前缀缓存 off/on 对比 |
 | `sim_timing.py` | 最简时间模型：TTFT / TPOT / makespan |
 | `sim_policy.py` | 策略对比：FCFS / 短请求优先 / 长请求优先 |
+| `sim_srs.py` | 复刻 VA 的 short-request-first（同时到达） |
+| `sim_srs_arrivals.py` | 同上 + 错峰到达 + 老化阈值 |
+| `sim_va_compare.py` | VA 补丁 on/off 对比 |
 | `run_in_container.sh` | 在容器里跑上述脚本（透传 `KV_MB` 等 env） |
 | `DOCKER.md` | 镜像的逐层构建命令与每个坑的解法 |
 
