@@ -20,7 +20,6 @@
 
 | ID | 事项 | 下一步 | 完成标准 |
 | :-- | :-- | :-- | :-- |
-| T-002 | 修 `Signed-off-by` 邮箱（当前有两个 `@`） | 改 git 配置后 rebase 4 个 commit | `git log --format=%B` 里没有双 `@` |
 
 ---
 

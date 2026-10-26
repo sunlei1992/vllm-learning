@@ -38,13 +38,14 @@
 - 已推送到个人 fork：`git@github.com:sunlei1992/vllm-ascend.git`（公开 fork），
   远程分支同名。本地 `main` 已重置回 `origin/main`，保持与上游同步。
 - 提交：
-  1. `9a3821e6b` fix: reload shared buffers on the block-key plane
-  2. `6c0e4b2a2` fix: scope the block-key partial tail by its end token
-  3. `604bc19bd` feat: plan layerwise buffer reuse on the block-key plane
-  4. `fe6de285b` feat: enable shared KV buffers on the Mooncake backend
+  1. `2148087ce` fix: reload shared buffers on the block-key plane
+  2. `b56582775` fix: scope the block-key partial tail by its end token
+  3. `4e2042140` feat: plan layerwise buffer reuse on the block-key plane
+  4. `13d80c908` feat: enable shared KV buffers on the Mooncake backend
 - 验证：`tests/ut/distributed/ascend_store` 761 passed / 12 skipped；ruff 通过。
   **Linux 容器（无 NPU）复跑一致**：761 passed / 12 skipped / 420 subtests in 13.57s（2026-10-26）。
   每个 commit 单独 checkout 也都跑过（142/143/760/761 passed）。
+- **身份**：4 个 commit 的作者/提交者/签名已统一为 `sl <sunclouddev@163.com>`（2026-10-26 修复）。
 - **状态：个人验证阶段，暂不提交社区。** 未做：NPU 实机 e2e、release note fragment
   （`release_notes/fragments/<PR号>.yaml`，社区 PR 时才需要）。
 - 远程：`origin` = gh-proxy 镜像的上游（只读），`fork` = `sunlei1992/vllm-ascend`（SSH 可写）。

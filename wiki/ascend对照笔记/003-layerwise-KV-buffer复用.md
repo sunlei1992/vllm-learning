@@ -81,28 +81,28 @@ layout = get_layerwise_reuse_config(kv_transfer_config)
 
 | commit | 类型 | 改动 |
 | :-- | :-- | :-- |
-| `9a3821e6b` | fix | reload shared buffers on the block-key plane（复用层加载完整 prefix） |
-| `6c0e4b2a2` | fix | partial tail key 按 **end token** 作用域 |
-| `604bc19bd` | feat | planner：在 block-key 上规划复用（scheduler + worker） |
-| `fe6de285b` | feat | backend opt-in：Mooncake 返回复用配置，打开共享 buffer |
+| `2148087ce` | fix | reload shared buffers on the block-key plane（复用层加载完整 prefix） |
+| `b56582775` | fix | partial tail key 按 **end token** 作用域 |
+| `4e2042140` | feat | planner：在 block-key 上规划复用（scheduler + worker） |
+| `13d80c908` | feat | backend opt-in：Mooncake 返回复用配置，打开共享 buffer |
 
 改动规模：
 
 ```
-9a3821e6b  pool_worker.py +23/-3,   test_mooncake_layerwise.py +80
-6c0e4b2a2  pool_worker.py +10/-2,   test_mooncake_layerwise.py +31
-604bc19bd  pool_scheduler.py +51/-34, pool_worker.py +70/-34,
+2148087ce  pool_worker.py +23/-3,   test_mooncake_layerwise.py +80
+b56582775  pool_worker.py +10/-2,   test_mooncake_layerwise.py +31
+4e2042140  pool_scheduler.py +51/-34, pool_worker.py +70/-34,
            test_pool_scheduler.py +62, test_pool_worker.py +78
-fe6de285b  mooncake_layerwise.py +13/-2, test_layerwise_cache_layout.py +35/-…
+13d80c908  mooncake_layerwise.py +13/-2, test_layerwise_cache_layout.py +35/-…
            + 两篇文档
 ```
 
-### 4.1 `9a3821e6b` 复用层必须重载完整 prefix
+### 4.1 `2148087ce` 复用层必须重载完整 prefix
 
 复用 buffer 的内容已被前一层覆盖，所以加载时不能沿用"只取缺失后缀"的优化，
 必须把该请求的**完整 cached prefix** 重新读一遍。
 
-### 4.2 `6c0e4b2a2` partial tail 的作用域
+### 4.2 `b56582775` partial tail 的作用域
 
 partial block 的 key 里带长度：
 
@@ -114,7 +114,7 @@ partial block 的 key 里带长度：
 如果按"起始 token"去匹配，chunked prefill 下会命中错误的块；
 改成按 **end token** 作用域后，读写两侧才对得上。
 
-### 4.3 `604bc19bd` planner：`prefetch_layer_map`
+### 4.3 `4e2042140` planner：`prefetch_layer_map`
 
 ```python
 layout = build_layerwise_reuse_layout(...)   # layerwise_cache_layout.py:249
@@ -125,7 +125,7 @@ has_layer_reuse = bool(prefetch_layer_map)   # :332
   `_apply_layerwise_reuse_layout` / `_remap_layout_to_stage_local`
 - scheduler 侧：`_layerwise_reuse_config`，并在构造 `ReqMeta` 时携带复用布局
 
-### 4.4 `fe6de285b` 后端打开复用
+### 4.4 `13d80c908` 后端打开复用
 
 ```python
 # mooncake_layerwise.py extract_layout_config()
@@ -167,10 +167,10 @@ ruff check 通过
 
 | commit | 结果 |
 | :-- | :-- |
-| `9a3821e6b` | 142 passed |
-| `6c0e4b2a2` | 143 passed |
-| `604bc19bd` | 760 passed |
-| `fe6de285b` | 761 passed |
+| `2148087ce` | 142 passed |
+| `b56582775` | 143 passed |
+| `4e2042140` | 760 passed |
+| `13d80c908` | 761 passed |
 
 新增测试：
 
@@ -192,7 +192,7 @@ ruff check 通过
 | 真实时序 / 死锁 | ⚠️ 双线程 + per-layer Event 的时序只在 mock 下验证 |
 | HBM 实际节省 | ⚠️ 未测量 |
 | token-level parity | ⚠️ 未做 |
-| **Signed-off-by** | ❌ 当前是 `sl <sl@sunclouddev@163.com>`（两个 `@`），上游 PR 前必须修 |
+| **Signed-off-by** | ✅ 已修（2026-10-26）：`sl <sunclouddev@163.com>`，4 个 commit 已改写并 force push |
 
 ## 8. 代码地图
 
@@ -220,5 +220,5 @@ ruff check 通过
 ```
 fork:   git@github.com:sunlei1992/vllm-ascend.git
 branch: feature/mooncake-layerwise-reuse
-head:   fe6de285b
+head:   13d80c908
 ```
