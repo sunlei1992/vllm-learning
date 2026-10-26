@@ -67,6 +67,10 @@
   （step 0–3 长请求吃满 64 token，`running=1 waiting=2`；step 4 预算释放后进来 2 个新请求）。
 - 注意：**换 workload 形状可能触发新的 Triton JIT**（首次 48s，同形状再跑 0.23s），
   实验脚本要么固定 workload，要么先预热。
+- **多轮实验 + KV block 观测**：`tmp/sim_rounds.py`（同一引擎实例连续 generate，
+  记录每步 prefill/chunk/decode 组成、running/waiting、`kv_cache_manager.block_pool` 占用）。
+  实测 3 轮：短请求 2 步、长请求 6 步（4×64+45 分块）、4 并发 2 步；
+  KV block 随 prefill 推进 1→2→3，结束即释放（下一轮从自己的请求数重新开始）。
 
 ## 4. 已知环境问题（不是代码 bug）
 

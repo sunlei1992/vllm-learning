@@ -157,6 +157,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 无需模型权重 / NPU | ✅ |
 | 单次请求 < 1s（热缓存） | ✅ |
 | 注入指定输出 token 序列 | ✅（trace replay） |
+| 逐 step batch 组成 + KV block 占用 | ✅（`tmp/sim_rounds.py`） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -234,16 +235,72 @@ Scheduler.schedule = _schedule
 
 ---
 
-## 8. 待办
+## 8. 多轮实验：batch 组成与 KV block（2026-10-26 追加）
+
+同一个引擎实例连续 `llm.generate()`，每轮 workload 不同，观察调度行为。
+
+脚本：`tmp/sim_rounds.py`；跑法：`./tmp/run_in_container.sh sim_rounds.py`。
+配置：`max_num_batched_tokens=64`、`max_num_seqs=4`、`enable_prefix_caching=False`（便于解释 KV）。
+
+### 8.1 三轮汇总
+
+| 轮次 | workload | steps | 调度 token | KV 峰值 | 耗时 |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| 0 | 2 个短请求 | 2 | 5 | 2 / 145 | 0.219s |
+| 1 | 1 个长请求（~301 token） | 6 | 302 | 3 / 145 | 0.002s |
+| 2 | 4 个短请求 | 2 | 8 | 4 / 145 | 0.002s |
+
+> 第 0 轮的 0.219s 包含一次性预热；之后每轮 2ms 量级。
+
+### 8.2 逐 step 观测
+
+```text
+[round 0] reqs=2 steps=2 tokens=5 peak_kv=2/145 time=0.219s
+  r0: reqs=2 tokens=  3 new=2 prefill=2 chunk=0 decode=0 kv=  2
+  r0: reqs=2 tokens=  2 new=0 prefill=0 chunk=0 decode=2 kv=  2
+
+[round 1] reqs=1 steps=6 tokens=302 peak_kv=3/145 time=0.002s
+  r1: reqs=1 tokens= 64 new=1 prefill=1 chunk=0 decode=0 kv=  1
+  r1: reqs=1 tokens= 64 new=0 prefill=0 chunk=1 decode=0 kv=  1
+  r1: reqs=1 tokens= 64 new=0 prefill=0 chunk=1 decode=0 kv=  2
+  r1: reqs=1 tokens= 64 new=0 prefill=0 chunk=1 decode=0 kv=  2
+  r1: reqs=1 tokens= 45 new=0 prefill=0 chunk=1 decode=0 kv=  3
+  r1: reqs=1 tokens=  1 new=0 prefill=0 chunk=0 decode=1 kv=  3
+
+[round 2] reqs=4 steps=2 tokens=8 peak_kv=4/145 time=0.002s
+  r2: reqs=4 tokens=  4 new=4 prefill=4 chunk=0 decode=0 kv=  4
+  r2: reqs=4 tokens=  4 new=0 prefill=0 chunk=0 decode=4 kv=  4
+```
+
+### 8.3 能读出的东西
+
+| 现象 | 结论 |
+| :-- | :-- |
+| r1 前 5 步全是 prefill/chunk | 长请求被 `max_num_batched_tokens=64` 切成 4×64 + 45 |
+| r1 的 `kv` 从 1 → 2 → 3 | **KV block 随 prefill 推进逐块分配**（block=128 token） |
+| r0/r2 只有 prefill 1 步 + decode 1 步 | 短请求一轮就 prefill 完 |
+| 每轮第一个 step 的 `kv` 等于本轮请求数 | 上一轮结束后 **block 已释放**（round 1 从 1 开始，而不是接着 round 0 的 2） |
+| `waiting` 始终为 0 | `max_num_seqs=4` ≥ 每轮请求数，没有排队 |
+| `preempted` 始终为 0 | KV 只用了 4/145，远未触发抢占 |
+
+### 8.4 这个实验的价值
+
+- 证明**同一引擎实例多轮**可用（模拟服务化场景，而不是每次都重启引擎）
+- `kv_used` 是**真实调度器**算出来的 block 占用，不是估算
+- 想看到抢占/排队，需要把 `kv_cache_memory_bytes` 调小、或让并发超过 `max_num_seqs`
+
+## 9. 待办
 
 1. ✅ 多请求 + step 级观测（`tmp/sim_steps.py`）
-2. 参数扫描（`max_num_batched_tokens` / `max_num_seqs`）看调度差异
-3. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
-4. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+2. ✅ 多轮实验 + KV block 观测（`tmp/sim_rounds.py`）
+3. 参数扫描（`max_num_batched_tokens` / `max_num_seqs`）看调度差异
+4. KV 压力实验：调小 `kv_cache_memory_bytes` 或提高并发，观察排队与抢占
+5. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
+6. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 9. 参考
+## 10. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305
