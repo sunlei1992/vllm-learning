@@ -169,6 +169,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 前缀缓存命中 | ✅（`assets/simulate-forward/sim_prefix.py`，prefill -60%） |
 | 时间模型（TTFT/TPOT） | ✅（`sim_timing.py`，初版、未标定） |
 | 策略对比（FCFS/短优先/长优先） | ✅（`sim_policy.py`，makespan 不变、延迟重新分配） |
+| 加载 vllm-ascend main（无 NPU） | ✅（`va/run_va_dry_run.sh`，见 [004](../ascend对照笔记/004-在空跑环境加载vllm-ascend.md)） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 

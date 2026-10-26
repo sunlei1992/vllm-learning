@@ -100,6 +100,12 @@
 - **策略对比**：`sim_policy.py` 通过重排 `Scheduler.waiting`（deque）实现 FCFS / 短优先 / 长优先，
   不改 vLLM。实测三者 **makespan 完全相同（205.45）**，但 mean TTFT 56.5 / 90.9 / 143.0，
   max TTFT 181 / 171 / 152——**策略只重新分配延迟，不改变总吞吐**。
+- **空跑 + vllm-ascend main**：`assets/simulate-forward/va/run_va_dry_run.sh`。VA main 的
+  vLLM pin 就是 `a98247ab`（与空跑容器一致），因此**可直接加载**。需要 6 个 stub
+  （torch_npu、torch.npu、`_build_info`、triton cann 算子、HCCL、`torch_npu._C`）+ 改
+  `register()`（无 NPU 返回 None）+ 伪造 entry points。实测 4 个 general plugin 全 OK，
+  `patch_engine_core` / `patch_kv_cache_utils` 已生效，空跑输出正确。
+  详见 `wiki/ascend对照笔记/004-在空跑环境加载vllm-ascend.md`。
 
 ## 4. 已知环境问题（不是代码 bug）
 
