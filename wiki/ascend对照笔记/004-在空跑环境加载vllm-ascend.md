@@ -86,11 +86,80 @@ kv_cache_utils.get_kv_cache_groups: vllm_ascend.patch.platform.patch_kv_cache_ut
 改 `register()` → 写 `va_plugins.py`（每个插件 try/except）→ 伪造 entry points →
 验证两个补丁符号 → 跑 `sim_smoke.py`。
 
-## 7. 下一步
+## 7. 实测：VA 补丁能否改变调度行为（T-011）
+
+脚本：`assets/simulate-forward/sim_va_compare.py`（`VA_PATCHES=0/1` 两次运行）。
+
+### 7.1 dense 模型（Qwen3-0.6B）：补丁完全 no-op
+
+| 指标 | patches OFF | patches ON |
+| :-- | :-- | :-- |
+| steps | 13 | 13 |
+| kv_total | 145 | 145 |
+| peak_kv | 18 | 18 |
+| mean TTFT | 90.94 | 90.94 |
+| p95 TTFT | 171.10 | 171.10 |
+| mean TPOT | 14.98 | 14.98 |
+| makespan | 205.45 | 205.45 |
+
+**逐位相同**。原因很直接：这些补丁面向 Mamba / MLA / EPLB / SWA / DP balance，
+dense + 标准 KV 的 workload 一条都不触发。
+
+### 7.2 MLA + MoE 模型（DeepSeek-V2-Lite）：补丁 ON 直接崩
+
+```text
+patches OFF: {"steps": 8, "kv_total": 38835, "peak_kv": 100, "mean_ttft": 148.85, ...}
+
+patches ON:
+  RuntimeError: Ascend config is not initialized.
+                Please call init_ascend_config first.
+```
+
+`init_ascend_config(vllm_config)` 平时由 **NPU 平台**在 `check_and_update_config`
+或 connector/scheduler 构造时调用；CPU 空跑下没有任何人调用它。
+
+### 7.3 为什么不能用它评估 VA 的调度策略
+
+VA 确实自带调度策略：
+
+```
+vllm_ascend/core/short_request_first_scheduler.py   # ShortRequestFirstAsyncScheduler
+vllm_ascend/core/batch_job_aware_scheduler.py       # 批任务感知
+```
+
+但选择条件是：
+
+```python
+# platform.py:1095
+if vllm_config.scheduler_config.async_scheduling:
+    vllm_config.scheduler_config.scheduler_cls = "…ShortRequestFirstAsyncScheduler"
+```
+
+而空跑强制 `async_scheduling = False`：
+
+```python
+# vllm/engine/arg_utils.py
+async_scheduling = False if self.simulate_forward else self.async_scheduling
+```
+
+**所以 VA 的调度策略在空跑里根本不会被选中。**
+
+### 7.4 结论
+
+| 用途 | 适合？ |
+| :-- | :-- |
+| 验证 VA 补丁能加载、不破坏 CPU 路径 | ✅ |
+| 评估 VA 补丁/策略的收益 | ❌（no-op 或崩溃或不被选中） |
+| 评估调度策略本身 | ✅ 用 `sim_policy.py` 自己实现 |
+
+也就是说：**空跑是"兼容性脚手架"，不是"VA 策略评估器"。**
+想评估策略，把它写进 `sim_policy.py` 的排序 key，比硬塞 VA 补丁便宜得多。
+
+## 8. 下一步
 
 1. 用这个环境验证 **VA 的调度类补丁**（如 `patch_balance_schedule`、`patch_engine_core`）
    在 CPU 空跑下是否改变调度行为
-2. 结合 `sim_policy.py` / `sim_timing.py` 量化收益
+2. 结合 `sim_policy.py` / `sim_timing.py` 量化收益（推荐路线）
 3. 把 `patch.worker` 的补丁也纳入（需要模拟一个 `NPUWorker` 形状的 worker，成本更高）
 
 > 注意：这是一套**本地实验脚手架**，不是上游支持的运行方式，不要提交到社区。

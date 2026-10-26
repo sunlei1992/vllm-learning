@@ -32,7 +32,7 @@
 | T-005 | 时间模型加二次项（prefill ≈ tokens²） | simulator | P2 | 在 `sim_timing.py` 加 `c_quad` 项，重跑扫描 | 长 prompt 的 TTFT 不再线性外推 | 实验B 第 12 节 |
 | T-008 | 前缀缓存 × 时间模型组合实验 | simulator | P2 | 命中率 0/25/50/75% 各跑一次，比较 TTFT | 得到"命中率→TTFT"曲线 | 实验B 第 11/12 节 |
 | T-010 | 用 `sim_policy.py` 评估自己的调度策略 | simulator | P1 | 在 `_schedule` 里实现候选策略，跑对比表 | 得到 mean/p95 TTFT + TPOT 的对比结论 | 实验B 第 13 节 |
-| T-011 | 用 VA 空跑验证调度类补丁 | ascend | P1 | 跑 `va/run_va_dry_run.sh`，再对比 `patch_balance_schedule` 等是否改变调度行为 | 至少一个补丁的 patch/不 patch 对比 | 004 笔记 |
+| T-012 | 在 `sim_policy.py` 复刻 VA 的 short-request-first（含 `long_max_wait_ms` 老化） | simulator | P1 | 按 threshold 分流 + 老化提权，与 FCFS 对比 | 得到 VA 策略在 CPU 调度下的近似收益 | 004 第 7 节 |
 
 ---
 
@@ -55,6 +55,7 @@
 | I-001 | PD 分离场景的调度仿真 | 当前模拟器不覆盖 PD，需要另一个数据面 |
 | I-002 | 用模拟器评估 layerwise 复用的调度收益 | 把"复用 vs 不复用"作为策略变量，配合时间模型 |
 | I-003 | 多租户 / 优先级调度实验 | 需要先给模拟器加优先级 workload |
+| I-004 | 在空跑里初始化 `AscendConfig`，让 MLA 模型也能加载 VA 补丁 | 需要构造 VllmConfig 并挂到 CPU 平台的 config 钩子上 |
 
 ---
 
@@ -66,3 +67,4 @@
 | — | layerwise block-key 复用实现（4 commit） | 2026-10-26 | `wiki/ascend对照笔记/003-...md`，分支 `feature/mooncake-layerwise-reuse` |
 | — | 策略对比框架（FCFS/短优先/长优先） | 2026-10-26 | `sim_policy.py`，实验B 第 13 节 |
 | — | 空跑环境加载 vllm-ascend main（无 NPU） | 2026-10-26 | `va/run_va_dry_run.sh`，004 笔记 |
+| T-011 | VA 补丁 on/off 对比（dense no-op、MLA 需 AscendConfig） | 2026-10-26 | `sim_va_compare.py`，004 第 7 节 |

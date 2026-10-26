@@ -106,6 +106,11 @@
   `register()`（无 NPU 返回 None）+ 伪造 entry points。实测 4 个 general plugin 全 OK，
   `patch_engine_core` / `patch_kv_cache_utils` 已生效，空跑输出正确。
   详见 `wiki/ascend对照笔记/004-在空跑环境加载vllm-ascend.md`。
+- **VA 补丁 on/off 实测（T-011）**：dense 模型（Qwen3）下补丁**逐位 no-op**（13 步、145 blocks、
+  TTFT 90.94、makespan 205.45 完全相同）；MLA 模型（DeepSeek-V2-Lite）下补丁 ON 崩溃
+  （`Ascend config is not initialized`），因为 CPU 平台没人调 `init_ascend_config`。
+  VA 自带的 `ShortRequestFirstAsyncScheduler` 还要求 `async_scheduling=True`，而空跑强制 False。
+  **结论：空跑=兼容性脚手架，不是 VA 策略评估器；评估策略请用 `sim_policy.py`。**
 
 ## 4. 已知环境问题（不是代码 bug）
 
