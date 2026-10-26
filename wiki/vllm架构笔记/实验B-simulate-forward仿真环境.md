@@ -165,16 +165,85 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 
 ---
 
-## 7. 待办
+## 7. 多请求与 step 级观测（2026-10-26 追加）
 
-1. 多请求 + step 级观测（每步调度多少 token、batch 组成、KV block 使用）
+### 7.1 关键技巧：进程内模式
+
+Scheduler 默认跑在 EngineCore 子进程里，主进程 monkey-patch 不到。开启：
+
+```bash
+export VLLM_ENABLE_V1_MULTIPROCESSING=0
+```
+
+之后 `Scheduler` 就在主进程里，可以直接包一层：
+
+```python
+from vllm.v1.core.sched.scheduler import Scheduler
+
+_orig = Scheduler.schedule
+def _schedule(self, *a, **k):
+    out = _orig(self, *a, **k)
+    steps.append({
+        "reqs": len(out.num_scheduled_tokens),
+        "tokens": sum(out.num_scheduled_tokens.values()),
+        "new": len(out.scheduled_new_reqs),
+        "running": len(self.running),
+        "waiting": len(self.waiting),
+        "preempted": len(out.preempted_req_ids or ()),
+    })
+    return out
+Scheduler.schedule = _schedule
+```
+
+脚本：`tmp/sim_steps.py`，跑法：`./tmp/run_in_container.sh sim_steps.py`。
+
+### 7.2 结果（`max_num_batched_tokens=64`，4 个请求）
+
+```text
+[steps] generate 0.23s over 4 requests
+[steps] total scheduler steps: 7
+  step  0: reqs=2 tokens= 64 new=2 running=2 waiting=2 preempted=0
+  step  1: reqs=2 tokens= 64 new=0 running=2 waiting=2 preempted=0
+  step  2: reqs=1 tokens= 64 new=0 running=1 waiting=2 preempted=0
+  step  3: reqs=1 tokens= 64 new=0 running=1 waiting=2 preempted=0
+  step  4: reqs=3 tokens= 64 new=2 running=3 waiting=0 preempted=0
+  step  5: reqs=3 tokens=  8 new=0 running=3 waiting=0 preempted=0
+  step  6: reqs=1 tokens=  1 new=0 running=1 waiting=0 preempted=0
+[steps] peak tokens/step=64, avg reqs/step=1.86
+```
+
+能直接读出来的现象：
+
+| 现象 | 解释 |
+| :-- | :-- |
+| step 0–3 都是一个长请求在吃满 64 token | **chunked prefill**：长 prompt 被切成 4 段 |
+| step 2–3 `running=1, waiting=2` | 另外两个请求在排队等 token 预算 |
+| step 4 一次进来 2 个新请求 | 长请求 prefill 结束后，预算释放 |
+| step 6 只剩 1 个请求 1 token | decode 尾巴，典型的 batch 收缩 |
+| `avg reqs/step=1.86` | batch 利用率很低（预算太小 + 长度差异大） |
+
+### 7.3 冷/热缓存对多请求的影响
+
+| 场景 | generate |
+| :-- | :-- |
+| 新 workload 首次（新 kernel 形状） | 48.55s |
+| 同一 workload 再跑 | **0.23s** |
+
+说明：**每换一种 batch 形状，可能触发新的 Triton JIT**；实验脚本要固定 workload，
+或者先跑一遍预热。
+
+---
+
+## 8. 待办
+
+1. ✅ 多请求 + step 级观测（`tmp/sim_steps.py`）
 2. 参数扫描（`max_num_batched_tokens` / `max_num_seqs`）看调度差异
 3. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
 4. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 8. 参考
+## 9. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

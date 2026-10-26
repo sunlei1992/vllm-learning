@@ -60,6 +60,13 @@
   （`buffer_utils.apply_write` → `triton/backends/cpu/compiler.py:make_asm`），每个约 60s。
   把 `TRITON_CACHE_DIR` 指向持久目录（`tmp/triton-cache`）后：冷缓存 146s → 热缓存 **0.26s**。
   `tmp/sim_forward_run.sh` 已默认挂载该缓存。
+- **step 级观测**：`VLLM_ENABLE_V1_MULTIPROCESSING=0` 让 Scheduler 跑在主进程，
+  可以 monkey-patch `Scheduler.schedule` 记录每步（脚本 `tmp/sim_steps.py`）。
+  通用跑法：`./tmp/run_in_container.sh <tmp 下的脚本>`。
+- 实测（`max_num_batched_tokens=64`，4 请求）：7 个 step、0.23s，chunked prefill 清晰可见
+  （step 0–3 长请求吃满 64 token，`running=1 waiting=2`；step 4 预算释放后进来 2 个新请求）。
+- 注意：**换 workload 形状可能触发新的 Triton JIT**（首次 48s，同形状再跑 0.23s），
+  实验脚本要么固定 workload，要么先预热。
 
 ## 4. 已知环境问题（不是代码 bug）
 
