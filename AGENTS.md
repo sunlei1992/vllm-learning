@@ -91,6 +91,9 @@
   比例 0.01 时 TTFT 最优是 512/8；0.1 时变成 64/4；1.0 时 64/2。
   makespan 最优恒为 512/8，但 ratio=1.0 下 makespan 只比 64/2 好 0.13%，
   而 mean TTFT 差 33%（945 vs 710）——**吞吐最优 ≠ 延迟最优**。
+- **脚本归档**：以上实验脚本已复制到 `wiki/vllm架构笔记/assets/simulate-forward/` 并入库
+  （`tmp/` 被 gitignore，只有本机副本）。归档版 `run_in_container.sh` 用
+  `VLLM_LAB_ROOT` 或脚本位置推导仓库根。
 
 ## 4. 已知环境问题（不是代码 bug）
 

@@ -4,6 +4,8 @@
 > 目标：在本地（Mac M3 / 无 NPU）跑通 vLLM 的 `--simulate-forward`，
 > 让真实 Scheduler/KVCacheManager 在没有模型计算、没有 GPU 的情况下跑起来。
 > 相关：`../../AGENTS.md` 的「vLLM 原生 simulator 实验环境」。
+> 全部实验脚本归档在 [`assets/simulate-forward/`](assets/simulate-forward/README.md)；
+> 开发时同一份脚本也放在 `tmp/`（已被 `.gitignore` 忽略，不入库）。
 
 ---
 
@@ -73,10 +75,10 @@ Triton kernel，而 `triton-cpu` **只发布 Linux wheel**（x86_64 / aarch64）
 ### 3.3 一键复现
 
 ```bash
-./tmp/sim_forward_run.sh
+./assets/simulate-forward/sim_forward_run.sh
 ```
 
-内部：挂载 `tmp/`（wheel）、`models/`、`tmp/triton-cache`，在镜像 `sim-built` 里跑 `tmp/sim_smoke.py`。
+内部：挂载 `tmp/`（wheel）、`models/`、`tmp/triton-cache`，在镜像 `sim-built` 里跑 `assets/simulate-forward/sim_smoke.py`。
 
 ---
 
@@ -145,7 +147,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 冷缓存 | 146.32s |
 | 热缓存 | **0.26s** |
 
-缓存大小只有 6.6MB。`tmp/sim_forward_run.sh` 已默认挂载。
+缓存大小只有 6.6MB。`assets/simulate-forward/sim_forward_run.sh` 已默认挂载。
 
 ---
 
@@ -157,11 +159,11 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 无需模型权重 / NPU | ✅ |
 | 单次请求 < 1s（热缓存） | ✅ |
 | 注入指定输出 token 序列 | ✅（trace replay） |
-| 逐 step batch 组成 + KV block 占用 | ✅（`tmp/sim_rounds.py`） |
-| 排队 / 抢占路径 | ✅（`tmp/sim_kv_stress.py`，7 次抢占） |
-| 参数扫描（预算 × 并发） | ✅（`tmp/sim_sweep.py`，12 组） |
-| 前缀缓存命中 | ✅（`tmp/sim_prefix.py`，prefill -60%） |
-| 时间模型（TTFT/TPOT） | ✅（`tmp/sim_timing.py`，初版、未标定） |
+| 逐 step batch 组成 + KV block 占用 | ✅（`assets/simulate-forward/sim_rounds.py`） |
+| 排队 / 抢占路径 | ✅（`assets/simulate-forward/sim_kv_stress.py`，7 次抢占） |
+| 参数扫描（预算 × 并发） | ✅（`assets/simulate-forward/sim_sweep.py`，12 组） |
+| 前缀缓存命中 | ✅（`assets/simulate-forward/sim_prefix.py`，prefill -60%） |
+| 时间模型（TTFT/TPOT） | ✅（`assets/simulate-forward/sim_timing.py`，初版、未标定） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -200,7 +202,7 @@ def _schedule(self, *a, **k):
 Scheduler.schedule = _schedule
 ```
 
-脚本：`tmp/sim_steps.py`，跑法：`./tmp/run_in_container.sh sim_steps.py`。
+脚本：`assets/simulate-forward/sim_steps.py`，跑法：`./assets/simulate-forward/run_in_container.sh sim_steps.py`。
 
 ### 7.2 结果（`max_num_batched_tokens=64`，4 个请求）
 
@@ -243,7 +245,7 @@ Scheduler.schedule = _schedule
 
 同一个引擎实例连续 `llm.generate()`，每轮 workload 不同，观察调度行为。
 
-脚本：`tmp/sim_rounds.py`；跑法：`./tmp/run_in_container.sh sim_rounds.py`。
+脚本：`assets/simulate-forward/sim_rounds.py`；跑法：`./assets/simulate-forward/run_in_container.sh sim_rounds.py`。
 配置：`max_num_batched_tokens=64`、`max_num_seqs=4`、`enable_prefix_caching=False`（便于解释 KV）。
 
 ### 8.1 三轮汇总
@@ -298,7 +300,7 @@ Scheduler.schedule = _schedule
 前面的实验 KV 只用了 4/145，抢占路径从没被触发。这一节把 KV 压到 8 个 block，
 观察调度器的准入控制和抢占。
 
-脚本：`tmp/sim_kv_stress.py`（可调 `KV_MB / N_REQS / PROMPT_REP / MAX_SEQS /
+脚本：`assets/simulate-forward/sim_kv_stress.py`（可调 `KV_MB / N_REQS / PROMPT_REP / MAX_SEQS /
 MAX_BATCHED / MAX_TOKENS / MAX_MODEL_LEN`）。
 
 ### 9.1 第一次尝试：只排队，不抢占
@@ -377,7 +379,7 @@ step 128: reqs=4 tokens=4 decode=4 running=4 waiting=4 preempted=0 kv=8/8
 ## 10. 参数扫描：`max_num_batched_tokens` × `max_num_seqs`（2026-10-26 追加）
 
 固定 workload，只动两个调度参数，看调度行为怎么变。
-脚本：`tmp/sim_sweep.py`。
+脚本：`assets/simulate-forward/sim_sweep.py`。
 
 ### 10.1 实验设置
 
@@ -443,7 +445,7 @@ step 128: reqs=4 tokens=4 decode=4 running=4 waiting=4 preempted=0 kv=8/8
 | 对比 | `enable_prefix_caching=False` vs `True` |
 | 输出 | `max_tokens=2` |
 
-脚本：`tmp/sim_prefix.py`（`MAX_BATCHED` 可调）。
+脚本：`assets/simulate-forward/sim_prefix.py`（`MAX_BATCHED` 可调）。
 
 ### 11.2 结果（预算 512）
 
@@ -527,7 +529,7 @@ step_cost = c_prefill × prefill_tokens + c_decode × decode_tokens + c_overhead
 - **TPOT** = (最后一步结束时间 - TTFT) / (`max_tokens` - 1)
 - **makespan** = 所有 step 成本之和（整体吞吐的代理）
 
-脚本：`tmp/sim_timing.py`。
+脚本：`assets/simulate-forward/sim_timing.py`。
 
 ### 12.2 为什么扫系数比而不是拍脑袋
 
@@ -584,12 +586,12 @@ StepDescriptor → StepCost
 
 ## 13. 待办
 
-1. ✅ 多请求 + step 级观测（`tmp/sim_steps.py`）
-2. ✅ 多轮实验 + KV block 观测（`tmp/sim_rounds.py`）
-3. ✅ 参数扫描（`tmp/sim_sweep.py`）：预算/并发 ↑ → 步数 50→10，chunk 21→2，avg_reqs 1.7→6.6
-4. ✅ KV 压力实验：调小 `kv_cache_memory_bytes` + 长输出，触发排队与抢占（`tmp/sim_kv_stress.py`）
-5. ✅ 前缀缓存实验（`tmp/sim_prefix.py`）：prefill token 2968→1176，窄预算下步数 4→2
-6. ✅ 时间模型初版（`tmp/sim_timing.py`）：step 定价 + TTFT/TPOT，扫成本比例
+1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
+2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
+3. ✅ 参数扫描（`assets/simulate-forward/sim_sweep.py`）：预算/并发 ↑ → 步数 50→10，chunk 21→2，avg_reqs 1.7→6.6
+4. ✅ KV 压力实验：调小 `kv_cache_memory_bytes` + 长输出，触发排队与抢占（`assets/simulate-forward/sim_kv_stress.py`）
+5. ✅ 前缀缓存实验（`assets/simulate-forward/sim_prefix.py`）：prefill token 2968→1176，窄预算下步数 4→2
+6. ✅ 时间模型初版（`assets/simulate-forward/sim_timing.py`）：step 定价 + TTFT/TPOT，扫成本比例
 7. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
 8. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
