@@ -122,6 +122,9 @@
   VA 0.30 还需 `VLLM_USE_V2_MODEL_RUNNER=1`（它的 patch 覆盖了上游 MRV2 判定）。
   复现：`assets/simulate-forward/run_smoke_030.sh` / `va/run_va_dry_run_030.sh`。
   详见 `wiki/ascend对照笔记/005-空跑迁移到v0.30.md`。
+- **main vs 0.30 行为对照（实测）**：策略对比、12 组参数扫描、KV 抢占（564 步/7 次）、
+  前缀缓存（2968→1176）四条路径上，两者**调度指标逐位一致**，只有墙钟时间不同。
+  → 0.30 移植保真；这 1428 个 commit 没改这些调度路径。
 
 ## 4. 已知环境问题（不是代码 bug）
 
