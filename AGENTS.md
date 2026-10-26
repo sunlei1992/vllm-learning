@@ -108,6 +108,9 @@
 
 ## 5. 约定
 
+- **待办与想法统一记在根目录 [`todo.md`](todo.md)**：每条有 ID（`T-###`/`I-###`），
+  写不出"下一步"的放「想法池」；完成时移到「归档」并留证据。
+  本文件（`AGENTS.md`）只记状态与结论，不记 TODO。
 - 提交信息用 Conventional Commits（`feat(kv-pool): ...`），带 `-s` 签名。
 - 改 vllm-ascend 前先跑一遍相关 UT 基线，改完保持全绿。
 - 新的调研结论写进 `wiki/` 或 `kvcache-research/`，不要只留在对话里。
