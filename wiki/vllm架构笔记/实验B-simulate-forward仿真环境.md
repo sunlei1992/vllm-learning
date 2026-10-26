@@ -161,6 +161,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 排队 / 抢占路径 | ✅（`tmp/sim_kv_stress.py`，7 次抢占） |
 | 参数扫描（预算 × 并发） | ✅（`tmp/sim_sweep.py`，12 组） |
 | 前缀缓存命中 | ✅（`tmp/sim_prefix.py`，prefill -60%） |
+| 时间模型（TTFT/TPOT） | ✅（`tmp/sim_timing.py`，初版、未标定） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -508,19 +509,93 @@ computed prefill tokens: 1176 / 2968 (39.6%)
 前缀缓存的收益体现在**计算量**（prefill token）和**步数**上，
 而不是"KV 占用变高"——这一点和直觉相反，值得记住。
 
-## 12. 待办
+## 12. 时间模型（初版）：把 step 变成 TTFT / TPOT（2026-10-26 追加）
+
+前面的实验只能回答"调度行为变了"，回答不了"哪个配置更快"。这一节补上时间维度。
+
+### 12.1 模型
+
+没有改 vLLM，直接复用 `Scheduler.schedule` 的输出给每步定价：
+
+```
+step_cost = c_prefill × prefill_tokens + c_decode × decode_tokens + c_overhead
+```
+
+然后逐请求累加：
+
+- **TTFT** = 该请求 prefill 完成那一步结束时的累计时间
+- **TPOT** = (最后一步结束时间 - TTFT) / (`max_tokens` - 1)
+- **makespan** = 所有 step 成本之和（整体吞吐的代理）
+
+脚本：`tmp/sim_timing.py`。
+
+### 12.2 为什么扫系数比而不是拍脑袋
+
+`c_prefill / c_decode` 在真机上取决于模型、硬件、batch——没有标定之前，
+唯一诚实的做法是**扫一组比例看结论怎么变**。
+
+固定 `c_decode = 1.0`、`c_overhead = 0.05`，扫 `c_prefill/c_decode ∈ {0.01, 0.1, 1.0}`。
+
+### 12.3 结果：最优点随成本比例漂移
+
+| `c_prefill/c_decode` | 含义 | 最优 makespan | 最优 mean TTFT |
+| :-- | :-- | :-- | :-- |
+| 0.01 | prefill 便宜、decode 主导 | 512 / 8（71.38） | **512 / 8（13.38）** |
+| 0.1 | 混合 | 512 / 8（205.30） | **64 / 4（88.91）** |
+| 1.0 | prefill 昂贵、prefill 主导 | 512 / 8（1544.50） | **64 / 2（710.12）** |
+
+同一个 workload、同一组候选配置，**"吞吐最优"和"延迟最优"不是同一个答案**，
+而且延迟最优会随着 prefill 变贵而向小 batch 漂移。
+
+### 12.4 代价对比（ratio = 1.0）
+
+| batched | seqs | mean TTFT | p95 TTFT | makespan |
+| :-- | :-- | :-- | :-- | :-- |
+| 64 | 2 | **710.1** | 1503.8 | 1546.5 |
+| 256 | 8 | 822.4 | 1510.3 | 1544.7 |
+| 512 | 8 | 945.5 | 1497.2 | **1544.5** |
+
+- makespan 只差 **0.13%**（1544.5 vs 1546.5）
+- 但 mean TTFT 差了 **33%**（945.5 vs 710.1）
+
+**大 batch 换来的是极小的吞吐收益 + 明显的首 token 延迟惩罚。**
+这就是为什么线上服务通常不会把 batch 拉满，而是按 SLO 调。
+
+### 12.5 局限（必须写清楚）
+
+| 局限 | 影响 |
+| :-- | :-- |
+| 系数是示意的，未标定 | 绝对值无意义，只有相对趋势可信 |
+| 线性模型 | 忽略了 prefill 的二次项（注意力）与 batch 的非线性 |
+| 没有建模 KV 读写、通信、调度开销 | 抢占/前缀缓存的影响被低估 |
+| 没有建模 PD 分离 | 不适用于 PD 场景 |
+
+### 12.6 与上游 #61305 的关系
+
+上游 RFC 的 `TimingProvider` 接口是：
+
+```
+StepDescriptor → StepCost
+```
+
+我们这一步相当于**手写了一个最简 `TimingProvider`**：
+输入是 `SchedulerOutput` + 运行状态，输出是每步耗时。
+等 #61305 落地后，可以把这个模型塞进它的接口里，复用它的时钟与回放。
+
+## 13. 待办
 
 1. ✅ 多请求 + step 级观测（`tmp/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`tmp/sim_rounds.py`）
 3. ✅ 参数扫描（`tmp/sim_sweep.py`）：预算/并发 ↑ → 步数 50→10，chunk 21→2，avg_reqs 1.7→6.6
 4. ✅ KV 压力实验：调小 `kv_cache_memory_bytes` + 长输出，触发排队与抢占（`tmp/sim_kv_stress.py`）
 5. ✅ 前缀缓存实验（`tmp/sim_prefix.py`）：prefill token 2968→1176，窄预算下步数 4→2
-6. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
-7. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+6. ✅ 时间模型初版（`tmp/sim_timing.py`）：step 定价 + TTFT/TPOT，扫成本比例
+7. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
+8. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 13. 参考
+## 14. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

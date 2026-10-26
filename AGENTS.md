@@ -85,6 +85,12 @@
   off/on 对比：prefill token 2968 → 1176（-60.4%）；命中按 block 对齐（共享前缀 ~308 token，
   只复用 2×128=256）；步数只在窄预算下下降（128 预算：每请求 4→2，总 32→18）；
   `kv_peak` 不变，因为缓存块可驱逐、仍计入 free。
+- **时间模型（初版）**：`tmp/sim_timing.py`。给每步定价
+  `cost = c_prefill*prefill_tokens + c_decode*decode_tokens + c_overhead`，
+  逐请求推 TTFT（prefill 完成那步结束）与 TPOT。系数未标定，所以扫 `c_prefill/c_decode`：
+  比例 0.01 时 TTFT 最优是 512/8；0.1 时变成 64/4；1.0 时 64/2。
+  makespan 最优恒为 512/8，但 ratio=1.0 下 makespan 只比 64/2 好 0.13%，
+  而 mean TTFT 差 33%（945 vs 710）——**吞吐最优 ≠ 延迟最优**。
 
 ## 4. 已知环境问题（不是代码 bug）
 
