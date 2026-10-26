@@ -31,6 +31,7 @@
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | T-005 | 时间模型加二次项（prefill ≈ tokens²） | simulator | P2 | 在 `sim_timing.py` 加 `c_quad` 项，重跑扫描 | 长 prompt 的 TTFT 不再线性外推 | 实验B 第 12 节 |
 | T-008 | 前缀缓存 × 时间模型组合实验 | simulator | P2 | 命中率 0/25/50/75% 各跑一次，比较 TTFT | 得到"命中率→TTFT"曲线 | 实验B 第 11/12 节 |
+| T-010 | 用 `sim_policy.py` 评估自己的调度策略 | simulator | P1 | 在 `_schedule` 里实现候选策略，跑对比表 | 得到 mean/p95 TTFT + TPOT 的对比结论 | 实验B 第 13 节 |
 
 ---
 
@@ -62,3 +63,4 @@
 | :-- | :-- | :-- | :-- |
 | — | 模拟器跑通 + 60s 排查 + 6 组实验 | 2026-10-26 | `wiki/vllm架构笔记/实验B-...md`，commit `57519f9`…`a65aa03` |
 | — | layerwise block-key 复用实现（4 commit） | 2026-10-26 | `wiki/ascend对照笔记/003-...md`，分支 `feature/mooncake-layerwise-reuse` |
+| — | 策略对比框架（FCFS/短优先/长优先） | 2026-10-26 | `sim_policy.py`，实验B 第 13 节 |

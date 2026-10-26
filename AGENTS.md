@@ -97,6 +97,9 @@
   `VLLM_LAB_ROOT` 或脚本位置推导仓库根。
 - **镜像构建**：逐层命令见 `wiki/vllm架构笔记/assets/simulate-forward/DOCKER.md`
   （apt 换源、torch `+cpu`、ACL/oneDNN 预取、`libnuma-dev`、`MAX_JOBS=2`、shm 等）。
+- **策略对比**：`sim_policy.py` 通过重排 `Scheduler.waiting`（deque）实现 FCFS / 短优先 / 长优先，
+  不改 vLLM。实测三者 **makespan 完全相同（205.45）**，但 mean TTFT 56.5 / 90.9 / 143.0，
+  max TTFT 181 / 171 / 152——**策略只重新分配延迟，不改变总吞吐**。
 
 ## 4. 已知环境问题（不是代码 bug）
 

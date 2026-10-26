@@ -167,7 +167,8 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 排队 / 抢占路径 | ✅（`assets/simulate-forward/sim_kv_stress.py`，7 次抢占） |
 | 参数扫描（预算 × 并发） | ✅（`assets/simulate-forward/sim_sweep.py`，12 组） |
 | 前缀缓存命中 | ✅（`assets/simulate-forward/sim_prefix.py`，prefill -60%） |
-| 时间模型（TTFT/TPOT） | ✅（`assets/simulate-forward/sim_timing.py`，初版、未标定） |
+| 时间模型（TTFT/TPOT） | ✅（`sim_timing.py`，初版、未标定） |
+| 策略对比（FCFS/短优先/长优先） | ✅（`sim_policy.py`，makespan 不变、延迟重新分配） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -588,7 +589,93 @@ StepDescriptor → StepCost
 输入是 `SchedulerOutput` + 运行状态，输出是每步耗时。
 等 #61305 落地后，可以把这个模型塞进它的接口里，复用它的时钟与回放。
 
-## 13. 待办
+## 13. 策略对比：把"调度策略"做成可替换变量（2026-10-26 追加）
+
+前面都是调**配置**，这一节调**策略**——也是"空跑"最初的目的：
+验证一个调度策略到底有没有收益。
+
+### 13.1 方法：不改 vLLM，只重排 waiting 队列
+
+`Scheduler.waiting` 是 `FCFSRequestQueue(deque[Request])`，可以直接重排：
+
+```python
+items = list(self.waiting)
+items.sort(key=lambda r: r.num_prompt_tokens, reverse=(policy == "longest_first"))
+self.waiting.clear()
+self.waiting.extend(items)
+```
+
+脚本：`assets/simulate-forward/sim_policy.py`。三个策略：
+
+| 策略 | 行为 |
+| :-- | :-- |
+| `fcfs` | 不动，先到先服务 |
+| `shortest_first` | 按 prompt 长度升序 |
+| `longest_first` | 按 prompt 长度降序 |
+
+其余全部固定：8 个请求（长度 1~500 token）、`max_tokens=8`、KV 2GiB、
+`max_num_batched_tokens=256`、`max_num_seqs=8`、成本模型固定
+（`c_prefill=0.1, c_decode=1.0, c_overhead=0.05`）。
+
+### 13.2 结果
+
+```text
+[policy] fcfs            steps=13 mean_ttft= 90.94 p50= 83.25 p95=171.10 max=171.10 mean_tpot=14.98 makespan=205.45
+[policy] shortest_first  steps=13 mean_ttft= 56.50 p50= 25.65 p95= 86.85 max=181.10 mean_tpot=20.39 makespan=205.45
+[policy] longest_first   steps=13 mean_ttft=143.04 p50=152.10 p95=152.10 max=152.10 mean_tpot= 8.57 makespan=205.45
+```
+
+| 策略 | mean TTFT | p50 | p95 | max | mean TPOT | makespan |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| fcfs | 90.94 | 83.25 | 171.10 | 171.10 | 14.98 | 205.45 |
+| shortest_first | **56.50** | **25.65** | **86.85** | 181.10 | 20.39 | 205.45 |
+| longest_first | 143.04 | 152.10 | 152.10 | **152.10** | **8.57** | 205.45 |
+
+### 13.3 三个结论
+
+**① makespan 完全相同（205.45）**
+
+总工作量不变，**策略只改变延迟在请求之间的分配**，不改变总吞吐。
+这反过来验证了成本模型是自洽的。
+
+**② 短请求优先：均值大幅改善，但长请求被饿**
+
+| 指标 | fcfs | shortest_first | 变化 |
+| :-- | :-- | :-- | :-- |
+| mean TTFT | 90.94 | 56.50 | **-38%** |
+| p50 TTFT | 83.25 | 25.65 | -69% |
+| max TTFT | 171.10 | 181.10 | **+6%** |
+| mean TPOT | 14.98 | 20.39 | +36% |
+
+短请求几乎立刻返回，但长请求要等所有短的做完——**尾部更差，TPOT 更差**。
+
+**③ 长请求优先：尾部最好，均值最差**
+
+| 指标 | fcfs | longest_first | 变化 |
+| :-- | :-- | :-- | :-- |
+| mean TTFT | 90.94 | 143.04 | **+57%** |
+| max TTFT | 171.10 | 152.10 | **-11%** |
+| mean TPOT | 14.98 | 8.57 | **-43%** |
+
+长请求早点开始，TPOT 显著变好；代价是短请求排在后面，均值变差。
+
+### 13.4 这说明什么
+
+- **没有"最好的策略"，只有"对哪个指标最好"**：均值、尾部、TPOT 三者此消彼长
+- 线上如果在意 P99，应该偏向 `longest_first` 类策略；如果在意平均体验，`shortest_first` 更好
+- 也说明：**只看吞吐（makespan）会得出"策略无所谓"的错误结论**
+
+### 13.5 怎么加自己的策略
+
+在 `sim_policy.py` 的 `_schedule` 里改排序 key，或者按业务字段（优先级、租户）排序：
+
+```python
+items.sort(key=lambda r: (r.priority, r.num_prompt_tokens))
+```
+
+改完直接跑，脚本会自动输出对比表。
+
+## 14. 待办
 
 1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
@@ -596,12 +683,13 @@ StepDescriptor → StepCost
 4. ✅ KV 压力实验：调小 `kv_cache_memory_bytes` + 长输出，触发排队与抢占（`assets/simulate-forward/sim_kv_stress.py`）
 5. ✅ 前缀缓存实验（`assets/simulate-forward/sim_prefix.py`）：prefill token 2968→1176，窄预算下步数 4→2
 6. ✅ 时间模型初版（`assets/simulate-forward/sim_timing.py`）：step 定价 + TTFT/TPOT，扫成本比例
-7. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
-8. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+7. ✅ 策略对比框架（`sim_policy.py`）：三种策略、makespan 相同、TTFT 分布差异显著
+8. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
+9. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 14. 参考
+## 15. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

@@ -25,6 +25,7 @@
 | `sim_sweep.py` | 参数扫描：`max_num_batched_tokens` × `max_num_seqs` |
 | `sim_prefix.py` | 前缀缓存 off/on 对比 |
 | `sim_timing.py` | 最简时间模型：TTFT / TPOT / makespan |
+| `sim_policy.py` | 策略对比：FCFS / 短请求优先 / 长请求优先 |
 | `run_in_container.sh` | 在容器里跑上述脚本（透传 `KV_MB` 等 env） |
 | `DOCKER.md` | 镜像的逐层构建命令与每个坑的解法 |
 
