@@ -159,6 +159,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 注入指定输出 token 序列 | ✅（trace replay） |
 | 逐 step batch 组成 + KV block 占用 | ✅（`tmp/sim_rounds.py`） |
 | 排队 / 抢占路径 | ✅（`tmp/sim_kv_stress.py`，7 次抢占） |
+| 参数扫描（预算 × 并发） | ✅（`tmp/sim_sweep.py`，12 组） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -371,18 +372,73 @@ step 128: reqs=4 tokens=4 decode=4 running=4 waiting=4 preempted=0 kv=8/8
 | 首次（新形状，含 JIT） | 47.899s |
 | 同形状再跑 | **0.353s**（564 步，约 0.6ms/步） |
 
-## 10. 待办
+## 10. 参数扫描：`max_num_batched_tokens` × `max_num_seqs`（2026-10-26 追加）
+
+固定 workload，只动两个调度参数，看调度行为怎么变。
+脚本：`tmp/sim_sweep.py`。
+
+### 10.1 实验设置
+
+| 项 | 值 |
+| :-- | :-- |
+| workload | 8 个请求，长度从 1 token 到 ~500 token（`"Hello"`、`"Hello "*10/50/200/400/800`、两个短请求） |
+| 输出 | `max_tokens=8`（固定 trace） |
+| KV | 2 GiB（145 blocks），**故意给足**，避免抢占干扰 |
+| 扫描 | `max_num_batched_tokens` ∈ {64,128,256,512} × `max_num_seqs` ∈ {2,4,8} |
+| 其他 | `enable_prefix_caching=False`，进程内模式 |
+
+### 10.2 结果
+
+| batched | seqs | steps | avg_reqs | peak_tok | prefill | chunk | decode | max_waiting | preempt | gen_s |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 64 | 2 | 50 | 1.7 | 64 | 6 | 21 | 25 | 6 | 0 | 0.23 |
+| 64 | 4 | 35 | 2.49 | 64 | 4 | 23 | 10 | 4 | 0 | 0.012 |
+| 64 | 8 | 31 | 2.81 | 64 | 4 | 23 | 7 | 4 | 0 | 0.012 |
+| 128 | 2 | 41 | 1.8 | 128 | 6 | 10 | 26 | 6 | 0 | 0.013 |
+| 128 | 4 | 25 | 3.0 | 128 | 4 | 11 | 12 | 4 | 0 | 0.011 |
+| 128 | 8 | 19 | 3.95 | 128 | 4 | 11 | 7 | 4 | 0 | 0.010 |
+| 256 | 2 | 36 | 1.89 | 256 | 6 | 4 | 27 | 6 | 0 | 0.012 |
+| 256 | 4 | 20 | 3.45 | 256 | 4 | 5 | 13 | 4 | 0 | 0.010 |
+| 256 | 8 | 13 | 5.31 | 256 | 4 | 5 | 7 | 4 | 0 | 0.009 |
+| 512 | 2 | 34 | 1.94 | 512 | 5 | 2 | 27 | 6 | 0 | 0.013 |
+| 512 | 4 | 18 | 3.67 | 512 | 3 | 2 | 14 | 4 | 0 | 0.009 |
+| 512 | 8 | 10 | 6.60 | 512 | 3 | 2 | 7 | 3 | 0 | 0.008 |
+
+引擎 init 每次 1.5–5.8s（每次组合重建引擎）；12 组 generate 合计仅 **0.349s**。
+
+### 10.3 趋势
+
+| 观察 | 数据 |
+| :-- | :-- |
+| **步数随预算/并发下降** | 50 → 10 步（**5 倍**） |
+| **平均并发随预算/并发上升** | 1.70 → 6.60 reqs/step（**3.9 倍**） |
+| **chunked prefill 步数骤降** | 21 → 2（预算够大后长 prompt 一步装下） |
+| **decode-only 步数基本恒定** | 7–8 步（受 `max_tokens=8` 限制） |
+| **排队减少** | max_waiting 6 → 3 |
+| **KV 峰值随并发上升** | 8 → 18 blocks |
+| **预算总被吃满** | 每行 `peak_tok` 都正好等于预算 |
+
+### 10.4 一个重要结论（也是局限）
+
+- 参数越大 → 步数越少、并发越高 → **吞吐潜力更大**
+- 但每步处理的 token 也更多 → **单步延迟更长**
+- 模拟器**没有时间模型**，所以这里只能说"调度行为变了"，**不能**说"端到端更快"
+
+要回答"哪个配置更好"，需要 #61305 的 `StepCost`：给 prefill / chunk / decode 分别定价。
+这正是下一步（见待办）。
+
+## 11. 待办
 
 1. ✅ 多请求 + step 级观测（`tmp/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`tmp/sim_rounds.py`）
-3. 参数扫描（`max_num_batched_tokens` / `max_num_seqs`）看调度差异
+3. ✅ 参数扫描（`tmp/sim_sweep.py`）：预算/并发 ↑ → 步数 50→10，chunk 21→2，avg_reqs 1.7→6.6
 4. ✅ KV 压力实验：调小 `kv_cache_memory_bytes` + 长输出，触发排队与抢占（`tmp/sim_kv_stress.py`）
 5. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
 6. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 11. 参考
+## 12. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

@@ -77,6 +77,10 @@
   564 步、7 次抢占、max_waiting=6；第一次抢占在 step 127（第 128 个 token 后需要第 2 个 block）。
   冷 47.9s → 热 0.353s。
 - 跑任意脚本：`KV_MB=... ./tmp/run_in_container.sh <script.py>`（runner 会透传这些 env）。
+- **参数扫描**：`tmp/sim_sweep.py`（固定 8 请求 workload、KV 2GiB、`max_tokens=8`；
+  扫 `max_num_batched_tokens` {64,128,256,512} × `max_num_seqs` {2,4,8}，每组重建引擎）。
+  结论：预算/并发 ↑ → 步数 50→10（5×）、avg_reqs 1.7→6.6（3.9×）、chunk 步 21→2、max_waiting 6→3、
+  KV 峰值 8→18；无抢占（KV 给足）。**模拟器没有时间模型，只能证明"调度行为变了"，不能说"更快"。**
 
 ## 4. 已知环境问题（不是代码 bug）
 
