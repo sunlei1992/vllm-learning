@@ -151,9 +151,17 @@ has_layer_reuse = bool(prefetch_layer_map)   # :332
 
 ```bash
 ./tmp/run-ascend-ut.sh tests/ut/distributed/ascend_store -q
-# 761 passed, 12 skipped
+# macOS: 761 passed, 12 skipped, 420 subtests
 ruff check 通过
 ```
+
+**Linux 容器（无 NPU）复跑**（2026-10-26）：
+
+```text
+761 passed, 12 skipped, 14 warnings, 420 subtests passed in 13.57s
+```
+
+与 macOS 结果逐项一致，说明这套 UT 不依赖平台/NPU。
 
 按提交逐个 checkout 也跑过：
 
@@ -179,6 +187,7 @@ ruff check 通过
 | 项 | 状态 |
 | :-- | :-- |
 | NPU 实机 e2e | ❌ 本地无 NPU，只跑了 UT |
+| 平台无关性 | ✅ Linux 容器复跑 761 passed（与 macOS 一致） |
 | 同步 `put()` 的可见性 | ⚠️ 未在真实 store 上验证 |
 | 真实时序 / 死锁 | ⚠️ 双线程 + per-layer Event 的时序只在 mock 下验证 |
 | HBM 实际节省 | ⚠️ 未测量 |

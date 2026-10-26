@@ -43,6 +43,7 @@
   3. `604bc19bd` feat: plan layerwise buffer reuse on the block-key plane
   4. `fe6de285b` feat: enable shared KV buffers on the Mooncake backend
 - 验证：`tests/ut/distributed/ascend_store` 761 passed / 12 skipped；ruff 通过。
+  **Linux 容器（无 NPU）复跑一致**：761 passed / 12 skipped / 420 subtests in 13.57s（2026-10-26）。
   每个 commit 单独 checkout 也都跑过（142/143/760/761 passed）。
 - **状态：个人验证阶段，暂不提交社区。** 未做：NPU 实机 e2e、release note fragment
   （`release_notes/fragments/<PR号>.yaml`，社区 PR 时才需要）。

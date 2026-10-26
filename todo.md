@@ -20,7 +20,6 @@
 
 | ID | 事项 | 下一步 | 完成标准 |
 | :-- | :-- | :-- | :-- |
-| T-001 | Linux 容器跑完整 `ascend_store` UT | 起 `sim-built` 容器装 pytest 后跑 `tests/ut/distributed/ascend_store` | 与 macOS 一致：761 passed / 12 skipped |
 | T-002 | 修 `Signed-off-by` 邮箱（当前有两个 `@`） | 改 git 配置后 rebase 4 个 commit | `git log --format=%B` 里没有双 `@` |
 
 ---
