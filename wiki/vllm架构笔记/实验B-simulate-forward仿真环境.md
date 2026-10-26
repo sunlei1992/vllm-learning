@@ -160,6 +160,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 逐 step batch 组成 + KV block 占用 | ✅（`tmp/sim_rounds.py`） |
 | 排队 / 抢占路径 | ✅（`tmp/sim_kv_stress.py`，7 次抢占） |
 | 参数扫描（预算 × 并发） | ✅（`tmp/sim_sweep.py`，12 组） |
+| 前缀缓存命中 | ✅（`tmp/sim_prefix.py`，prefill -60%） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -427,18 +428,99 @@ step 128: reqs=4 tokens=4 decode=4 running=4 waiting=4 preempted=0 kv=8/8
 要回答"哪个配置更好"，需要 #61305 的 `StepCost`：给 prefill / chunk / decode 分别定价。
 这正是下一步（见待办）。
 
-## 11. 待办
+## 11. 前缀缓存（prefix cache）（2026-10-26 追加）
+
+前面所有实验都显式关了前缀缓存（`enable_prefix_caching=False`），这一节补上。
+
+### 11.1 设置
+
+| 项 | 值 |
+| :-- | :-- |
+| workload | 8 个**依次**发送的请求，共享同一个系统提示词，各自接不同问题 |
+| prompt | `"You are a helpful assistant. " * 60 + "Question i: ..."`，共 **371 token** |
+| 预算 | 两种：`max_num_batched_tokens=512`（宽松）和 `128`（紧张） |
+| 对比 | `enable_prefix_caching=False` vs `True` |
+| 输出 | `max_tokens=2` |
+
+脚本：`tmp/sim_prefix.py`（`MAX_BATCHED` 可调）。
+
+### 11.2 结果（预算 512）
+
+```text
+=== OFF ===
+i  prompt  cached  first_sched  prefill  steps  kv_peak
+0     371       0          371     371      2        3
+...
+computed prefill tokens: 2968 / 2968 (100.0%)
+
+=== ON ===
+i  prompt  cached  first_sched  prefill  steps  kv_peak
+0     371       0          371     371      2        3
+1     371     256          115     115      2        3
+2     371     256          115     115      2        3
+...
+computed prefill tokens: 1176 / 2968 (39.6%)
+```
+
+### 11.3 结果（预算 128）
+
+```text
+=== OFF ===
+  ...  first_sched=128  prefill=371  steps=4   # 128+128+115 + 1 decode
+computed prefill tokens: 2968 / 2968 (100.0%)
+
+=== ON ===
+0    371       0          128     371      4
+1    371     256          115     115      2   # 命中后只需 1 个 prefill step
+...
+computed prefill tokens: 1176 / 2968 (39.6%)
+```
+
+### 11.4 三个结论
+
+**① 命中按 block 对齐，不是按字节**
+
+共享前缀约 308 token，但只能复用 **2 个完整的 128-token block = 256 token**；
+剩下的 ~52 token 前缀 + 问题部分共 **115 token** 必须重算。
+
+**② prefill 计算量降 60%**
+
+| 模式 | prefill token | 占比 |
+| :-- | :-- | :-- |
+| OFF | 2968 | 100% |
+| ON | 1176 | **39.6%** |
+
+**③ 步数是否下降，取决于预算**
+
+| 预算 | OFF 步数/请求 | ON 步数/请求 | 总步数 |
+| :-- | :-- | :-- | :-- |
+| 512 | 2 | 2 | 16 → 16 |
+| 128 | 4 | 2 | **32 → 18（-44%）** |
+
+预算宽时，371 和 115 都是"一步装下"，所以步数没区别；
+预算紧时，371 要切 3 段，115 只需 1 段，**步数直接减半**。
+
+### 11.5 为什么 `kv_peak` 看不出差别
+
+缓存块是**可驱逐（evictable）**的，仍然留在空闲队列里计数，所以
+`block_pool.get_num_free_blocks()` 不会因为它们而减少。
+
+前缀缓存的收益体现在**计算量**（prefill token）和**步数**上，
+而不是"KV 占用变高"——这一点和直觉相反，值得记住。
+
+## 12. 待办
 
 1. ✅ 多请求 + step 级观测（`tmp/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`tmp/sim_rounds.py`）
 3. ✅ 参数扫描（`tmp/sim_sweep.py`）：预算/并发 ↑ → 步数 50→10，chunk 21→2，avg_reqs 1.7→6.6
 4. ✅ KV 压力实验：调小 `kv_cache_memory_bytes` + 长输出，触发排队与抢占（`tmp/sim_kv_stress.py`）
-5. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
-6. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+5. ✅ 前缀缓存实验（`tmp/sim_prefix.py`）：prefill token 2968→1176，窄预算下步数 4→2
+6. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
+7. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 12. 参考
+## 13. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305
