@@ -80,6 +80,9 @@ Triton kernel，而 `triton-cpu` **只发布 Linux wheel**（x86_64 / aarch64）
 
 内部：挂载 `tmp/`（wheel）、`models/`、`tmp/triton-cache`，在镜像 `sim-built` 里跑 `assets/simulate-forward/sim_smoke.py`。
 
+镜像从零构建的逐层命令（apt 换源、torch `+cpu` wheel、ACL/oneDNN 预取、`MAX_JOBS=2` 等）
+见 [`assets/simulate-forward/DOCKER.md`](assets/simulate-forward/DOCKER.md)。
+
 ---
 
 ## 4. 冒烟结果

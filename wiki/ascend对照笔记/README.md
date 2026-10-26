@@ -10,7 +10,8 @@
 |---|---|---|
 | 001 | [PCP对照-主仓vsAscend](001-PCP对照-主仓vsAscend.md) ✅ | PCP 是重写还是复用？为什么？（V1 vs V2 runner） |
 | 002 | [MLA对照-NPUvsCPU](002-MLA对照-NPUvsCPU.md) ✅ | MLA 注意力：参考实现（CPU）vs 性能实现（NPU） |
-| 003+ | 待写 | platform / DSA 稀疏注意力 / 插件注册机制… |
+| 003 | [layerwise KV buffer 复用](003-layerwise-KV-buffer复用.md) ✅ | 两个数据面（GVA vs block-key）、复用规划、Mooncake 侧补齐 |
+| 004+ | 待写 | platform / DSA 稀疏注意力 / 插件注册机制… |
 
 ## 1. 这是什么
 

@@ -47,6 +47,7 @@
 - **状态：个人验证阶段，暂不提交社区。** 未做：NPU 实机 e2e、release note fragment
   （`release_notes/fragments/<PR号>.yaml`，社区 PR 时才需要）。
 - 远程：`origin` = gh-proxy 镜像的上游（只读），`fork` = `sunlei1992/vllm-ascend`（SSH 可写）。
+- 详细笔记：`wiki/ascend对照笔记/003-layerwise-KV-buffer复用.md`
 
 ### vLLM 原生 simulator 实验环境（PR #47922）
 
@@ -94,6 +95,8 @@
 - **脚本归档**：以上实验脚本已复制到 `wiki/vllm架构笔记/assets/simulate-forward/` 并入库
   （`tmp/` 被 gitignore，只有本机副本）。归档版 `run_in_container.sh` 用
   `VLLM_LAB_ROOT` 或脚本位置推导仓库根。
+- **镜像构建**：逐层命令见 `wiki/vllm架构笔记/assets/simulate-forward/DOCKER.md`
+  （apt 换源、torch `+cpu`、ACL/oneDNN 预取、`libnuma-dev`、`MAX_JOBS=2`、shm 等）。
 
 ## 4. 已知环境问题（不是代码 bug）
 

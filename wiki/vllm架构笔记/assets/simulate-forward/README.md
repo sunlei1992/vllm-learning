@@ -26,6 +26,7 @@
 | `sim_prefix.py` | 前缀缓存 off/on 对比 |
 | `sim_timing.py` | 最简时间模型：TTFT / TPOT / makespan |
 | `run_in_container.sh` | 在容器里跑上述脚本（透传 `KV_MB` 等 env） |
+| `DOCKER.md` | 镜像的逐层构建命令与每个坑的解法 |
 
 ## 用法
 
