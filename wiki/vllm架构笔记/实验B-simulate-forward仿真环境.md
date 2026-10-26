@@ -171,6 +171,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 策略对比（FCFS/短优先/长优先） | ✅（`sim_policy.py`，makespan 不变、延迟重新分配） |
 | 加载 vllm-ascend main（无 NPU） | ✅（`va/run_va_dry_run.sh`，见 [004](../ascend对照笔记/004-在空跑环境加载vllm-ascend.md)） |
 | 复刻 VA 短请求优先策略 | ✅（`sim_srs.py` / `sim_srs_arrivals.py`，短请求 -50%~-69%） |
+| 迁移到 vLLM v0.30.0（含 VA 0.30） | ✅（`sim030:*`，见 [005](../ascend对照笔记/005-空跑迁移到v0.30.md)） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 

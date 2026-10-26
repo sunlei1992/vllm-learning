@@ -116,6 +116,12 @@
   （短请求早已做完，提权时 `short=0`）。错峰 + 竞争：mean TTFT 209.95→147.68（-30%），
   短请求 -50%，长请求 +4%，makespan 不变。老化阈值是**悬崖**：≤100 全退化为 FCFS，≥120 等价纯 SRS，
   没有中间态（同批长请求等待时间相同）。
+- **v0.30 迁移（已完成）**：`tmp/vllm-030-030`（分支 `sim-0.30`，基于 v0.30.0）+
+  `tmp/va030`（VA `releases/v0.30.0`）。镜像 `sim030:build` → `sim030:dry-run`。
+  补丁冲突 5 hunk + 1 处 API（`prepare_inputs` 无 `num_active_loras`）。
+  VA 0.30 还需 `VLLM_USE_V2_MODEL_RUNNER=1`（它的 patch 覆盖了上游 MRV2 判定）。
+  复现：`assets/simulate-forward/run_smoke_030.sh` / `va/run_va_dry_run_030.sh`。
+  详见 `wiki/ascend对照笔记/005-空跑迁移到v0.30.md`。
 
 ## 4. 已知环境问题（不是代码 bug）
 
