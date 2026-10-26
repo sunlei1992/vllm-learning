@@ -158,6 +158,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 单次请求 < 1s（热缓存） | ✅ |
 | 注入指定输出 token 序列 | ✅（trace replay） |
 | 逐 step batch 组成 + KV block 占用 | ✅（`tmp/sim_rounds.py`） |
+| 排队 / 抢占路径 | ✅（`tmp/sim_kv_stress.py`，7 次抢占） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -289,18 +290,99 @@ Scheduler.schedule = _schedule
 - `kv_used` 是**真实调度器**算出来的 block 占用，不是估算
 - 想看到抢占/排队，需要把 `kv_cache_memory_bytes` 调小、或让并发超过 `max_num_seqs`
 
-## 9. 待办
+## 9. KV 压力实验：排队与抢占（2026-10-26 追加）
+
+前面的实验 KV 只用了 4/145，抢占路径从没被触发。这一节把 KV 压到 8 个 block，
+观察调度器的准入控制和抢占。
+
+脚本：`tmp/sim_kv_stress.py`（可调 `KV_MB / N_REQS / PROMPT_REP / MAX_SEQS /
+MAX_BATCHED / MAX_TOKENS / MAX_MODEL_LEN`）。
+
+### 9.1 第一次尝试：只排队，不抢占
+
+`KV_MB=256`（17 blocks）、8 个 ~500 token 的长 prompt：
+
+```text
+[stress] kv_blocks=17 steps=11 peak_kv=16/17 max_waiting=6 preemptions=0
+  step 0: reqs=2 tokens=512 new=2 running=2 waiting=6 kv=5/17
+  step 1: reqs=3 tokens=512 new=1 running=3 waiting=5 kv=9/17
+  ...
+  step 7: reqs=4 tokens=504 new=1 running=4 waiting=0 kv=16/17
+```
+
+**结论**：vLLM 的准入控制是"没 block 就不放进来"，所以请求在 `waiting` 里排队，
+不会出现"先放进来再抢占"。
+
+### 9.2 触发抢占：让运行中的请求自己长大
+
+抢占需要**已运行的请求在 decode 过程中需要新 block，而池子正好空了**。
+所以改成：短 prompt + 长输出 + 小 KV。
+
+配置：
+
+| 参数 | 值 |
+| :-- | :-- |
+| `kv_cache_memory_bytes` | 128 MiB（8 blocks） |
+| `max_model_len` | 1024（必须 ≤ 8×128，否则启动就报 KV 不足） |
+| 请求数 | 8 个短 prompt |
+| `max_tokens` | 300 |
+| `max_num_seqs` | 8 |
+| `max_num_batched_tokens` | 512 |
+
+结果：
+
+```text
+[stress] kv_blocks=8 steps=564 time=0.353s
+[stress] peak_kv=8/8 max_waiting=6 preemptions=7
+```
+
+### 9.3 抢占发生的那一步
+
+```text
+step 124: reqs=8 tokens=8 decode=8 running=8 waiting=0 preempted=0 kv=8/8
+step 125: reqs=8 tokens=8 decode=8 running=8 waiting=0 preempted=0 kv=8/8
+step 126: reqs=8 tokens=8 decode=8 running=8 waiting=0 preempted=0 kv=8/8
+step 127: reqs=4 tokens=4 decode=4 running=4 waiting=4 preempted=4 kv=8/8   ← 抢占
+step 128: reqs=4 tokens=4 decode=4 running=4 waiting=4 preempted=0 kv=8/8
+```
+
+解释：
+
+1. 8 个请求各占 1 个 block，正好 8/8
+2. 第 128 个 token 之后，每个请求都需要**第 2 个 block**（block = 128 token）
+3. 池子没有空闲 block → 调度器**抢占 4 个**（优先级最低的），放回 `waiting`
+4. 腾出的 block 给剩下 4 个请求各分配第 2 块，于是仍是 8/8
+5. 后续又发生了 2 次 + 1 次抢占，共 **7 次**
+
+### 9.4 这验证了什么
+
+| 机制 | 观察 |
+| :-- | :-- |
+| 准入控制 | 无 block 时请求在 `waiting` 排队，不进入 `running` |
+| 抢占触发条件 | **运行中请求需要新 block 且池子为空** |
+| 抢占粒度 | 按请求抢占（不是按 block），一次可以抢多个 |
+| 抢占后行为 | 请求回到 `waiting`，之后重新 prefill（recompute，非 swap） |
+| 抢占的必要性 | `max_num_seqs=8` 时，8 个请求恰好占满 8 blocks，必然发生 |
+
+### 9.5 冷/热缓存
+
+| 场景 | 耗时 |
+| :-- | :-- |
+| 首次（新形状，含 JIT） | 47.899s |
+| 同形状再跑 | **0.353s**（564 步，约 0.6ms/步） |
+
+## 10. 待办
 
 1. ✅ 多请求 + step 级观测（`tmp/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`tmp/sim_rounds.py`）
 3. 参数扫描（`max_num_batched_tokens` / `max_num_seqs`）看调度差异
-4. KV 压力实验：调小 `kv_cache_memory_bytes` 或提高并发，观察排队与抢占
+4. ✅ KV 压力实验：调小 `kv_cache_memory_bytes` + 长输出，触发排队与抢占（`tmp/sim_kv_stress.py`）
 5. 如需时间维度，按 #61305 的 `StepDescriptor → StepCost` 自己实现一个最简 `TimingProvider`
 6. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 10. 参考
+## 11. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

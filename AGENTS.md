@@ -71,6 +71,12 @@
   记录每步 prefill/chunk/decode 组成、running/waiting、`kv_cache_manager.block_pool` 占用）。
   实测 3 轮：短请求 2 步、长请求 6 步（4×64+45 分块）、4 并发 2 步；
   KV block 随 prefill 推进 1→2→3，结束即释放（下一轮从自己的请求数重新开始）。
+- **KV 压力 / 抢占**：`tmp/sim_kv_stress.py`（env: `KV_MB/N_REQS/PROMPT_REP/MAX_TOKENS/MAX_MODEL_LEN`）。
+  两个关键结论：① 准入控制是"没 block 就排队"，只压长 prompt 只会 `waiting`，不会抢占；
+  ② 抢占要"运行中的请求自己长大"——短 prompt + 长输出 + 小 KV。实测 128MB/8 blocks/8 请求×300 token：
+  564 步、7 次抢占、max_waiting=6；第一次抢占在 step 127（第 128 个 token 后需要第 2 个 block）。
+  冷 47.9s → 热 0.353s。
+- 跑任意脚本：`KV_MB=... ./tmp/run_in_container.sh <script.py>`（runner 会透传这些 env）。
 
 ## 4. 已知环境问题（不是代码 bug）
 
