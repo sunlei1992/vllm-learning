@@ -12,15 +12,16 @@
 > 3. 每条 ≤ 2 行；细节写进 wiki，不在这里展开
 > 4. 完成时填完成日期 + 证据（commit / 测试结果），移到「归档」
 > 5. 状态变更随手提交，git 历史就是变更记录
-> 6. 每周过一遍：「现在做」超过 3 条就砍，「阻塞」看看解除条件
+> 6. 每周过一遍：「现在做」超过 5 条就砍，「阻塞」看看解除条件
 
 ---
 
-## 现在做（最多 3 条）
+## 现在做（最多 5 条）
 
 | ID | 事项 | 下一步 | 完成标准 |
 | :-- | :-- | :-- | :-- |
 | T-001 | Linux 容器跑完整 `ascend_store` UT | 起 `sim-built` 容器装 pytest 后跑 `tests/ut/distributed/ascend_store` | 与 macOS 一致：761 passed / 12 skipped |
+| T-002 | 修 `Signed-off-by` 邮箱（当前有两个 `@`） | 改 git 配置后 rebase 4 个 commit | `git log --format=%B` 里没有双 `@` |
 
 ---
 
@@ -28,7 +29,6 @@
 
 | ID | 事项 | 领域 | 优先级 | 下一步 | 完成标准 | 参考 |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| T-002 | 修 `Signed-off-by` 邮箱（当前有两个 `@`） | ascend | P0 | 改 git 配置后 rebase 4 个 commit | `git log --format=%B` 里没有双 `@` | `003` 笔记第 7 节 |
 | T-005 | 时间模型加二次项（prefill ≈ tokens²） | simulator | P2 | 在 `sim_timing.py` 加 `c_quad` 项，重跑扫描 | 长 prompt 的 TTFT 不再线性外推 | 实验B 第 12 节 |
 | T-008 | 前缀缓存 × 时间模型组合实验 | simulator | P2 | 命中率 0/25/50/75% 各跑一次，比较 TTFT | 得到"命中率→TTFT"曲线 | 实验B 第 11/12 节 |
 
