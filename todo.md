@@ -55,6 +55,7 @@
 | I-004 | 在空跑里初始化 `AscendConfig`，让 MLA 模型也能加载 VA 补丁 | 需要构造 VllmConfig 并挂到 CPU 平台的 config 钩子上 |
 | I-005 | 长请求错峰到达，验证 `long_max_wait_ms` 的渐进效果 | 同批到达时老化是二值开关；错峰才能看出"只提权最老的那个" |
 | I-006 | 用 DeepSeek-V4 config 验证空跑的 MLA 限制 | 需要 V4 的 config（本地没有），确认是否卡在 `compress_ratios` 路径 |
+| I-007 | 保留 DSA indexer 的 GLM-5.3 空跑 | 需要给 CPU 加稀疏注意力的 KV spec/记账支持，否则只能用 dense MLA 变体近似 |
 
 ---
 

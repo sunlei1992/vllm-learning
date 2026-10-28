@@ -174,6 +174,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 迁移到 vLLM v0.30.0（含 VA 0.30） | ✅（`sim030:*`，见 [005](../ascend对照笔记/005-空跑迁移到v0.30.md)） |
 | 在线模式（HTTP server） | ✅（`server/run_server.sh`，trace 必带、并发隔离） |
 | MLA 模型（V2 风格） | ✅（`sim_mla.py`，38,836 blocks；V4 未验证） |
+| GLM-5.3（78 层 DSA+MoE） | ✅（`glm53/run_glm53.sh`，1,493 blocks；需关 `is_v32`） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -902,7 +903,84 @@ V4 的 `compress_ratios` + sparse indexer 路径可能依赖只有真实权重�
 
 脚本：`assets/simulate-forward/sim_mla.py`（`SIM_MODEL` 可换任意模型）。
 
-## 17. 待办
+## 17. GLM-5.3 空跑（2026-10-28 追加）
+
+GLM-5.3 是 `glm_moe_dsa` 架构（78 层、MLA + 稀疏注意力 + MoE），比 Qwen3-0.6B 复杂得多。
+
+### 17.1 准备 config（不需要权重）
+
+```bash
+BASE=https://hf-mirror.com/zai-org/GLM-5.3/resolve/main
+for f in config.json generation_config.json tokenizer.json tokenizer_config.json chat_template.jinja; do
+  curl -sL -o "models/zai-org_GLM-5.3/$f" "$BASE/$f"
+done
+```
+
+关键字段：
+
+```
+num_hidden_layers = 78
+hidden_size       = 6144
+num_attention_heads = 64
+head_dim          = 192
+first_k_dense_replace = 3      # 前 3 层 dense，其余 MoE（256 experts）
+index_topk        = 2048       # 稀疏注意力（DSA）
+```
+
+### 17.2 直接跑会被 CPU 拦住
+
+```text
+NotImplementedError: Sparse Attention is not supported on CPU.
+```
+
+来自 `vllm/platforms/cpu.py：get_attn_backend_cls` 里的 `if attn_selector_config.use_sparse: raise`。
+这就是**实验A 的坑 1**，在 0.30 上依然存在。
+
+### 17.3 解法：关掉 `is_v32`（复用实验A 的办法）
+
+```python
+# vllm/model_executor/models/deepseek_v2.py（两处：1134 / 1435）
+self.is_v32 = False   # 原本是 hasattr(config, "index_topk")
+```
+
+镜像 `sim030:glm53` = `sim030:dry-run` + 这个补丁。
+
+### 17.4 结果
+
+```text
+CPU KV cache size: 23,888 tokens, Maximum concurrency for 2,048 tokens per request: 11.66x
+Initialized virtual KV cache with 1 groups and 1493 blocks; skipped KV tensor allocation.
+[sim] engine init: 13.49s
+[sim] generate: 0.37s
+[sim] token_ids: [100, 101, 102, 103, 104, 105, 106, 107]
+```
+
+- **1,493 blocks**（block_size 16），2 GiB 对应 23,888 tokens ≈ 88 KB/token
+- 与手算一致：`78 层 × (512 + 64) × 2B ≈ 88 KB/token`
+- 78 层完整 config，**没有下载任何权重**，init 只用了 13.5s
+
+### 17.5 重要 caveat
+
+`is_v32 = False` 关掉的不只是 CPU 检查，还有 **DSA 稀疏注意力的 indexer**。
+所以这个实验模拟的是 GLM-5.3 的 **dense MLA 变体**：
+
+| 项 | 是否真实 |
+| :-- | :-- |
+| 78 层 / hidden 6144 / 64 heads 的 KV 形状 | ✅ |
+| MLA 压缩（kv_lora_rank 512 + rope 64） | ✅ |
+| MoE 层结构（256 experts） | ✅（meta 构建，不执行） |
+| **DSA indexer 的额外 KV cache** | ❌ 未建模 |
+| 稀疏注意力对 prefill 的影响 | ❌ |
+
+所以 KV 容量/块数可以信，**但 GLM-5.3 真正省 KV 的那一半（indexer 压缩）没体现**。
+
+### 17.6 脚本
+
+```bash
+./wiki/vllm架构笔记/assets/simulate-forward/glm53/run_glm53.sh
+```
+
+## 18. 待办
 
 1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
@@ -914,12 +992,13 @@ V4 的 `compress_ratios` + sparse indexer 路径可能依赖只有真实权重�
 8. ✅ 复刻 VA 短请求优先 + 老化（`sim_srs.py` / `sim_srs_arrivals.py`）
 9. ✅ 在线模式（HTTP server）验证：trace 必带、并发隔离正确
 10. ✅ MLA 模型实测（V2-Lite 可用；V4 官方标注不支持，待验证）
-11. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
-12. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+11. ✅ GLM-5.3 空跑（78 层、1,493 blocks，需关 `is_v32` 绕开稀疏注意力）
+12. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
+13. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 18. 参考
+## 19. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

@@ -137,6 +137,11 @@
   38,836 blocks / 621,376 tokens，
   trace token 正确。限制更可能只针对 **V4 风格**（`compress_ratios` / unified head_dim）。
   用 MLA 前先跑 `assets/simulate-forward/sim_mla.py` 冒烟。
+- **GLM-5.3 空跑**：`glm53/run_glm53.sh`（镜像 `sim030:glm53`）。config 只下 5 个文件（29KB + 20MB tokenizer），
+  78 层完整、无权重。CPU 会拦稀疏注意力（`cpu.py` 的 `use_sparse`），需把 `deepseek_v2.py` 两处
+  `is_v32 = False`（同实验A）。结果：23,888 tokens / 1,493 blocks（16/block，约 88KB/token），
+  init 13.5s、generate 0.37s、trace 正确。**caveat：`is_v32=False` 同时关掉了 DSA indexer，
+  所以模拟的是 dense MLA 变体，GLM-5.3 真正省 KV 的那部分未建模。**
 
 ## 4. 已知环境问题（不是代码 bug）
 

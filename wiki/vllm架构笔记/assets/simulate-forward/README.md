@@ -26,6 +26,7 @@
 | `sim_prefix.py` | 前缀缓存 off/on 对比 |
 | `sim_timing.py` | 最简时间模型：TTFT / TPOT / makespan |
 | `sim_mla.py` | MLA 模型（DeepSeek-V2-Lite）冒烟，验证"是否支持 MLA" |
+| `glm53/run_glm53.sh` | GLM-5.3（78 层 DSA+MoE）空跑，需要 `sim030:glm53` 镜像 |
 | `sim_policy.py` | 策略对比：FCFS / 短请求优先 / 长请求优先 |
 | `sim_srs.py` | 复刻 VA 的 short-request-first（同时到达） |
 | `sim_srs_arrivals.py` | 同上 + 错峰到达 + 老化阈值 |
