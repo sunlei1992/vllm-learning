@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "run": {
+    "run_id": "gsm8k-1k-apc90-g24-cold",
+    "random_seed": 42,
+    "output_dir": "/data/outputs/cold"
+  },
+  "tokenizer": {
+    "path": "/data/tokenizer",
+    "block_size": 16,
+    "revision": null,
+    "trust_remote_code": false
+  },
+  "corpus": {
+    "path": "/data/GSM8K.jsonl",
+    "field": "question",
+    "selection": {
+      "mode": "random"
+    }
+  },
+  "requests": {
+    "count": 48,
+    "input_length": {
+      "mode": "fixed",
+      "value": 1024
+    },
+    "output_length": {
+      "mode": "fixed",
+      "value": 128
+    }
+  },
+  "output": {
+    "output_key": null
+  },
+  "prefix_cache": {
+    "mode": "cold",
+    "target_hit_rate": 0.9,
+    "seed_blocks": 1,
+    "minimum_non_shared_length": 16,
+    "groups": {
+      "count": 24,
+      "assignment": {
+        "mode": "uniform"
+      },
+      "overrides": {}
+    },
+    "order": {
+      "strategy": "interleave"
+    }
+  },
+  "service": {
+    "inference_url": "http://127.0.0.1:8000/v1/completions",
+    "metrics_url": "http://127.0.0.1:8000/metrics",
+    "reset_url": "http://127.0.0.1:8000/reset_prefix_cache",
+    "model": "qwen3-0.6b",
+    "dp_size": 1,
+    "assume_empty_cache": false,
+    "engine_label_map": {},
+    "timeout_seconds": 30,
+    "api_key": "",
+    "poll_interval_seconds": 5.0
+  },
+  "validation": {
+    "target_warning_pp": 1.0,
+    "actual_warning_pp": 5.0
+  },
+  "aisbench": {
+    "config": "/work/plugins/prefix_cache/config_examples/prefix_cache_perf.py",
+    "work_dir": "./outputs/default",
+    "extra_args": {
+      "--num-warmups": 0
+    },
+    "dataset": {
+      "abbr": null,
+      "input_columns": [
+        "question",
+        "max_out_len"
+      ],
+      "output_column": "answer",
+      "prompt_template": "{question}",
+      "pred_role": "BOT"
+    },
+    "model": {
+      "abbr": null,
+      "attr": "service",
+      "stream": true,
+      "max_out_len": 1,
+      "retry": 2,
+      "batch_size": 1,
+      "generation_kwargs": {
+        "temperature": 0,
+        "ignore_eos": true
+      }
+    }
+  }
+}

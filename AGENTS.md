@@ -163,6 +163,12 @@
   `--simulation-config '{"kv_transfer_timing":{"load_gbps":10}}'`，否则报 "Simulated KV transfer needs
   simulation_config.kv_transfer_timing"。流程：prefill（max_tokens=1 + do_remote_decode）→ 拿
   `kv_transfer_params` → decode 带参数生成。
+- **多轮 APC + 二级缓存代理实验（实验C §12）**：用 `OffloadingConnector`(+`CPUOffloadingSpec`) 代替
+  Mooncake 做分层缓存仿真，脚本 `mt/run_multiturn.sh`。实测（Qwen3-0.6B、HBM 1GiB、8 会话×6 轮）：
+  容量 4GiB 后命中率饱和在 81.1%（= 1 − 新增 token 占比），TTFT 19.4→11.1ms；
+  带宽 10GB/s 以下收益消失（B*=k×R≈11.2GB/s），5GB/s 反而更差。
+  **AscendStoreConnector 当前不能空跑**（§13）：`ValueError: Simulated forward does not support the
+  AscendStoreConnector connector`；要支持需假 store + simulated worker（1–2 天）。
 - **GLM-5.3 + VA 0.30 共存**：`va/run_va_glm53.sh`。在纯 vLLM 的 `is_v32=False` 之外还要
   ① 跳过 `register_model`（VA 的 deepseek_mtp 要 AscendConfig）② 在 `Worker.load_model` 里
   `init_ascend_config`（patch_fused_moe 要 eplb_config）③ 给 `RoutedExperts.__init__` 丢掉

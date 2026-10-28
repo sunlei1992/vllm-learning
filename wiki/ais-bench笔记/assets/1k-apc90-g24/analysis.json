@@ -1,0 +1,150 @@
+{
+  "effective_target_hit_rate": 0.9000651041666666,
+  "requested_target_hit_rate": 0.9,
+  "run_id": "gsm8k-1k-apc90-g24_20261028_095658",
+  "schema_version": "1.0",
+  "status": "prepared",
+  "target_absolute_difference_pp": 0.0065104166666607455,
+  "target_difference_pp": 0.0065104166666607455,
+  "target_signed_difference_pp": 0.0065104166666607455,
+  "theoretical_hit_rate": 0.9000651041666666,
+  "theory": {
+    "dp": {},
+    "groups": {
+      "group-0": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-1": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-10": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-11": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-12": {
+        "hit_rate": 0.90625,
+        "hit_tokens": 1856,
+        "input_tokens": 2048
+      },
+      "group-13": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-14": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-15": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-16": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-17": {
+        "hit_rate": 0.90625,
+        "hit_tokens": 1856,
+        "input_tokens": 2048
+      },
+      "group-18": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-19": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-2": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-20": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-21": {
+        "hit_rate": 0.90625,
+        "hit_tokens": 1856,
+        "input_tokens": 2048
+      },
+      "group-22": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-23": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-3": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-4": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-5": {
+        "hit_rate": 0.90625,
+        "hit_tokens": 1856,
+        "input_tokens": 2048
+      },
+      "group-6": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-7": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-8": {
+        "hit_rate": 0.8984375,
+        "hit_tokens": 1840,
+        "input_tokens": 2048
+      },
+      "group-9": {
+        "hit_rate": 0.90625,
+        "hit_tokens": 1856,
+        "input_tokens": 2048
+      }
+    },
+    "hit_tokens": 44240,
+    "input_tokens": 49152
+  },
+  "trajectory": {
+    "issues": [],
+    "status": "PASS",
+    "strategy": "target_convergent"
+  },
+  "validation": {
+    "affects_exit_code": false,
+    "status": "PASS",
+    "target_reachable": true,
+    "warning_only": true
+  },
+  "warnings": []
+}

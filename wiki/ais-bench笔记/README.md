@@ -18,8 +18,10 @@
 | 006 | [PrefixCache 插件详解](006-PrefixCache插件详解.md) ✅ | 指定命中率数据怎么造、五子命令、scenario 全字段、可达性算法 |
 | 007 | [128K / 90% APC / 24 组的方案](007-128K-90%-24组方案.md) ✅ | 本工作区的具体需求：参数映射、可达性算术、可直接用的 scenario |
 | 008 | [坑与 FAQ](008-坑与FAQ.md) ✅ | 版本差异、易错点、常见误解、限制清单 |
+| 009 | [实测：1K / 90% / 24 组 × 2 条](009-实测-1K-90%-24组.md) ✅【实测】 | 容器里真造了一次数：48 条就到 90%（**warmup 模式**），cold 上限只有 49.2% |
 
-配套资产：`assets/scenario-128k-apc90-g24.json`（可直接改的 scenario）、`assets/gsm8k_to_jsonl.py`（语料转换脚本）。
+配套资产：`assets/scenario-128k-apc90-g24.json`（可直接改的 scenario）、`assets/gsm8k_to_jsonl.py`（语料转换脚本）、
+`assets/1k-apc90-g24/`（009 的实测产物：scenario / 48 条 requests.jsonl / manifest / analysis / verify.py / run.sh）。
 
 ## 30 秒速查
 

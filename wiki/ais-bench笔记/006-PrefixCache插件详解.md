@@ -202,6 +202,10 @@ P_max = floor((input_length - minimum_non_shared_length) / block_size) × block_
 
 **24 组 × 11 = 264 是 90% 的理论下限；推荐 24 组 × 20 = 480。** 这条不是文档写的，是按"首条必 miss"推的，必须用 `inspect` 验证。
 
+> ⚠️ **适用范围（2026-10-28 补）**：上面这个 `(n−1)/n` 是 **`cold` 模式**的账，前提是"缓存从空开始"。
+> `warmup`（默认模式）会先把每组前缀预热好，之后每条都命中，上限回到 `P/input_length`
+> —— 实测 1K/24 组/每组 2 条：warmup 0.9001，cold 只有 0.4922。见 [009](009-实测-1K-90%-24组.md)。
+
 ### 7.5 另一个偏差来源
 
 `trajectory.status` 可能是 `BEST_EFFORT`：请求长度突增、容量约束、不适合比例分配时，**累计命中率仍可能回落或超调**。此时只告警（`TRAJECTORY_BEST_EFFORT`），不改退出码。文档明确不承诺所有顺序都严格单调。
