@@ -30,6 +30,8 @@
 | `sim_srs_arrivals.py` | 同上 + 错峰到达 + 老化阈值 |
 | `sim_va_compare.py` | VA 补丁 on/off 对比 |
 | `run_in_container.sh` | 在容器里跑上述脚本（透传 `KV_MB` 等 env） |
+| `server/run_server.sh` | 起干跑 OpenAI server（端口 18000） |
+| `server/smoke_client.sh` | 健康检查 + 带/不带 trace 的请求 |
 | `DOCKER.md` | 镜像的逐层构建命令与每个坑的解法 |
 
 ## 用法

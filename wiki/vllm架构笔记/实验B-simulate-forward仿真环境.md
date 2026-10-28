@@ -172,6 +172,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 加载 vllm-ascend main（无 NPU） | ✅（`va/run_va_dry_run.sh`，见 [004](../ascend对照笔记/004-在空跑环境加载vllm-ascend.md)） |
 | 复刻 VA 短请求优先策略 | ✅（`sim_srs.py` / `sim_srs_arrivals.py`，短请求 -50%~-69%） |
 | 迁移到 vLLM v0.30.0（含 VA 0.30） | ✅（`sim030:*`，见 [005](../ascend对照笔记/005-空跑迁移到v0.30.md)） |
+| 在线模式（HTTP server） | ✅（`server/run_server.sh`，trace 必带、并发隔离） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -751,7 +752,92 @@ VA 自带的 `ShortRequestFirstAsyncScheduler` 在空跑里用不了
 **对 VA 的意义**：`short_request_first` 在"短请求多、长请求少"的负载下收益明显；
 `long_max_wait_ms` 更适合作为"防饿死开关"而不是"调参旋钮"。
 
-## 15. 待办
+## 15. 在线模式：HTTP server（2026-10-28 追加）
+
+前面全是离线 `LLM.generate()`。这一节验证 `vllm serve` 路径。
+
+### 15.1 启动
+
+```bash
+python -m vllm.entrypoints.openai.api_server   --model /models/Qwen_Qwen3-0.6B   --served-model-name qwen   --simulate-forward   --kv-cache-memory-bytes 2147483648   --enforce-eager   --max-model-len 2048   --host 0.0.0.0 --port 8000
+```
+
+脚本：`assets/simulate-forward/server/run_server.sh`（容器内跑，映射到宿主 18000）。
+
+启动耗时 **约 24 秒**（离线 init 约 12s，多出来的是 API server 前端）。
+
+### 15.2 请求必须带 trace
+
+`#47922` 给 OpenAI 协议加了字段（completion 和 chat 都有）：
+
+```json
+{
+  "model": "qwen",
+  "prompt": "Hello",
+  "max_tokens": 4,
+  "return_token_ids": true,
+  "trace_decode_token_ids": [100, 101, 102, 103]
+}
+```
+
+返回：
+
+```json
+{
+  "choices": [{
+    "token_ids": [100, 101, 102, 103],
+    "finish_reason": "length",
+    "text": ""
+  }],
+  "usage": {"prompt_tokens": 1, "completion_tokens": 4, "total_tokens": 5}
+}
+```
+
+`text` 为空是因为 100~103 是特殊/空 token；换成真实文本 token 就有内容。
+
+> 默认不返回 `token_ids`，需要显式 `"return_token_ids": true`。
+
+### 15.3 不带 trace 会静默返回 0
+
+这是**必须注意的行为**：请求不带 `trace_decode_token_ids` 时，服务端**不报错**，
+返回 200，但 token 全是 0：
+
+```json
+{"token_ids": [0, 0, 0, 0], "finish_reason": "length", "text": "!!!!"}
+```
+
+原因：模拟 runner 用 `trace_replay_state.apply_trace(...)` 覆盖采样结果，
+请求没有 trace 时被写成 0。
+
+**所以在线模式下每个请求都必须带 trace**，否则拿到的是无意义输出。
+
+### 15.4 并发隔离
+
+同时发 4 个不同 trace 的请求：
+
+```text
+[100, 101, 102, 103]
+[200, 201, 202, 203]
+[300, 301, 302, 303]
+[400, 401, 402, 403]
+```
+
+每个请求都拿到自己的 trace，没有串扰——说明 trace replay 按 request 索引隔离正确。
+
+### 15.5 能用它测什么
+
+| 能测 | 不能测 |
+| :-- | :-- |
+| HTTP 前端、请求生命周期、并发接入 | 真实推理延迟 |
+| 多请求下的调度/批处理行为 | 流式输出的真实节奏（没有计算，几乎是瞬间返回） |
+| OpenAI 协议兼容性、chat template | tokenizer 之后的质量 |
+
+### 15.6 脚本
+
+- `assets/simulate-forward/server/run_server.sh` —— 起服务
+- `assets/simulate-forward/server/smoke_client.sh` —— 健康检查 + 带/不带 trace 的请求
+
+## 16. 待办
 
 1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
@@ -761,12 +847,13 @@ VA 自带的 `ShortRequestFirstAsyncScheduler` 在空跑里用不了
 6. ✅ 时间模型初版（`assets/simulate-forward/sim_timing.py`）：step 定价 + TTFT/TPOT，扫成本比例
 7. ✅ 策略对比框架（`sim_policy.py`）：三种策略、makespan 相同、TTFT 分布差异显著
 8. ✅ 复刻 VA 短请求优先 + 老化（`sim_srs.py` / `sim_srs_arrivals.py`）
-9. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
-10. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+9. ✅ 在线模式（HTTP server）验证：trace 必带、并发隔离正确
+10. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
+11. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 16. 参考
+## 17. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

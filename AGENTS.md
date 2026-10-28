@@ -127,6 +127,11 @@
 - **main vs 0.30 行为对照（实测）**：策略对比、12 组参数扫描、KV 抢占（564 步/7 次）、
   前缀缓存（2968→1176）四条路径上，两者**调度指标逐位一致**，只有墙钟时间不同。
   → 0.30 移植保真；这 1428 个 commit 没改这些调度路径。
+- **在线模式（HTTP server）**：`python -m vllm.entrypoints.openai.api_server --simulate-forward ...`
+  可用；启动约 24s。请求必须带 `trace_decode_token_ids`（completion/chat 都有），
+  **不带 trace 会静默返回全 0 token**（200，不报错）。要看 token 需 `return_token_ids: true`。
+  并发 4 个不同 trace 互不串扰。
+  脚本：`assets/simulate-forward/server/{run_server,smoke_client}.sh`，实验B 第 15 节。
 
 ## 4. 已知环境问题（不是代码 bug）
 
