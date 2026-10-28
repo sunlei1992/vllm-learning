@@ -163,3 +163,50 @@ async_scheduling = False if self.simulate_forward else self.async_scheduling
 3. 把 `patch.worker` 的补丁也纳入（需要模拟一个 `NPUWorker` 形状的 worker，成本更高）
 
 > 注意：这是一套**本地实验脚手架**，不是上游支持的运行方式，不要提交到社区。
+
+---
+
+## 9. GLM-5.3（MoE）下的额外要求（2026-10-28 追加）
+
+纯 vLLM 跑 GLM-5.3 只需要 `is_v32 = False`（见实验B 第 17 节）。
+加上 vllm-ascend 之后，还需要 3 个额外处理。
+
+### 9.1 四个必要改动
+
+| # | 改动 | 原因 |
+| :-- | :-- | :-- |
+| 1 | `is_v32 = False`（镜像 `sim030:glm53`） | CPU 不支持稀疏注意力 |
+| 2 | 跳过 `register_model`（`VA_SKIP_MODEL=1`） | VA 的 `models/deepseek_mtp.py` 在建模型时就要 `AscendConfig` |
+| 3 | 在 `Worker.load_model` 里调 `init_ascend_config`（`VA_INIT_CONFIG=1`） | `patch_fused_moe._ascend_FusedMoE` 读 `get_ascend_config().eplb_config` |
+| 4 | 给 `RoutedExperts.__init__` 加 shim，丢掉 `n_shared_experts` | VA 往 `routed_experts_args` 里塞了这个 kwarg，GLM-5.3 的类不接收 |
+
+第 2、3 条是同一个根因：**CPU 平台没有任何人调用 `init_ascend_config`**（它平时由 NPU 平台调用）。
+第 3 条的钩子必须挂在 `Worker.load_model` 上——挂 `VllmConfig.__post_init__` 无效，
+因为 worker 里的 config 不走 `__post_init__`。
+
+### 9.2 结果
+
+```text
+[va-plugin] connector: OK / model: SKIPPED / model_loader: OK / service_profiling: OK
+[va-plugin] init_ascend_config: OK (worker)
+[sim] engine init: 13.87s
+[sim] generate: 0.40s
+[sim] token_ids: [100, 101, 102, 103, 104, 105, 106, 107]
+```
+
+KV 指标与**纯 vLLM 完全一致**：
+
+| 配置 | tokens | blocks | 并发度 |
+| :-- | :-- | :-- | :-- |
+| 纯 vLLM（0.30 / main） | 23,888 | 1,493 | 11.66x |
+| **vLLM + VA 0.30** | 23,888 | 1,493 | 11.66x |
+
+说明 VA 的 `patch_kv_cache_utils` 在 GLM-5.3 这条路上没有改变 KV 布局。
+
+### 9.3 边界
+
+- `VA_SKIP_MODEL=1` 意味着 **VA 的模型侧补丁没有生效**（只验证了 platform 层补丁共存）
+- 空跑不执行 forward，所以 MoE 路由/专家计算没有被真正验证
+- 这 4 条都是**本地 shim**，不是上游支持的组合
+
+脚本：`assets/simulate-forward/va/run_va_glm53.sh`

@@ -144,6 +144,11 @@
   所以模拟的是 dense MLA 变体，GLM-5.3 真正省 KV 的那部分未建模。**
   **main 镜像同样验证**（`sim-main:glm53`，vllm 0.31.1rc1）：23,888 tokens / 1,493 blocks / 11.66x，
   与 0.30 **逐位一致**。
+- **GLM-5.3 + VA 0.30 共存**：`va/run_va_glm53.sh`。在纯 vLLM 的 `is_v32=False` 之外还要
+  ① 跳过 `register_model`（VA 的 deepseek_mtp 要 AscendConfig）② 在 `Worker.load_model` 里
+  `init_ascend_config`（patch_fused_moe 要 eplb_config）③ 给 `RoutedExperts.__init__` 丢掉
+  `n_shared_experts`（VA 多传的 kwarg）。跑通后 KV 指标与纯 vLLM 完全一致（23,888/1,493/11.66x）。
+  **注意 `VA_SKIP_MODEL=1` 意味着 VA 模型侧补丁未生效，只验证了 platform 层共存。**
 
 ## 4. 已知环境问题（不是代码 bug）
 
