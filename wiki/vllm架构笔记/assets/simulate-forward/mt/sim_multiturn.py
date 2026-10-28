@@ -53,14 +53,24 @@ def install_hook(engine) -> None:
     cls.schedule = wrapper
 
 
+USE_STORE = os.environ.get("MT_CONN", "offload") == "store"
+
+
 def make_args(tier_gb: float, bw: float) -> EngineArgs:
     kwargs = {}
     if tier_gb > 0:
-        kwargs["kv_transfer_config"] = {
-            "kv_connector": "OffloadingConnector",
-            "kv_role": "kv_both",
-            "kv_connector_extra_config": {"cpu_bytes_to_use": int(tier_gb * 1024**3)},
-        }
+        if USE_STORE:
+            kwargs["kv_transfer_config"] = {
+                "kv_connector": "SimulatedAscendStoreConnector",
+                "kv_role": "kv_both",
+                "kv_connector_extra_config": {"store_gb": tier_gb},
+            }
+        else:
+            kwargs["kv_transfer_config"] = {
+                "kv_connector": "OffloadingConnector",
+                "kv_role": "kv_both",
+                "kv_connector_extra_config": {"cpu_bytes_to_use": int(tier_gb * 1024**3)},
+            }
     return EngineArgs(
         model=MODEL,
         simulate_forward=True,
