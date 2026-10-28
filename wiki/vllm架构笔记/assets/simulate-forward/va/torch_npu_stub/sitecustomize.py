@@ -17,7 +17,12 @@ try:
     import torch
 
     if not hasattr(torch, "npu"):
-        torch.npu = MagicMock(name="torch.npu")
+        try:
+            import torch_npu
+
+            torch.npu = torch_npu.npu
+        except Exception:
+            torch.npu = MagicMock(name="torch.npu")
 except Exception:
     pass
 

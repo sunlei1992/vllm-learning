@@ -179,6 +179,13 @@
   容量扫描：1G 以下无效、2G 66.3%、4G 饱和 81.1%，阈值≈工作集 2.8GiB。
   **传输计时已补齐**（`SimulatedStoreWorker` + 异步加载）：10/25/50 GB/s 下 TTFT 为
   21.0/13.4/10.9ms，与 offloading 的 21.7/13.7/11.1ms 基本重合。
+- **P0/P1/P2 本机验证 layerwise（实验C §15）**：
+  P1 把 `torch_npu` stub 的 `Event` 换成 threading 语义；
+  P0 新增 `tests/ut/distributed/ascend_store/test_layerwise_fake_store.py`（CPU 张量 + fake address store +
+  真实 `LayerBatchBuilder`），覆盖 main+indexer round-trip、复用 slot 覆盖后重载、非均匀层；全量 **766 passed**；
+  P2 用 fake AscendStore 跑 24 公共前缀（24 会话×6 轮）：store 16 GiB 命中 80.0%/TTFT 18.6ms，
+  store 8 GiB 掉到 54.2%/p90 215ms → **24 个 140K 前缀约需 295 GiB store**。
+  剩余只有 P3 真机（RDMA、NPU kernel、带宽）。
 - **GLM-5.3 + VA 0.30 共存**：`va/run_va_glm53.sh`。在纯 vLLM 的 `is_v32=False` 之外还要
   ① 跳过 `register_model`（VA 的 deepseek_mtp 要 AscendConfig）② 在 `Worker.load_model` 里
   `init_ascend_config`（patch_fused_moe 要 eplb_config）③ 给 `RoutedExperts.__init__` 丢掉

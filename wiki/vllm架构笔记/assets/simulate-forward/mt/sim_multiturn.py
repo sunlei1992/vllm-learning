@@ -18,6 +18,7 @@ SESSIONS = int(os.environ.get("SESSIONS", "8"))
 TURNS = int(os.environ.get("TURNS", "6"))
 BASE = int(os.environ.get("BASE", "1024"))
 NEW = int(os.environ.get("NEW", "512"))
+PREFIXES = int(os.environ.get("PREFIXES", "1"))
 OUT = int(os.environ.get("OUT", "8"))
 HBM_GB = float(os.environ.get("HBM_GB", "1"))
 BW = float(os.environ.get("BW_GBPS", "50"))
@@ -91,8 +92,14 @@ def make_args(tier_gb: float, bw: float) -> EngineArgs:
 def build_requests():
     """Sessions interleaved turn by turn; each turn's prompt extends the previous."""
     params = SamplingParams(max_tokens=OUT, ignore_eos=True)
-    base = list(range(1000, 1000 + BASE))
-    conv = [list(base) for _ in range(SESSIONS)]
+    if PREFIXES > 1:
+        prefixes = [
+            list(range(1000 + g * 4096, 1000 + g * 4096 + BASE)) for g in range(PREFIXES)
+        ]
+        conv = [list(prefixes[s % PREFIXES]) for s in range(SESSIONS)]
+    else:
+        base = list(range(1000, 1000 + BASE))
+        conv = [list(base) for _ in range(SESSIONS)]
     reqs = []
     for t in range(TURNS):
         for s in range(SESSIONS):
@@ -159,7 +166,8 @@ CONFIGS = [
 
 if __name__ == "__main__":
     print(
-        f"sessions={SESSIONS} turns={TURNS} base={BASE} new={NEW} hbm={HBM_GB}GiB",
+        f"sessions={SESSIONS} turns={TURNS} base={BASE} new={NEW} "
+        f"prefixes={PREFIXES} hbm={HBM_GB}GiB",
         flush=True,
     )
     for name, tier, bw in CONFIGS:

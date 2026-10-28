@@ -3,11 +3,11 @@ set -uo pipefail
 ROOT="${VLLM_LAB_ROOT:-$(cd "$(dirname "$0")/../../../../.." && pwd)}"
 docker rm -f pd_va >/dev/null 2>&1
 docker run --rm --platform linux/arm64 --shm-size=16g \
-  -e TIERS -e BWS -e SESSIONS -e TURNS -e BASE -e NEW -e HBM_GB -e OUT \
+  -e TIERS -e BWS -e MT_CONN -e PREFIXES -e BASE -e NEW -e SESSIONS -e TURNS -e SESSIONS -e TURNS -e BASE -e NEW -e HBM_GB -e OUT \
   -v $ROOT/vllm-ascend-src:/ascend:ro \
   -v "$ROOT/wiki/vllm架构笔记/assets/simulate-forward/va/torch_npu_stub":/stub:ro \
   -v $ROOT/models:/models:ro -v $ROOT/tmp:/out:ro -v $ROOT/tmp/simlogs:/logs \
-  sim-int:dry-run bash -c '
+  sim-int:store3 bash -c '
     set -e
     cp -a /ascend /va
     echo "__device_type__ = '\''A2'\''" > /va/vllm_ascend/_build_info.py
