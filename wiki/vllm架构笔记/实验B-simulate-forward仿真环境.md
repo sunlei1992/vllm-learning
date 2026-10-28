@@ -173,6 +173,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 复刻 VA 短请求优先策略 | ✅（`sim_srs.py` / `sim_srs_arrivals.py`，短请求 -50%~-69%） |
 | 迁移到 vLLM v0.30.0（含 VA 0.30） | ✅（`sim030:*`，见 [005](../ascend对照笔记/005-空跑迁移到v0.30.md)） |
 | 在线模式（HTTP server） | ✅（`server/run_server.sh`，trace 必带、并发隔离） |
+| MLA 模型（V2 风格） | ✅（`sim_mla.py`，38,836 blocks；V4 未验证） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -837,7 +838,69 @@ python -m vllm.entrypoints.openai.api_server   --model /models/Qwen_Qwen3-0.6B  
 - `assets/simulate-forward/server/run_server.sh` —— 起服务
 - `assets/simulate-forward/server/smoke_client.sh` —— 健康检查 + 带/不带 trace 的请求
 
-## 16. 待办
+## 16. MLA 模型：官方限制 vs 实测（2026-10-28 追加）
+
+### 16.1 官方说法
+
+PR #47922 的 Notes 里写着：
+
+```text
+- Doesn't support MLA yet (deepseekv4)
+```
+
+### 16.2 代码里没有强制检查
+
+```text
+$ grep -rn "simulate_forward" vllm/model_executor/ vllm/v1/worker/
+（无输出）
+```
+
+也就是说这是一个**已知限制的标注**，不是 hard block——不会在启动时拒绝 MLA 模型。
+
+### 16.3 实测：V2 风格 MLA 可以跑
+
+DeepSeek-V2-Lite（MLA + MoE）：
+
+```bash
+SIM_MODEL=/models/deepseek-ai_DeepSeek-V2-Lite ./run_in_container_030.sh sim_mla.py
+```
+
+```text
+CPU KV cache size: 621,376 tokens, Maximum concurrency for 2,048 tokens per request: 303.41x
+Initialized virtual KV cache with 1 groups and 38836 blocks; skipped KV tensor allocation.
+TOKENS [100, 101, 102, 103]
+```
+
+- 38,836 blocks / 621,376 tokens —— 符合 MLA 的 KV 压缩特征（每 token 的 KV 很小）
+- trace token 正确返回
+
+### 16.4 那"不支持 MLA"指的是什么
+
+更可能指 **DeepSeek V4 风格的 MLA**。代码里靠配置字段区分：
+
+```python
+# vllm/model_executor/layers/attention/mla_attention.py
+if hasattr(hf_text_config, "compress_ratios"):
+    # DeepseekV4 style: unified head_dim + rope_head_dim
+```
+
+V2/V3 走另一条分支。考虑到空跑跳过了 forward（attention 内核根本不执行），
+限制只可能来自 **config 解析 / KV spec / runner 记账** 这一层——
+V4 的 `compress_ratios` + sparse indexer 路径可能依赖只有真实权重才有的信息。
+
+> 本地没有 V4 的 config，无法进一步确认。
+
+### 16.5 实践建议
+
+| 模型 | 建议 |
+| :-- | :-- |
+| Qwen / Llama 等 dense | 直接用 |
+| DeepSeek-V2 / V3（MLA） | 可以用，先跑一次 `sim_mla.py` 冒烟 |
+| DeepSeek-V4（`compress_ratios`） | 官方标注不支持，需要自己验证，可能卡在 config/KV spec |
+
+脚本：`assets/simulate-forward/sim_mla.py`（`SIM_MODEL` 可换任意模型）。
+
+## 17. 待办
 
 1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
@@ -848,12 +911,13 @@ python -m vllm.entrypoints.openai.api_server   --model /models/Qwen_Qwen3-0.6B  
 7. ✅ 策略对比框架（`sim_policy.py`）：三种策略、makespan 相同、TTFT 分布差异显著
 8. ✅ 复刻 VA 短请求优先 + 老化（`sim_srs.py` / `sim_srs_arrivals.py`）
 9. ✅ 在线模式（HTTP server）验证：trace 必带、并发隔离正确
-10. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
-11. 关注 #47922 的合并进度；合并后可以去掉本地 patch
+10. ✅ MLA 模型实测（V2-Lite 可用；V4 官方标注不支持，待验证）
+11. 用真机数据标定 `c_prefill / c_decode / c_overhead`，或等 #61305 的 `TimingProvider`
+12. 关注 #47922 的合并进度；合并后可以去掉本地 patch
 
 ---
 
-## 17. 参考
+## 18. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305

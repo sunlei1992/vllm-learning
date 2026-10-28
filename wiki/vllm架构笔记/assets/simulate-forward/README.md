@@ -25,6 +25,7 @@
 | `sim_sweep.py` | 参数扫描：`max_num_batched_tokens` × `max_num_seqs` |
 | `sim_prefix.py` | 前缀缓存 off/on 对比 |
 | `sim_timing.py` | 最简时间模型：TTFT / TPOT / makespan |
+| `sim_mla.py` | MLA 模型（DeepSeek-V2-Lite）冒烟，验证"是否支持 MLA" |
 | `sim_policy.py` | 策略对比：FCFS / 短请求优先 / 长请求优先 |
 | `sim_srs.py` | 复刻 VA 的 short-request-first（同时到达） |
 | `sim_srs_arrivals.py` | 同上 + 错峰到达 + 老化阈值 |

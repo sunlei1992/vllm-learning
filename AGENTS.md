@@ -132,6 +132,10 @@
   **不带 trace 会静默返回全 0 token**（200，不报错）。要看 token 需 `return_token_ids: true`。
   并发 4 个不同 trace 互不串扰。
   脚本：`assets/simulate-forward/server/{run_server,smoke_client}.sh`，实验B 第 15 节。
+- **MLA 支持**：PR Notes 写"Doesn't support MLA yet (deepseekv4)"，但代码里**没有强制检查**。
+  实测 DeepSeek-V2-Lite（V2 风格 MLA）在 0.30 空跑下正常：38,836 blocks / 621,376 tokens，
+  trace token 正确。限制更可能只针对 **V4 风格**（`compress_ratios` / unified head_dim）。
+  用 MLA 前先跑 `assets/simulate-forward/sim_mla.py` 冒烟。
 
 ## 4. 已知环境问题（不是代码 bug）
 
