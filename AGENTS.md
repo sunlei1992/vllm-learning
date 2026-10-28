@@ -144,6 +144,14 @@
   所以模拟的是 dense MLA 变体，GLM-5.3 真正省 KV 的那部分未建模。**
   **main 镜像同样验证**（`sim-main:glm53`，vllm 0.31.1rc1）：23,888 tokens / 1,493 blocks / 11.66x，
   与 0.30 **逐位一致**。
+- **#61506 仿真器（实验C）**：分支 `sim-integrated`（worktree `tmp/vllm-sim-int`，基于 `a98247ab`），
+  提交 `1cd22c891b`，镜像 `sim-int:dry-run`。移植时 43 文件里 4 个冲突（gpu_worker `_bind_device`、
+  cpu.py 仿真 block_size、config 钩子、base_loader meta 跳过 repack），**无 csrc 改动**→复用已编译扩展。
+  能力：可插拔时间模型（zero/linear/table/replay）、录制、**P/D 分离**、配置搜索、TP/PP/DP、投机解码。
+  冒烟：block_size 32、18,720 tokens / 585 blocks、`timing=zero` 时 generate 0.00s。
+  P/D 用 `simulate_disaggregated(prefill_args, decode_args, requests, num_prefill, num_decode)`
+  （内部自动配 NixlConnector + 模拟 NIXL 传输）；16 请求下 2P2D 最优（mean TTFT 68.95ms vs 1P1D 90.89ms）。
+  脚本 `pd/run_pd.sh` + `pd/sim_pd_ratio.py`，详见 `wiki/vllm架构笔记/实验C-移植PR61506仿真器.md`。
 - **GLM-5.3 + VA 0.30 共存**：`va/run_va_glm53.sh`。在纯 vLLM 的 `is_v32=False` 之外还要
   ① 跳过 `register_model`（VA 的 deepseek_mtp 要 AscendConfig）② 在 `Worker.load_model` 里
   `init_ascend_config`（patch_fused_moe 要 eplb_config）③ 给 `RoutedExperts.__init__` 丢掉
