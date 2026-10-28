@@ -132,6 +132,11 @@
   **不带 trace 会静默返回全 0 token**（200，不报错）。要看 token 需 `return_token_ids: true`。
   并发 4 个不同 trace 互不串扰。
   脚本：`assets/simulate-forward/server/{run_server,smoke_client}.sh`，实验B 第 15 节。
+- **⚠️ KV 容量必须对齐真实硬件（实验B §18）**：空跑的容量不是测出来的——
+  给 `--kv-cache-memory-bytes` 就用它，不给就用 **主机内存 × gpu_memory_utilization**（Mac 上约 21GB，毫无意义）。
+  容量 → 块数 → 准入/抢占，给错则结论无意义。取数方法：抄真实日志的
+  `Available KV cache memory: X GiB` / `GPU KV cache size` / `GPU blocks`，或按
+  `HBM×util − 权重 − 激活` 估算。另外注意 block_size（CPU 32/128 vs GPU 16）和 MLA 在 CPU 上的降级。
 - **MLA 支持**：PR Notes 写"Doesn't support MLA yet (deepseekv4)"，但代码里**没有强制检查**。
   实测 DeepSeek-V2-Lite（V2 风格 MLA，config 为实验A 截断的 **3 层**版）在 0.30 空跑下正常：
   38,836 blocks / 621,376 tokens，

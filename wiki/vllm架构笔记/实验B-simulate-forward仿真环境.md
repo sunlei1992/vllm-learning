@@ -1014,7 +1014,101 @@ MLA 的每 token KV 远小于 GQA，所以同样显存能装更多 token——�
 ./wiki/vllm架构笔记/assets/simulate-forward/glm53/run_glm53.sh
 ```
 
-## 18. 待办
+## 18. KV 容量必须对齐真实硬件（2026-10-28 追加）
+
+这一条是**空跑结论可信度的前提**，比任何实验结果都重要。
+
+### 18.1 为什么
+
+空跑里 KV 容量不是测出来的，是**你给的口径**。它直接决定：
+
+```
+KV 字节 → 每块字节（block_size × 每 token KV）
+        → block 数
+        → 能同时跑几个请求 / 什么时候排队 / 什么时候抢占
+```
+
+容量给错，准入、抢占、批处理全都跟着错，**测出来的结论就没有意义**。
+
+### 18.2 空跑怎么决定容量
+
+代码只有两条路（`vllm/v1/worker/simulated/worker.py`）：
+
+| 情况 | 容量来源 |
+| :-- | :-- |
+| 显式给 `--kv-cache-memory-bytes` | 直接用这个值 ✅ |
+| 没给 | **主机内存 × `gpu_memory_utilization`**（Mac 上 24G×0.9≈21G，与 NPU 无关）❌ |
+
+没给时会有警告：
+
+```text
+kv_cache_memory_bytes is unset; simulating X GiB of KV cache from the local device.
+Pass --kv-cache-memory-bytes to model the target deployment.
+```
+
+拿到字节后，块数由**真实的** `get_kv_cache_configs` 计算：
+
+```
+每 token KV = 层数 × KV heads × head_dim × dtype 字节（模型 config 决定）
+每块字节   = block_size × 每 token KV
+blocks    = KV 字节 // 每块字节
+```
+
+以 Qwen3-0.6B（114,688 B/token）为例：
+
+| KV 字节 | block_size | tokens | blocks |
+| :-- | :-- | :-- | :-- |
+| 2 GiB | 128（#47922 CPU 默认） | 18,688 | 146 |
+| 2 GiB | 32（#61506 仿真） | 18,720 | 585 |
+| 128 MiB | 128 | 1,024 | 8 |
+
+### 18.3 怎么对齐真实部署
+
+**方法一：抄真实运行的日志**（最可靠）
+
+真实 vLLM 启动会打印：
+
+```text
+Available KV cache memory: 60.2 GiB
+GPU KV cache size: 1,234,567 tokens
+GPU blocks: 19290
+```
+
+直接用：
+
+```bash
+--kv-cache-memory-bytes 64642673254   # 60.2 GiB
+```
+
+或按 block 反推：`blocks × block_size × 每 token KV`。
+
+**方法二：自己算**
+
+```
+可用 KV = HBM 总量 × gpu_memory_utilization − 权重 − 激活峰值
+```
+
+例如 80GB 卡 × 0.9 − 16GB 权重 − 2GB 激活 ≈ 54GB。
+
+### 18.4 两个必须注意的偏差
+
+| 偏差 | 影响 | 对策 |
+| :-- | :-- | :-- |
+| **block_size 不同**（CPU 仿真 32/128，GPU 通常 16） | 总 tokens 一样，但块数差 2–8 倍，抢占粒度不同 | 记录块数并与真实对比；必要时用 `--block-size` 对齐（CPU 需为 32 的倍数） |
+| **MLA 在 CPU 上被降级** | prefix caching 和 chunked prefill 被强制关闭 | MLA 相关结论不要用 CPU 空跑 |
+
+### 18.5 实验前的检查清单
+
+- [ ] 显式给了 `--kv-cache-memory-bytes`（不要用默认值）
+- [ ] 数值来自真实部署日志或按 HBM 计算
+- [ ] 记录了 `tokens` 和 `blocks`，与真实 run 对比过
+- [ ] block_size 与目标环境一致，或明确知道差异
+- [ ] 模型 config 与线上一致（层数、GQA/MLA、dtype）
+- [ ] MLA/稀疏注意力等 CPU 降级项已确认
+
+> 只有这一栏全部打勾，"空跑得出的调度差异"才能拿去推断真实部署。
+
+## 19. 待办
 
 1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
@@ -1032,7 +1126,7 @@ MLA 的每 token KV 远小于 GQA，所以同样显存能装更多 token——�
 
 ---
 
-## 19. 参考
+## 20. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305
