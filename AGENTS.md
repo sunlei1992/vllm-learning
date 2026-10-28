@@ -142,6 +142,8 @@
   `is_v32 = False`（同实验A）。结果：23,888 tokens / 1,493 blocks（16/block，约 88KB/token），
   init 13.5s、generate 0.37s、trace 正确。**caveat：`is_v32=False` 同时关掉了 DSA indexer，
   所以模拟的是 dense MLA 变体，GLM-5.3 真正省 KV 的那部分未建模。**
+  **main 镜像同样验证**（`sim-main:glm53`，vllm 0.31.1rc1）：23,888 tokens / 1,493 blocks / 11.66x，
+  与 0.30 **逐位一致**。
 
 ## 4. 已知环境问题（不是代码 bug）
 

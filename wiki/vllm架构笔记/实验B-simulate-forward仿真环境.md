@@ -174,7 +174,7 @@ export TRITON_CACHE_DIR=/triton-cache   # 挂载宿主机的 tmp/triton-cache
 | 迁移到 vLLM v0.30.0（含 VA 0.30） | ✅（`sim030:*`，见 [005](../ascend对照笔记/005-空跑迁移到v0.30.md)） |
 | 在线模式（HTTP server） | ✅（`server/run_server.sh`，trace 必带、并发隔离） |
 | MLA 模型（V2 风格） | ✅（`sim_mla.py`，38,836 blocks；V4 未验证） |
-| GLM-5.3（78 层 DSA+MoE） | ✅（`glm53/run_glm53.sh`，1,493 blocks；需关 `is_v32`） |
+| GLM-5.3（78 层 DSA+MoE） | ✅（`glm53/run_glm53.sh`，1,493 blocks；main 与 0.30 结果一致） |
 | 性能数字（TTFT/TPOT） | ❌ 需要 #61305 的 timing model |
 | vllm-ascend 的 connector | ❌ 官方 simulator 不覆盖 |
 
@@ -995,7 +995,20 @@ MLA 的每 token KV 远小于 GQA，所以同样显存能装更多 token——�
 
 所以 KV 容量/块数可以信，**但 GLM-5.3 真正省 KV 的那一半（indexer 压缩）没体现**。
 
-### 17.6 脚本
+### 17.6 main 与 0.30 的对比
+
+同一份 config、同样关掉 `is_v32`，在两个镜像上各跑一次：
+
+| 版本 | tokens | blocks | 并发度 | init | generate |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| main（`0.31.1rc1`，`sim-main:glm53`） | 23,888 | 1,493 | 11.66x | 13.96s | 0.31s |
+| v0.30.0（`sim030:glm53`） | 23,888 | 1,493 | 11.66x | 13.49s | 0.37s |
+
+**调度指标逐位一致**，只有墙钟时间有噪声。说明这条"78 层 MLA + MoE"路径在
+两个版本间也没有行为差异——把之前四组对照（dense / 策略 / 抢占 / 前缀缓存）
+扩展到了"大模型 + MLA + MoE"的 config 上。
+
+### 17.7 脚本
 
 ```bash
 ./wiki/vllm架构笔记/assets/simulate-forward/glm53/run_glm53.sh
