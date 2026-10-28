@@ -1,7 +1,7 @@
 #!/bin/bash
 # Load vllm-ascend releases/v0.30.0 into the vLLM 0.30 dry-run image.
 set -euo pipefail
-ROOT="${VLLM_LAB_ROOT:-$(cd "$(dirname "$0")/../../../../../.." && pwd)}"
+ROOT="${VLLM_LAB_ROOT:-$(cd "$(dirname "$0")/../../../../.." && pwd)}"
 docker run --rm --platform linux/arm64 --shm-size=16g \
   -v "$ROOT/tmp/va030":/ascend:ro \
   -v "$ROOT/tmp/torch_npu_stub":/stub:ro \

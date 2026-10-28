@@ -210,3 +210,18 @@ KV 指标与**纯 vLLM 完全一致**：
 - 这 4 条都是**本地 shim**，不是上游支持的组合
 
 脚本：`assets/simulate-forward/va/run_va_glm53.sh`
+
+### 9.4 验证脚本自身的两个坑
+
+归档脚本第一次复跑时出现过一个**假阳性**：`[sim]` 输出正确，但一条 `[va-plugin]` 都没有——
+说明插件根本没加载，实际跑的是纯 vLLM。原因是脚本有两处 bug：
+
+| bug | 表现 | 修复 |
+| :-- | :-- | :-- |
+| `ROOT` 多上溯了一层 | 挂载目录为空，`cp -a /ascend /va` 后 `/va/vllm_ascend` 不存在 | 按脚本所在层级改成 5 层 |
+| 生成 `va_plugins.py` 的模板少了 `except` | `SyntaxError: expected 'except' or 'finally' block`，插件加载失败但被 vLLM 静默跳过 | 补上 `except` |
+
+**教训**：判断"VA 是否真的生效"，不能只看空跑有没有输出，
+必须确认日志里有 `[va-plugin] ... OK` 和 `patch_engine_core` / `patch_kv_cache_utils`
+这些行。否则可能只是纯 vLLM 在跑。
+
