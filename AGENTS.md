@@ -173,7 +173,8 @@
   `SimulatedAscendStoreConnector`（scheduler 真实查找 + 内存 LRU；worker no-op），
   vLLM 侧放行 + `simulated_kv_connector` 挂 `_NoTransfers`；镜像 `sim-int:store2`。
   容量扫描：1G 以下无效、2G 66.3%、4G 饱和 81.1%，阈值≈工作集 2.8GiB。
-  **caveat：worker no-op 不计传输时间**，TTFT 只反映省掉的重算（4G 时 7.9ms vs offloading 11.1ms）。
+  **传输计时已补齐**（`SimulatedStoreWorker` + 异步加载）：10/25/50 GB/s 下 TTFT 为
+  21.0/13.4/10.9ms，与 offloading 的 21.7/13.7/11.1ms 基本重合。
 - **GLM-5.3 + VA 0.30 共存**：`va/run_va_glm53.sh`。在纯 vLLM 的 `is_v32=False` 之外还要
   ① 跳过 `register_model`（VA 的 deepseek_mtp 要 AscendConfig）② 在 `Worker.load_model` 里
   `init_ascend_config`（patch_fused_moe 要 eplb_config）③ 给 `RoutedExperts.__init__` 丢掉

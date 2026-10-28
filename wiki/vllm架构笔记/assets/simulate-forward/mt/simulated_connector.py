@@ -33,9 +33,9 @@ logger = init_logger(__name__)
 
 @dataclass
 class SimulatedStoreMetadata(KVConnectorMetadata):
-    """Nothing to transfer: the load is a no-op."""
+    """Bytes to load per request, booked on the simulated clock."""
 
-    req_ids: tuple[str, ...] = ()
+    loads: dict[str, int] | None = None
 
 
 class _LRUStore:
@@ -84,6 +84,10 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
         self.block_bytes = max(1, group.kv_cache_spec.page_size_bytes * max(1, len(group.layer_names)))
         store_gb = float(extra.get("store_gb", 8.0))
         self.store = _LRUStore(int(store_gb * 1024**3) // self.block_bytes)
+        self.bytes_per_token = self.block_bytes / max(1, self.block_size)
+        # Set by vllm's simulated_kv_connector: books transfer time.
+        self.simulated_transfers = None
+        self._pending: dict[str, int] = {}
         logger.info(
             "Simulated AscendStore: %d blocks x %d bytes (%.2f GiB), block_size=%d",
             self.store.capacity,
@@ -111,18 +115,30 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
             hit_tokens = request.num_tokens - 1
         if hit_tokens <= num_computed_tokens:
             return 0, False
-        return hit_tokens - num_computed_tokens, False
+        need = hit_tokens - num_computed_tokens
+        self._pending[request.request_id] = need
+        # Async: the scheduler waits for get_finished() to report the load.
+        return need, True
 
     def update_state_after_alloc(self, request, blocks, num_external_tokens):
         return None
 
     def build_connector_meta(self, scheduler_output):
-        return SimulatedStoreMetadata()
+        loads = {
+            request_id: int(tokens * self.bytes_per_token)
+            for request_id, tokens in self._pending.items()
+        }
+        self._pending.clear()
+        return SimulatedStoreMetadata(loads=loads)
 
     def request_finished(self, request, block_ids):
         hashes = getattr(request, "block_hashes", None) or []
         for block_hash, block_id in zip(hashes, block_ids):
             self.store.put(block_hash, block_id)
+        if self.simulated_transfers is not None and hashes:
+            self.simulated_transfers.submit_store(
+                request.request_id, int(len(hashes) * self.block_bytes)
+            )
         return False, None
 
     # ------------------------------------------------------------------ #
@@ -132,7 +148,11 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
         return None
 
     def start_load_kv(self, forward_context, **kwargs):
-        return None
+        metadata = self._connector_metadata
+        if self.simulated_transfers is None or metadata is None:
+            return
+        for request_id, num_bytes in (metadata.loads or {}).items():
+            self.simulated_transfers.submit_load(request_id, num_bytes)
 
     def wait_for_layer_load(self, layer_name):
         return None
@@ -142,3 +162,9 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
 
     def wait_for_save(self):
         return None
+
+    def get_finished(self, finished_req_ids):
+        if self.simulated_transfers is None:
+            return None, None
+        sending, recving = self.simulated_transfers.get_finished()
+        return (sending or None), (recving or None)

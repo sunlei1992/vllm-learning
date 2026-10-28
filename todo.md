@@ -57,7 +57,7 @@
 | I-006 | 用 DeepSeek-V4 config 验证空跑的 MLA 限制 | 需要 V4 的 config（本地没有），确认是否卡在 `compress_ratios` 路径 |
 | I-007 | 保留 DSA indexer 的 GLM-5.3 空跑 | 需要给 CPU 加稀疏注意力的 KV spec/记账支持，否则只能用 dense MLA 变体近似 |
 | I-008 | 从真实日志提取 KV 容量的小工具 | 解析 `Available KV cache memory` / `GPU blocks` 直接输出 `--kv-cache-memory-bytes`，避免手算 |
-| I-010 | 给 fake AscendStore 补传输计时 | 目前 worker no-op，TTFT 不含 KV 读取时间；接入 `kv_transfer_timing` 后可与 offloading 对齐 |
+
 
 ---
 
