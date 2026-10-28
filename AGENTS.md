@@ -152,6 +152,12 @@
   P/D 用 `simulate_disaggregated(prefill_args, decode_args, requests, num_prefill, num_decode)`
   （内部自动配 NixlConnector + 模拟 NIXL 传输）；16 请求下 2P2D 最优（mean TTFT 68.95ms vs 1P1D 90.89ms）。
   脚本 `pd/run_pd.sh` + `pd/sim_pd_ratio.py`，详见 `wiki/vllm架构笔记/实验C-移植PR61506仿真器.md`。
+  **VA + P/D 也通**（`pd/run_pd_va.sh`）：4 个 plugin OK，1P1D/2P1D/1P2D/2P2D 的 TTFT 与纯 vLLM 逐位一致。
+  **在线 P/D 也通**（`pd/online_pd.sh` / `online_pd_va.sh`）：两个 server 必须同容器（`remote_host=localhost`），
+  side-channel 端口用 `VLLM_NIXL_SIDE_CHANNEL_PORT` 区分；`vllm serve` 必须给
+  `--simulation-config '{"kv_transfer_timing":{"load_gbps":10}}'`，否则报 "Simulated KV transfer needs
+  simulation_config.kv_transfer_timing"。流程：prefill（max_tokens=1 + do_remote_decode）→ 拿
+  `kv_transfer_params` → decode 带参数生成。
 - **GLM-5.3 + VA 0.30 共存**：`va/run_va_glm53.sh`。在纯 vLLM 的 `is_v32=False` 之外还要
   ① 跳过 `register_model`（VA 的 deepseek_mtp 要 AscendConfig）② 在 `Worker.load_model` 里
   `init_ascend_config`（patch_fused_moe 要 eplb_config）③ 给 `RoutedExperts.__init__` 丢掉
