@@ -222,3 +222,87 @@ fork:   git@github.com:sunlei1992/vllm-ascend.git
 branch: feature/mooncake-layerwise-reuse
 head:   13d80c908
 ```
+
+---
+
+## 8. 完成度与 GLM-5.3 验证（2026-10-28 追加）
+
+### 8.1 完成度
+
+| 项 | 状态 |
+| :-- | :-- |
+| 功能实现（block-key 平面复用） | ✅ 4 个提交 |
+| 单测 | ✅ `ascend_store` 761 passed / 12 skipped（macOS + Linux 一致） |
+| 布局单测 | ✅ 41 passed（含新增 GLM-5.3 形状用例） |
+| **GLM-5.3 形状验证** | ✅ 本地合成验证通过（见 8.2） |
+| NPU 实机 e2e | ❌ 未做 |
+| 真实 Mooncake 服务联调 | ❌ 未做 |
+| hybrid / 多 group | ❌ 设计上不支持（`NotImplementedError`） |
+| release note / 社区 PR | ❌ 暂不需要 |
+
+**结论：功能开发完成，单测完备；缺的是真机数据面验证。**
+
+### 8.2 GLM-5.3 形状验证（本地合成）
+
+构造 78 层、每层两个 spec 的 `UniformTypeKVCacheSpecs`：
+
+```python
+main    = AscendMLAAttentionSpec(block_size=32, head_size=576, dtype=bf16)
+indexer = AscendSFAIndexerCacheSpec(block_size=32, head_size=192, dtype=uint8, scale_dim=4)
+```
+
+结果：
+
+```text
+logical cache specs: 156        # 78 主 MLA + 78 indexer
+has_layer_reuse: True
+buffer_slots: 3                 # 1 independent + 2 shared
+slot sizes: [1, 39, 38]
+prefetch entries: 75
+physical layers: 78  with indexer: 78
+uses_hybrid_kv_cache(...) = False
+```
+
+- `AscendSFAIndexerCacheSpec` 的文档明确：indexer "share block ids with the MLA cache in
+  the same UniformType group" → **GLM-5.3 是单 group**
+- 单 group ⇒ `block_key_hybrid=False` ⇒ `_validate_layerwise_reuse_layout` **不会**抛
+  `NotImplementedError`
+- 78 层 → 3 个物理 buffer，复用生效
+
+新增单测 `test_glm53_sfa_indexer_layers_get_reuse`（VA 提交 `8eb74f2c7`，分支
+`local/simulated-ascend-store`）。
+
+### 8.3 真机验证步骤（建议）
+
+1. **backend 用 `mooncake`（block-key 平面）**——我们改的复用只在 block-key 生效；
+   `memcache` 是 GVA 平面，复用来自上游 #12852。
+2. 参数：
+
+```json
+{
+  "kv_connector": "AscendStoreConnector",
+  "kv_role": "kv_both",
+  "kv_connector_extra_config": {
+    "backend": "mooncake",
+    "use_layerwise": true,
+    "layerwise_num_shared_buffers": 2,
+    "layerwise_prefetch_layers": 2
+  }
+}
+```
+
+3. 启动后确认三件事：
+   - `kv cache group sizes` 只有一组
+   - 没有 `NotImplementedError`（复用布局被接受）
+   - slot 数 = 1 independent + N shared（远小于 78）
+4. 用 140K × 24 前缀 workload 对比 on/off：HBM 峰值、TTFT、Mooncake 读写带宽。
+
+### 8.4 剩余风险
+
+| 风险 | 说明 |
+| :-- | :-- |
+| indexer 数据面 | 布局支持，但 indexer 的字节/偏移在真机搬运未验证 |
+| MTP 额外层 | 若开 MTP，`model.mtp.*` 也要经过 `get_layerwise_physical_layer_index` 映射 |
+| 带宽 | 复用层加载要重读完整 prefix，流量比不复用高 |
+| 双平面 | memcache(GVA) 与 mooncake(block-key) 的复用行为不同，别混用 |
+

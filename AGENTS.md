@@ -46,6 +46,10 @@
   **Linux 容器（无 NPU）复跑一致**：761 passed / 12 skipped / 420 subtests in 13.57s（2026-10-26）。
   每个 commit 单独 checkout 也都跑过（142/143/760/761 passed）。
 - **身份**：4 个 commit 的作者/提交者/签名已统一为 `sl <sunclouddev@163.com>`（2026-10-26 修复）。
+- **GLM-5.3 形状已验证（本地合成，2026-10-28）**：78 层 × (主 MLA + `AscendSFAIndexerCacheSpec`)
+  是**单** UniformType group → `use_hybrid=False` → 复用布局可用；`buffer_slots=3`（1 独立 + 2 共享），
+  78 个物理层全部配对 indexer。新增 UT `test_glm53_sfa_indexer_layers_get_reuse`（VA `8eb74f2c7`，
+  分支 `local/simulated-ascend-store`）。真机仍缺 indexer 数据面验证。
 - **状态：个人验证阶段，暂不提交社区。** 未做：NPU 实机 e2e、release note fragment
   （`release_notes/fragments/<PR号>.yaml`，社区 PR 时才需要）。
 - 远程：`origin` = gh-proxy 镜像的上游（只读），`fork` = `sunlei1992/vllm-ascend`（SSH 可写）。
