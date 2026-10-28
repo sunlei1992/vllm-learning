@@ -346,3 +346,54 @@ uses_hybrid_kv_cache(...) = False
 - `test_reuse_rebuilds_generic_indexer_descriptors_with_physical_capacity`
 - `test_reuse_rejects_unknown_indexer_stride`
 
+### 8.6 本机实测：地址/字节这一层已验证（2026-10-28）
+
+用 GLM-5.3 形状（每层主 MLA 8192 B + indexer 1024 B，共 2 层）直接跑 `LayerBatchBuilder`：
+
+```text
+== A: 每层都有 main+indexer ==
+layer0: addr=[50960, 25120]  size=[8192, 1024]  gva=[1000, 9192]
+layer1: addr=[70960, 45120]  size=[8192, 1024]  gva=[10216, 18408]
+```
+
+- 地址 = `base + block_id × stride`，主 MLA 与 indexer 各用各的 stride ✅
+- `gva` 内偏移 = `[0, 8192]`，说明**两块打包在同一次传输里**，indexer 紧跟主 MLA ✅
+- layer1 的 `gva` 基址 = `500+9216`，按层累加 ✅
+
+```text
+== B: layer1 没有 indexer（非均匀）==
+layer0: addr=[50960, 25120] size=[8192, 1024]
+layer1: addr=[70960]        size=[8192]
+```
+
+layerwise 路径用 per-layer offset，非均匀也能正确处理 ✅
+
+```text
+== C: 非 layerwise 的 prepare_value_layer（均分假设）==
+layer0: addr=[50960] size=[8192]
+layer1: addr=[25120] size=[1024]   ← 错！取到了 layer0 的 indexer
+```
+
+**证实了 8.5 里的第二个风险**：非 layerwise 路径在"各层 entry 数不齐"时会错位。
+GLM-5.3 每层都有 indexer（entry 数恒为 2），所以不触发：
+
+```text
+== C2: 非 layerwise + 均匀 ==
+layer0: addr=[50960, 25120] size=[8192, 1024]  ✅
+layer1: addr=[70960, 45120] size=[8192, 1024]  ✅
+```
+
+已固化为单测（VA `4df67b2a6`）：
+
+- `test_indexer_entry_is_packed_after_main_for_every_layer`
+- 既有的 `test_uses_real_offsets_for_variable_cache_entries_per_layer` 覆盖非均匀
+
+### 8.7 本机能验证 / 不能验证的边界
+
+| 能（纯 Python/NumPy） | 不能（需要 NPU / Mooncake） |
+| :-- | :-- |
+| 传输地址、字节数、内偏移 | 真实 RDMA/UCX 搬运 |
+| 每层 entry 打包顺序 | 零拷贝内存注册是否成功 |
+| 非均匀 indexer 的 offset 处理 | NPU kernel 读回 indexer 是否正确（输出正确性） |
+| 容量合并（max）后的描述符 | 实际带宽、TTFT/TPOT |
+
