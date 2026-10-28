@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "run": {
+    "run_id": "gsm8k-128k-apc90-g24",
+    "random_seed": 42,
+    "output_dir": "./outputs/gsm8k-128k-apc90-g24"
+  },
+  "tokenizer": {
+    "path": "/path/to/your/model",
+    "block_size": 16
+  },
+  "corpus": {
+    "path": "./GSM8K.jsonl",
+    "field": "question",
+    "selection": { "mode": "random" }
+  },
+  "requests": {
+    "count": 480,
+    "input_length": { "mode": "fixed", "value": 131072 },
+    "output_length": { "mode": "fixed", "value": 128 }
+  },
+  "prefix_cache": {
+    "mode": "warmup",
+    "target_hit_rate": 0.9,
+    "seed_blocks": 1,
+    "minimum_non_shared_length": 16,
+    "groups": {
+      "count": 24,
+      "assignment": { "mode": "uniform" }
+    },
+    "order": { "strategy": "interleave" }
+  },
+  "service": {
+    "inference_url": "http://127.0.0.1:8000/v1/completions",
+    "metrics_url": "http://127.0.0.1:8000/metrics",
+    "reset_url": "http://127.0.0.1:8000/reset_prefix_cache",
+    "model": "your-model-name",
+    "dp_size": 8
+  },
+  "validation": {
+    "target_warning_pp": 1.0,
+    "actual_warning_pp": 8.0
+  },
+  "aisbench": {
+    "work_dir": "./outputs/default",
+    "extra_args": { "--num-warmups": 0 }
+  }
+}
