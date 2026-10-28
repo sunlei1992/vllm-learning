@@ -927,6 +927,8 @@ first_k_dense_replace = 3      # 前 3 层 dense，其余 MoE（256 experts）
 index_topk        = 2048       # 稀疏注意力（DSA）
 ```
 
+> `models/` 在 `.gitignore` 里，config 不入库；`glm53/run_glm53.sh` 检测到缺失会自动下载。
+
 ### 17.2 直接跑会被 CPU 拦住
 
 ```text
@@ -943,7 +945,16 @@ NotImplementedError: Sparse Attention is not supported on CPU.
 self.is_v32 = False   # 原本是 hasattr(config, "index_topk")
 ```
 
-镜像 `sim030:glm53` = `sim030:dry-run` + 这个补丁。
+镜像 `sim030:glm53` = `sim030:dry-run` + 这个补丁：
+
+```bash
+docker run -d --name glm53img --platform linux/arm64 sim030:dry-run bash -c '
+  sed -i "s/self.is_v32 = hasattr(config, \"index_topk\")/self.is_v32 = False/g" \
+    /work030/vllm/model_executor/models/deepseek_v2.py'
+docker commit glm53img sim030:glm53
+```
+
+（`is_v32` 是纯 Python 改动，不需要重新编译。）
 
 ### 17.4 结果
 
@@ -958,6 +969,16 @@ Initialized virtual KV cache with 1 groups and 1493 blocks; skipped KV tensor al
 - **1,493 blocks**（block_size 16），2 GiB 对应 23,888 tokens ≈ 88 KB/token
 - 与手算一致：`78 层 × (512 + 64) × 2B ≈ 88 KB/token`
 - 78 层完整 config，**没有下载任何权重**，init 只用了 13.5s
+
+同样 2 GiB 虚拟 KV 下三个模型的对比：
+
+| 模型 | 层数 | tokens | blocks | block 大小 |
+| :-- | :-- | :-- | :-- | :-- |
+| Qwen3-0.6B（GQA） | 28 | 18,688 | 146 | 128 |
+| **GLM-5.3（MLA）** | 78 | 23,888 | 1,493 | 16 |
+| DeepSeek-V2-Lite（3 层截断 MLA） | 3 | 621,376 | 38,836 | 16 |
+
+MLA 的每 token KV 远小于 GQA，所以同样显存能装更多 token——这也是抢占阈值完全不同的原因。
 
 ### 17.5 重要 caveat
 
