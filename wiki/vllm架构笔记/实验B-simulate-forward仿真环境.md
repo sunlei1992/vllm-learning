@@ -859,7 +859,8 @@ $ grep -rn "simulate_forward" vllm/model_executor/ vllm/v1/worker/
 
 ### 16.3 实测：V2 风格 MLA 可以跑
 
-DeepSeek-V2-Lite（MLA + MoE）：
+DeepSeek-V2-Lite（MLA + MoE）。注意：这个目录的 config 在**实验A**里被截断成了
+**3 层**（原始 27 层），所以 block 数才这么夸张：
 
 ```bash
 SIM_MODEL=/models/deepseek-ai_DeepSeek-V2-Lite ./run_in_container_030.sh sim_mla.py
@@ -871,7 +872,8 @@ Initialized virtual KV cache with 1 groups and 38836 blocks; skipped KV tensor a
 TOKENS [100, 101, 102, 103]
 ```
 
-- 38,836 blocks / 621,376 tokens —— 符合 MLA 的 KV 压缩特征（每 token 的 KV 很小）
+- 38,836 blocks / 621,376 tokens（16 token/block）—— 每 token 仅约 3.4KB，
+  是 3 层 MLA（`(512+64)×2B×3`）的结果；完整 27 层会是约 9 倍
 - trace token 正确返回
 
 ### 16.4 那"不支持 MLA"指的是什么
