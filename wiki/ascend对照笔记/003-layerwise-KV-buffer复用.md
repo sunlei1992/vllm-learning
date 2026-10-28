@@ -306,3 +306,43 @@ uses_hybrid_kv_cache(...) = False
 | 带宽 | 复用层加载要重读完整 prefix，流量比不复用高 |
 | 双平面 | memcache(GVA) 与 mooncake(block-key) 的复用行为不同，别混用 |
 
+### 8.5 indexer 数据面：代码分析结论（2026-10-28）
+
+"风险集中在 indexer 数据面"这句话可以进一步收敛。逐层追代码后：
+
+**结论：layerwise 路径确实搬 indexer，而且按物理层 offset 分组，GLM-5.3 的形状是对的。**
+
+| 环节 | 代码 | 结论 |
+| :-- | :-- | :-- |
+| 布局配对 | `_INDEXER_CACHE_SUFFIX = ".indexer.k_cache"` | indexer 与主 MLA 归到同一物理层 |
+| buffer 合并 | `_merge_specs(indexer_specs, indexer=True)` | indexer 单独一个 merged tensor，容量取 `max` |
+| 层元数据 | `_infer_cache_group_metadata` 按物理层分组 | `group_num_layers` = 物理层数（78），不是 156 |
+| 地址计算 | `LayerBatchBuilder._build_transfer_arrays` | 用 `group_layer_cache_entry_offsets` 的 per-layer 区间 + 内偏移 |
+| 键 | `make_block_key` + `KeyMetadata.layer_id` | 每层一个 object，主 MLA 与 indexer 用字节偏移区分 |
+
+**真正残留的三个点**（不是"没搬"，而是边界条件）：
+
+| 风险 | 触发条件 | 影响 |
+| :-- | :-- | :-- |
+| merged indexer 容量取 `max` | 同一 slot 内 indexer 的 page size 不同 | 小 page 的层会多搬/多写 `max - own` 字节 |
+| 非 layerwise 路径的均分假设 | 走 `KVCacheStoreKeyLayerSendingThread`（非 layerwise）时，`prepare_value_layer` 用 `entries_per_layer = entries // num_layers` | 若某些层没有 indexer（entry 数不齐），`layer_id * entries_per_layer` 会错位 |
+| indexer 的字节布局 | uint8 + scale（`AscendSFAIndexerCacheSpec.real_page_size_bytes`） | 真机未验证 scale 区与主 MLA 的偏移是否完全对齐 |
+
+**GLM-5.3 为什么大概率安全**：每一层都有 indexer（DSA 在全部注意力层启用），
+所以每层 entry 数恒为 2，均分假设成立；且所有层的 indexer spec 相同，`max` 等于自身。
+
+**真机验证的快捷方式**：`_build_transfer_arrays` 有 DEBUG 日志，打开后看：
+
+```text
+[KVPOOL] build_transfer layer=L page_size=... caches_per_layer=2
+         layer_block_len=[<main_bytes>, <indexer_bytes>] layer_inner_offsets=[0, <main_bytes>]
+```
+
+`caches_per_layer=2` 且 `layer_inner_offsets` 等于 `[0, main_bytes]`，就说明主 MLA 和 indexer 都进了同一次传输。
+
+已存在的相关单测（覆盖容量合并）：
+
+- `test_mixed_indexers_share_max_capacity_without_changing_reuse_order`
+- `test_reuse_rebuilds_generic_indexer_descriptors_with_physical_capacity`
+- `test_reuse_rejects_unknown_indexer_stride`
+
