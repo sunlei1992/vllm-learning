@@ -179,6 +179,13 @@
   容量扫描：1G 以下无效、2G 66.3%、4G 饱和 81.1%，阈值≈工作集 2.8GiB。
   **传输计时已补齐**（`SimulatedStoreWorker` + 异步加载）：10/25/50 GB/s 下 TTFT 为
   21.0/13.4/10.9ms，与 offloading 的 21.7/13.7/11.1ms 基本重合。
+- **#61506 移植到 v0.30.0（实验C §16）**：分支 `sim-0.30-integrated`（基于 `ced6857af`，
+  提交 `a5d8ccc654`，已推 fork），镜像 `sim030:int3`。9 文件 / 20 hunk（main 是 4/6）；
+  冲突集中在 config、arg_utils、cpu.py、gpu_worker、gpu/model_runner、kv_connector；
+  运行期还要补两处（没有 `_init_workspace_and_model_runner`、`prepare_inputs` 无 `num_active_loras`）。
+  未移植 `benchmarks/serve.py` 重构（`vllm bench sweep simulate` 不可用）。
+  验证：冒烟（585 blocks / 18,720 tokens）、离线 P/D、在线 P/D、VA 0.30 + P/D，
+  TTFT 90.89/87.51/92.81/68.95 与 main 移植**逐位一致**。
 - **P0/P1/P2 本机验证 layerwise（实验C §15）**：
   P1 把 `torch_npu` stub 的 `Event` 换成 threading 语义；
   P0 新增 `tests/ut/distributed/ascend_store/test_layerwise_fake_store.py`（CPU 张量 + fake address store +
