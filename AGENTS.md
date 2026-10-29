@@ -1,7 +1,7 @@
 # AGENTS.md — vLLM 学习/实验工作区
 
 > 给 AI agent 的工作记忆。`wiki/` 是写给人看的学习笔记，本文件是给 agent 接上下文用的。
-> 最近更新：2026-10-20
+> 最近更新：2026-10-29
 
 ## 1. 目录与仓库边界
 
@@ -56,6 +56,15 @@
 - 详细笔记：`wiki/ascend对照笔记/003-layerwise-KV-buffer复用.md`
 
 ### 空跑模式（dry run，PR #47922 simulate-forward）
+
+**仿真器移植矩阵（2026-10-29 快照）**
+
+| 版本线 | 分支 / 提交 | 镜像 | 能力 |
+| :-- | :-- | :-- | :-- |
+| **main**（`a98247ab`） | `sim-integrated` / `d96a6f5b82`（fork 已推） | `sim-int:store3` | 冒烟、时间模型、离线/在线 P/D、VA 共存、fake AscendStore（含计时）、多轮 APC |
+| **v0.30.0**（`ced6857af`） | `sim-0.30-integrated` / `a5d8ccc654`（fork 已推） | `sim030:int3` | 冒烟、离线/在线 P/D、VA 0.30 + 离线 P/D；`vllm bench sweep simulate` 不可用（未移植 serve 重构） |
+
+两条线的调度指标**逐位一致**：1P1D 90.89 / 2P1D 87.51 / 1P2D 92.81 / 2P2D 68.95 ms。
 
 - 分支 `sim` 在 `tmp/vllm-030`（基于 `a98247ab`），提交 `16ab166382`，已应用 #47922 并跑通。
 - **macOS 原生不可用**：MRV2 依赖 triton，而 triton-cpu 只有 Linux wheel。
