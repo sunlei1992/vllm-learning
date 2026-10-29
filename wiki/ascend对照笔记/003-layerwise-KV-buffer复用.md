@@ -397,3 +397,118 @@ layer1: addr=[70960, 45120] size=[8192, 1024]  ✅
 | 非均匀 indexer 的 offset 处理 | NPU kernel 读回 indexer 是否正确（输出正确性） |
 | 容量合并（max）后的描述符 | 实际带宽、TTFT/TPOT |
 
+## 11. HBM 节省估算（2026-10-29 追加）
+
+### 11.1 收益从哪来
+
+`apply_layerwise_kv_cache_plan()`（`layerwise_cache_layout.py`）会重写
+`kv_cache_config.kv_cache_tensors`：
+
+- **共享槽位**：多个层共用一个 descriptor（`layer_stride=0`）
+- **独立层**：各占一个 descriptor
+- 函数**只改 descriptor，不改 `num_blocks`**
+
+它是否生效，取决于 `get_layerwise_reuse_config()` → 后端协议的 `extract_layout_config()`。
+我们的提交 `13d80c908` 把 Mooncake（block-key）从 `return None` 改成 opt-in。
+
+UT `test_block_key_backend_merges_shared_slots` 直接证明：
+
+```text
+4 层 + layerwise_num_shared_buffers=1
+→ 2 个 descriptor（1 独立 + 3 共享）
+```
+
+### 11.2 公式
+
+```
+槽位数 S = layerwise_num_shared_buffers + len(layerwise_independent_layers)
+节省比例 = 1 − S / L            （L = 有缓存的层数）
+同预算容量倍数 = L / S
+```
+
+### 11.3 GLM-5.3（L = 78，独立层默认 [0]）
+
+| `num_shared_buffers` | 槽位 S | 节省比例 | 容量倍数 |
+| :-- | :-- | :-- | :-- |
+| 1 | 2 | **97.4%** | 39× |
+| 2 | 3 | 96.2% | 26× |
+| **3**（文档示例） | **4** | **94.9%** | **19.5×** |
+| 4 | 5 | 93.6% | 15.6× |
+| 8 | 9 | 88.5% | 8.7× |
+| 16 | 17 | 78.2% | 4.6× |
+| 不设（默认 = 78） | 79 | 0% | 1× |
+
+### 11.4 140K 输入的绝对量
+
+GLM-5.3 每层每 token：`(kv_lora_rank 512 + qk_rope 64) × 2 B = 1,152 B`
+
+```
+单层 140K = 140,000 × 1,152 B ≈ 154 MiB
+78 层合计 ≈ 12.0 GiB / 请求
+```
+
+| 配置 | 140K 请求 KV 足迹 | 节省 |
+| :-- | :-- | :-- |
+| 不复用 | 12.0 GiB | — |
+| N=3（4 槽） | **615 MiB** | **−11.4 GiB（94.9%）** |
+| N=8（9 槽） | 1.35 GiB | −10.6 GiB（88.5%） |
+
+同样 8 GiB 的 KV 预算：
+
+| 配置 | 可容纳的 140K KV |
+| :-- | :-- |
+| 不复用 | 0.67 条 |
+| N=3 | **13 条** |
+| N=8 | 5.9 条 |
+
+### 11.5 两个口径
+
+| 口径 | 结果 |
+| :-- | :-- |
+| `num_blocks` 不变 | HBM 占用降到 `S/L`（N=3 时 5.1%），剩余 HBM 释放 |
+| 预算重新调大 | 容量变 `L/S` 倍（N=3 时 19.5×） |
+
+因为该函数不改 `num_blocks`，默认看到的是"**占用变少**"；
+要变成"**容量变大**"，需同步调大 `--kv-cache-memory-bytes` / `gpu_memory_utilization`。
+
+### 11.6 不节省的部分
+
+| 项 | 是否节省 |
+| :-- | :-- |
+| 本地 KV 缓冲（prefill offload 的 staging KV） | ✅ 主要收益 |
+| **Mooncake 存储池** | ❌ 每层 KV 仍要全存 |
+| 权重、激活 | ❌ |
+| MTP/draft 层 | ❌ 单独占 descriptor（代码显式排除） |
+| 多 group / hybrid / mamba | ❌ 当前不支持复用 |
+
+### 11.7 怎么验证收益
+
+启动日志应出现：
+
+```text
+Layerwise KV cache reuse merged N descriptors into M descriptors using K buffer assignments.
+```
+
+| 现象 | 结论 |
+| :-- | :-- |
+| 有 merged 且 M < N | ✅ 复用生效，显存确实降了 |
+| 没有这行 | ❌ 没进复用（多半没设 `layerwise_num_shared_buffers`） |
+| `NotImplementedError`（hybrid/mamba） | ❌ 布局不支持 |
+
+### 11.8 澄清："不是 GVA，所以拿不到收益"？
+
+这个说法**部分对**：
+
+| 说法 | 判断 |
+| :-- | :-- |
+| block-key 不是 GVA 平面 | ✅ 对（fence 机制不同：GVA 用显式完成门控，block-key 用 save-finished 事件） |
+| 能跑 layerwise offload | ✅ 对 |
+| 拿不到复用收益 | ❌ 不准确 |
+
+真正拿不到收益的常见原因：
+
+1. **没显式设置 `layerwise_num_shared_buffers`** —— 默认等于层数，等于不复用（最可能）
+2. 把"Mooncake 存储容量"和"本地 KV 缓冲"混为一谈 —— store 侧确实不省
+3. 用了 hybrid / mamba / 多 group 布局 —— 代码直接拒绝复用
+4. 用了 MTP/draft 层 —— 这些层被排除在复用外
+

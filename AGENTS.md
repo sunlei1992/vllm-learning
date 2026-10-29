@@ -195,6 +195,11 @@
   未移植 `benchmarks/serve.py` 重构（`vllm bench sweep simulate` 不可用）。
   验证：冒烟（585 blocks / 18,720 tokens）、离线 P/D、在线 P/D、VA 0.30 + P/D，
   TTFT 90.89/87.51/92.81/68.95 与 main 移植**逐位一致**。
+- **layerwise HBM 节省（003 §11）**：槽位 `S = num_shared_buffers + len(independent)`，
+  节省 `1 − S/L`，容量倍数 `L/S`。GLM-5.3（L=78）：N=3 → 4 槽，省 94.9%、容量 19.5×；
+  140K 单请求 KV 从 12.0 GiB → 615 MiB。`apply_layerwise_kv_cache_plan` 只改 descriptor
+  不改 `num_blocks`，默认是"占用变少"，要"容量变大"需同步调大 KV 预算。
+  **Mooncake 存储池不省**；不设 `layerwise_num_shared_buffers`（默认=层数）则完全不复用。
 - **P0/P1/P2 本机验证 layerwise（实验C §15）**：
   P1 把 `torch_npu` stub 的 `Event` 换成 threading 语义；
   P0 新增 `tests/ut/distributed/ascend_store/test_layerwise_fake_store.py`（CPU 张量 + fake address store +
