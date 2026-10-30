@@ -1,0 +1,77 @@
+infer_modes:
+  - PD
+  - PD-AM
+description: pipeline for fully disaggregated prefill\decode mode (with vanilla-vLLM remote-decode injection).
+pipeline_cfg:
+  api_endpoints:
+    - path: "/v1/chat/completions"
+      methods: [ "POST" ]
+      handler: chat_completions_infer
+    - path: "/v1/completions"
+      methods: [ "POST" ]
+      handler: completions_infer
+    - path: "/v1/messages"
+      methods: [ "POST" ]
+      handler: messages_infer
+  phases:
+    - name: prefill_schedule
+      type: Schedule
+      span_name: prefill_stage
+      stage_name: Prefill
+      schedule_params:
+        instance_type: prefill
+        skip_policy: no_skip
+        request_load:
+          - usage
+          - text
+          - bytes
+    - name: prefill_execute
+      type: Execute
+      span_name: prefill_stage
+      stage_name: Prefill
+      execute_params:
+        instance_type: prefill
+        pre_process_request_funcs:
+          - prefill_prepare_request
+          # 关键：让 vanilla vLLM 的 P 知道要"远程 decode"，否则不会做 KV 传输、
+          # 响应里也不会带 kv_transfer_params（这个函数原本只在 VA-PD 模式下由 deploy.sh 注入）
+          - vllm_ascend_prepare_request
+        post_process_funcs:
+          - prefill_post_response
+          - check_kv_transfer_params
+        post_phase_funcs:
+          - regular_post_phase
+      dependsOn:
+        - prefill_schedule
+    - name: decode_schedule
+      type: Schedule
+      span_name: decode_stage
+      stage_name: Decode
+      schedule_params:
+        instance_type: decode
+        request_load:
+          - usage
+          - text
+          - bytes
+      dependsOn:
+        - prefill_execute
+    - name: decode_execute
+      type: Execute
+      span_name: decode_stage
+      stage_name: Decode
+      execute_params:
+        instance_type: decode
+        pre_process_request_funcs:
+          - decode_prepare_request
+        post_process_funcs:
+          - decode_post_response
+        post_phase_funcs:
+          - complete_post_phase
+      dependsOn:
+        - decode_schedule
+  success_phase:
+    name: pd_success
+    type: default_success
+  error_phase:
+    name: pd_failure
+    type: default_fail

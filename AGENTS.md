@@ -197,6 +197,16 @@
   图表脚本 `make_pd_chart.py`（Pillow，输出同目录 `pd_trend.png`）。
   **已归档**：`wiki/vllm架构笔记/assets/simulate-forward/pd/bench/`，笔记
   `wiki/vllm架构笔记/实验D-bench-serve压P-D空跑.md`（`tmp/` 里是同一份工作副本）。
+- **RouteServer 当空跑 P/D 的 proxy（实验E，2026-10-30 已跑通）**：上游
+  `/Users/sunlei/code/gitcode/RouteServer` `dev@54d7d80`，`rs-demo:dev` + `sim-int:dry-run`
+  **共享 netns**（`docker run --network container:rs-pd`），实例用 `PREFILL_SERVERS/DECODE_SERVERS`
+  注册，所以 RS 不拉起 vLLM。**必须打 `pd_separate_with_remote_decode.yaml` 补丁**（给 P 段加
+  `vllm_ascend_prepare_request`，显式写 `do_remote_decode`），否则 P 返回
+  `kv_transfer_params: null`，D 自己重新 prefill——`/v1/completions` 下只有 WARN、请求全 200，
+  **看起来还更快**（实测未打补丁 78ms vs 真 P/D 97ms vs 薄代理 92.6ms）。
+  脚本 `assets/routeserver-sim/{run.sh,start_sim_pd.sh}`，笔记 `实验E-RouteServer对接P-D空跑.md`。
+  另：**冷启动会把 TTFT 抬高约 2 倍**（首次 190.7ms → 同栈 93–97ms），`--num-warmups 2` 不够，
+  要先用完整负载跑一遍丢弃；实验D 的 `k8_*` 绝对值即受此影响（趋势不变）。
 - **多轮 APC + 二级缓存代理实验（实验C §12）**：用 `OffloadingConnector`(+`CPUOffloadingSpec`) 代替
   Mooncake 做分层缓存仿真，脚本 `mt/run_multiturn.sh`。实测（Qwen3-0.6B、HBM 1GiB、8 会话×6 轮）：
   容量 4GiB 后命中率饱和在 81.1%（= 1 − 新增 token 占比），TTFT 19.4→11.1ms；

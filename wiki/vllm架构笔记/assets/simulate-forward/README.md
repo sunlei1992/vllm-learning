@@ -37,6 +37,7 @@
 | `server/smoke_client.sh` | 健康检查 + 带/不带 trace 的请求 |
 | `pd/bench/pd_bench.sh` | 用 `vllm bench serve` 压 XpYd 空跑（代理 + 起停一条龙） |
 | `pd/bench/make_pd_chart.py` | 把 `tmp/simlogs/pd_bench/*.json` 画成趋势图（Pillow） |
+| `../routeserver-sim/run.sh` | RouteServer 当 P/D proxy 接空跑（实验E） |
 | `DOCKER.md` | 镜像的逐层构建命令与每个坑的解法 |
 
 ## 用法

@@ -27,6 +27,7 @@
 | 实验B | **simulate-forward 仿真环境** ✅已写 | 没有 NPU/权重怎么跑真 Scheduler？Triton JIT 为什么让单次请求慢 146s？ | PR #47922 + `tmp/vllm-030`（分支 `sim`） | `vllm/v1/worker/simulated/model_runner.py:44` |
 | 实验C | **移植 PR #61506（时间模型 + P/D 分离）** ✅已写 | 不只是调度：能估 TTFT/TPOT，能跑 P/D 比例对比 | PR #61506 + `tmp/vllm-sim-int`（分支 `sim-integrated`） | `vllm/v1/worker/simulated/disaggregated.py:286` |
 | 实验D | **用 `vllm bench serve` 压 P/D 空跑** ✅已写 | bench 缺两段式协议怎么办？默认 `timing=zero` 为什么让配比实验失效？ | `pd/bench/pd_proxy.py` + `sim-int:dry-run` | `v1/worker/simulated/timing.py:575` `get_timing_provider` |
+| 实验E | **RouteServer 对接空跑 P/D** ✅已写 | 生产级 Go proxy 能不能直接接 `--simulate-forward`？不打补丁会怎样静默降级？ | `rs-demo:dev` + `sim-int:dry-run`（共享 netns） | `pkg/route-server/handler/pipeline/mono_phases.go:363` `PreparePrefillRequestBody` |
 
 ---
 
