@@ -176,6 +176,27 @@
   `--simulation-config '{"kv_transfer_timing":{"load_gbps":10}}'`，否则报 "Simulated KV transfer needs
   simulation_config.kv_transfer_timing"。流程：prefill（max_tokens=1 + do_remote_decode）→ 拿
   `kv_transfer_params` → decode 带参数生成。
+- **`vllm bench serve` 可以测 P/D 空跑（2026-10-30 已跑通）**：bench serve 本身只说单请求协议
+  （无 `kv_transfer_params`），所以加了一个薄代理 `pd_proxy.py`（P：`max_tokens=1` +
+  `do_remote_decode`；拿回 `kv_transfer_params` 后打 D，`max_tokens-1`，SSE 原样透传），
+  一键脚本 `pd/bench/pd_bench.sh`（容器内 `pd_sim_launch.sh` 起 XpYd + 代理；`PRE/DEC` 控制配比，
+  `SIM_TIMING` 注入时间模型，`KEEP=1` 保留环境）。1P1D/2P1D/1P2D/2P2D 全部 0 失败。
+  **关键坑**：默认 `timing=zero`，算力免费 → 四组配比指标几乎相同（45–51ms），要比配比必须给
+  `"timing":"linear","timing_args":{...}`；带时间模型后 TTFT 对 `load_gbps` 敏感（2P1D
+  10→100GB/s：227→131ms），且 prefill 在 2P 下确认减半（代理侧 p50 173→96ms），
+  但整机 TTFT 只降 6%，说明瓶颈随后转移到 D 侧 KV 传输 —— 想测配比要同时扫带宽/并发。
+- **P/D 时间模型标定（公开数据版，2026-10-30）**：910B3 = BF16 294.91 TFLOPS / HBM 800 GB/s
+  （[oam-tools 规格](https://atomgit.com/cann/oam-tools/blob/master/skills/cann-npu-perfanalysis/references/hardware-specs.md)）；
+  Qwen3-0.6B@910B3 真实 TPOT 1/4/8 用户 = 8.6/14.7/25.5 ms（ClawPerf E2E 报告）→ 线性拟合
+  每步 `6.2ms + 2.4ms×并发`。据此预设 `linear: fixed_us=6200, prefill_us_per_token=15,`
+  `decode_us_per_req=2400, decode_us_per_kv_token=0.14`；KV = 112 KiB/token（28 层 × 8 KV head ×
+  128 dim × 2B × 2）。实测（8 请求 × 1024in/64out、KV 2GiB、单次）：TTFT 1P1D 194.7 / 2P1D 148.4 /
+  4P1D 182.1 ms；1D→2D TPOT 25.4→15.8ms、duration -35%；10→100GB/s 仅 150→140ms。
+  **结论：算力模型一真实，瓶颈从 KV 带宽转为 decode 算力；加 P 在 2P 就见顶，加 D 立竿见影。**
+  另注意 **KV 2GiB 装不下 16×2048 token 时，P/D 会被准入卡成排队，看起来像"加 P 无用"**（假象）。
+  图表脚本 `make_pd_chart.py`（Pillow，输出同目录 `pd_trend.png`）。
+  **已归档**：`wiki/vllm架构笔记/assets/simulate-forward/pd/bench/`，笔记
+  `wiki/vllm架构笔记/实验D-bench-serve压P-D空跑.md`（`tmp/` 里是同一份工作副本）。
 - **多轮 APC + 二级缓存代理实验（实验C §12）**：用 `OffloadingConnector`(+`CPUOffloadingSpec`) 代替
   Mooncake 做分层缓存仿真，脚本 `mt/run_multiturn.sh`。实测（Qwen3-0.6B、HBM 1GiB、8 会话×6 轮）：
   容量 4GiB 后命中率饱和在 81.1%（= 1 − 新增 token 占比），TTFT 19.4→11.1ms；
