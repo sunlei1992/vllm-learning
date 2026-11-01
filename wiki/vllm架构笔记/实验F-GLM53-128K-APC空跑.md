@@ -166,3 +166,39 @@ Workload：24 个前缀 × 115,200 token；每个前缀 40 条、每条 128,000 
 - 路由/排队层：按 prefix 分桶、限制活跃前缀、攒批/超时；
 - 缓存层：pin 当前前缀、优先淘汰 suffix、或组首预取；
 - scheduler 内部重排只能作为最后一道微调。
+
+## 9. 闭环 24 worker 实测（2026-11-01）
+
+之前的 960 条是“同时到达”开环；真实 case 是 **24 个进程、每个进程固定一个前缀、当前请求不结束不发下一条**，即固定 24 并发、每个前缀最多 1 条在飞。补了 [`assets/vslice_glm/closed_loop.py`](assets/vslice_glm/closed_loop.py)：
+
+- 24 个 worker，每个 worker 固定一个 prefix，40 条串行；
+- 每条 128K（115.2K prefix + 12.8K unique suffix），输出 1 token；
+- 65 GiB BF16/rank，block 128，`max_num_seqs=32`，`max_num_batched_tokens=32768`；
+- 测 `makespan`、per-request latency（输出 1，所以 latency ≈ TTFT）、APC hit。
+
+| 策略 | makespan | throughput（CPU proxy） | APC hit |
+|---|---:|---:|---:|
+| stock | **49.57s** | 19.37 req/s | 0.48% |
+| cap5（每 rank 最多 5 个活跃前缀） | 51.49s | 18.64 req/s | 0.31% |
+| cap2（v2 默认） | 56.47s | 17.00 req/s | 0.19% |
+
+注意：zero timing 下 `makespan`/`throughput` 只是 CPU/HTTP proxy，不是真实吞吐；但趋势清楚：**cap2 < cap5 < stock**。
+
+原因：
+
+1. 闭环里每个前缀只有 **1 条在飞**，下一條要等当前请求结束才发；scheduler 无法像开环那样“攒 40 条同前缀”形成 batch；
+2. 限制活跃前缀数（cap2/cap5）只会降低 `N_eff`，不会提高命中率——因为前缀没有 queued 请求可喂；
+3. 没有 pin 时，前缀在本条请求结束后仍可能被其他前缀驱逐；下一条回来时 miss；
+4. 因此 **闭环 24 前缀场景下，grouping/cap 不是正确杠杆；需要 prefix pin/retention**：把最近 5 个活跃前缀的块保护住，让 worker 的下一条请求直接命中。
+
+如果按 1K 输出、TPOT=20ms 估算：
+
+```text
+throughput = N_eff / (TTFT + 1023×0.02)
+```
+
+- `N_eff` 受 HBM 限制：每 rank 5 条 → 全局 ~10；cap2 只有 4；
+- TTFT 2s 时：N_eff=10 → 0.445 req/s；N_eff=4 → 0.178 req/s；
+- 所以 cap2 会把总吞吐压到约 40%。
+
+下一步不是继续调 cap，而是实现 **prefix pin/retention**，再跑同一闭环客户端对比。

@@ -189,6 +189,9 @@
   仍远低于 87.8%。原因：waiting 里同 prefix 攒不够 32 条，且 prefix 块会被 LRU 驱逐；
   考虑 running 只带来 ~3–4pp。结论：**只重排 waiting 不够，需要 prefix-aware 准入/攒批 +
   prefix pin/预取**；scheduler 排序只能做最后微调。
+  **闭环 24 worker（2026-11-01）**：每个 worker 固定前缀、40 条串行、24 并发（每个前缀最多 1 条在飞）。
+  65 GiB/rank：stock 49.57s/0.48% hit，cap5 51.49s/0.31%，cap2 56.47s/0.19%。
+  **闭环下 cap/grouping 反而降低 N_eff，不提高命中率；需要 prefix pin/retention**，不是继续调 cap。
 - **#61506 仿真器（实验C）**：分支 `sim-integrated`（worktree `tmp/vllm-sim-int`，基于 `a98247ab`），
   提交 `1cd22c891b`，镜像 `sim-int:dry-run`。移植时 43 文件里 4 个冲突（gpu_worker `_bind_device`、
   cpu.py 仿真 block_size、config 钩子、base_loader meta 跳过 repack），**无 csrc 改动**→复用已编译扩展。
