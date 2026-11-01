@@ -115,6 +115,14 @@
 - **策略对比**：`sim_policy.py` 通过重排 `Scheduler.waiting`（deque）实现 FCFS / 短优先 / 长优先，
   不改 vLLM。实测三者 **makespan 完全相同（205.45）**，但 mean TTFT 56.5 / 90.9 / 143.0，
   max TTFT 181 / 171 / 152——**策略只重新分配延迟，不改变总吞吐**。
+- **调度优化 A/B vertical slice（2026-10-31 已跑通）**：`assets/vslice/`。单实例 `sim-int:dry-run`，
+  同镜像只切 `VSLICE_POLICY=fcfs|srs`；8 长 725 + 8 短 65 token，各 2 次（整轮 warmup 丢弃）。
+  short queue p50 566→15ms（-97%）、long queue p50 44→532ms（+1112%）、总吞吐 -0.4%、
+  goodput(TTFT≤200ms) +6.2%、steps 213→204；**再次验证「策略只重分配延迟」**，
+  且证明 bench + 每请求 metrics + step 轨迹能归因。轨迹已固化成 golden trace UT
+  `assets/vslice/test_vslice_trace.py`（离线 Scheduler + fake KV，3 passed / 4s：
+  FCFS 42 步/6560 token、first short step 16；SRS 42 步、first short step 0、first3 short 24）。
+  详见 `wiki/vllm架构笔记/10-调度优化测试工作流.md` 与 `assets/vslice/RESULTS.md`。
 - **空跑 + vllm-ascend main**：`assets/simulate-forward/va/run_va_dry_run.sh`。VA main 的
   vLLM pin 就是 `a98247ab`（与空跑容器一致），因此**可直接加载**。需要 6 个 stub
   （torch_npu、torch.npu、`_build_info`、triton cann 算子、HCCL、`torch_npu._C`）+ 改
@@ -162,6 +170,25 @@
   所以模拟的是 dense MLA 变体，GLM-5.3 真正省 KV 的那部分未建模。**
   **main 镜像同样验证**（`sim-main:glm53`，vllm 0.31.1rc1）：23,888 tokens / 1,493 blocks / 11.66x，
   与 0.30 **逐位一致**。
+- **GLM-5.3 128K / 24 前缀 / 90% APC 空跑（实验F，2026-10-31）**：`assets/vslice_glm/`。
+  真实拓扑 P=TP8×DP2、D=TP1×DP16（EP16），util 0.85，只测 prefill。CPU MLA 默认强制关
+  APC/chunked，需挂 `cpu.py` + `VLLM_SIM_MLA_ALLOW=1` 才跑得起来。960 请求、320 GiB 仿真 KV
+  （BF16 ≈160 GiB C8）：baseline 轮询 **86.5%**、prefix-affinity **88.8%**、prefix-grouped **90.0%**；
+  250 GiB 时 baseline **71%**、affinity **90%**。结论：**960 个唯一 suffix 会驱逐 24 个前缀**，
+  affinity 必要但不充分，grouped 最稳。`num_preemptions=0`（是驱逐不是抢占）。
+  详见 `wiki/vllm架构笔记/实验F-GLM53-128K-APC空跑.md` 与 `assets/vslice_glm/RESULTS.md`。
+  **真实 P KV（2026-10-31 确认 per-DP-rank）**：`760,832 tokens` / TP8 rank ≈34 GiB C8。
+  24 个 128K 前缀需 2.76M tokens = **3.63× 容量**，只放前缀也只能放 6.6 个；32 并发时只剩
+  ~3 个前缀的空间。**90% APC 物理上不成立**：即使 grouped，24 组×40 条，每组首条冷启动，
+  上限 ≈ 0.9×(1−1/40)=87.75%。除非 24 前缀常驻（不可能）、外部 prefix store/Mooncake 预加载、
+  layerwise 复用放大容量，或降低目标/减少前缀。320 GiB BF16 仿真（3.82M tokens）是真实容量的
+  5 倍，不能用于这个结论；应按 65 GiB BF16/rank 重跑。
+  **简单 prefix-grouped scheduler（2026-11-01）**：`assets/vslice_glm/prefix_sched.py`，65 GiB/rank
+  （776,704 tokens≈真实 760,832）。grouped 到达时 stock 已 85.5%，重排无增益；interleaved 到达时
+  stock **2.7%** → v1 重排 **15.9%** → v2（考虑 running 前缀集合 + cap1/cap2）**19.7%/19.5%**，
+  仍远低于 87.8%。原因：waiting 里同 prefix 攒不够 32 条，且 prefix 块会被 LRU 驱逐；
+  考虑 running 只带来 ~3–4pp。结论：**只重排 waiting 不够，需要 prefix-aware 准入/攒批 +
+  prefix pin/预取**；scheduler 排序只能做最后微调。
 - **#61506 仿真器（实验C）**：分支 `sim-integrated`（worktree `tmp/vllm-sim-int`，基于 `a98247ab`），
   提交 `1cd22c891b`，镜像 `sim-int:dry-run`。移植时 43 文件里 4 个冲突（gpu_worker `_bind_device`、
   cpu.py 仿真 block_size、config 钩子、base_loader meta 跳过 repack），**无 csrc 改动**→复用已编译扩展。

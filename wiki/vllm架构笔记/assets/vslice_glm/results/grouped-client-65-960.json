@@ -1,0 +1,13 @@
+{
+  "mode": "grouped",
+  "prefix_cache_queries": 122880000.0,
+  "prefix_cache_hits": 110592000.0,
+  "num_preemptions": 0.0,
+  "iteration_tokens": 0.0,
+  "hit_rate": 0.9,
+  "warm_s": 2.18,
+  "measured_s": 67.26,
+  "requests": 960,
+  "wall_p50": 2.566,
+  "wall_max": 2.975
+}

@@ -1,0 +1,20 @@
+{
+  "mode": "baseline",
+  "prefix_cache_queries": 122880000.0,
+  "prefix_cache_hits": 106329600.0,
+  "num_preemptions": 0.0,
+  "iteration_tokens": 0.0,
+  "hit_rate": 0.8653125,
+  "warm_s": 2.95,
+  "measured_s": 37.03,
+  "requests": 960,
+  "wall_p50": 2.408,
+  "kv_usage_after": {
+    "18100": 0.0,
+    "18101": 0.0
+  },
+  "kv_usage_before": {
+    "18100": 0.0,
+    "18101": 0.0
+  }
+}
