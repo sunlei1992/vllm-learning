@@ -192,6 +192,8 @@
   **闭环 24 worker（2026-11-01）**：每个 worker 固定前缀、40 条串行、24 并发（每个前缀最多 1 条在飞）。
   65 GiB/rank：stock 49.57s/0.48% hit，cap5 51.49s/0.31%，cap2 56.47s/0.19%。
   **闭环下 cap/grouping 反而降低 N_eff，不提高命中率；需要 prefix pin/retention**，不是继续调 cap。
+  **pin5 实测**：单前缀两条请求 90% 命中，但 24 worker 闭环仍只有 0.21%（pin 在 24 前缀间轮换，
+  worker 回来时已被换掉）。**pin 必须配合 active window ≤5/rank 的准入**，单独 pin 不够。
 - **#61506 仿真器（实验C）**：分支 `sim-integrated`（worktree `tmp/vllm-sim-int`，基于 `a98247ab`），
   提交 `1cd22c891b`，镜像 `sim-int:dry-run`。移植时 43 文件里 4 个冲突（gpu_worker `_bind_device`、
   cpu.py 仿真 block_size、config 钩子、base_loader meta 跳过 repack），**无 csrc 改动**→复用已编译扩展。

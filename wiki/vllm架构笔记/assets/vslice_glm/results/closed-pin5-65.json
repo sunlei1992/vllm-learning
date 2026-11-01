@@ -1,0 +1,17 @@
+{
+  "requests": 960,
+  "per_prefix": 40,
+  "makespan_s": 49.283,
+  "throughput_req_s": 19.4792,
+  "latency_p50_s": 1.22,
+  "latency_p99_s": 1.763,
+  "latency_max_s": 1.881,
+  "effective_running_p50": 0.0,
+  "effective_running_max": 2.0,
+  "waiting_p50": 0.0,
+  "waiting_max": 10.0,
+  "prefix_cache_queries": 122880000.0,
+  "prefix_cache_hits": 260352.0,
+  "apc_hit_rate": 0.0021,
+  "preemptions": 0.0
+}

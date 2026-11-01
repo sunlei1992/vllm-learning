@@ -181,6 +181,7 @@ Workload：24 个前缀 × 115,200 token；每个前缀 40 条、每条 128,000 
 | stock | **49.57s** | 19.37 req/s | 0.48% |
 | cap5（每 rank 最多 5 个活跃前缀） | 51.49s | 18.64 req/s | 0.31% |
 | cap2（v2 默认） | 56.47s | 17.00 req/s | 0.19% |
+| pin5（保留最近 5 个前缀块） | 49.28s | 19.48 req/s | 0.21% |
 
 注意：zero timing 下 `makespan`/`throughput` 只是 CPU/HTTP proxy，不是真实吞吐；但趋势清楚：**cap2 < cap5 < stock**。
 
@@ -201,4 +202,8 @@ throughput = N_eff / (TTFT + 1023×0.02)
 - TTFT 2s 时：N_eff=10 → 0.445 req/s；N_eff=4 → 0.178 req/s；
 - 所以 cap2 会把总吞吐压到约 40%。
 
-下一步不是继续调 cap，而是实现 **prefix pin/retention**，再跑同一闭环客户端对比。
+pin5 已实现（[`prefix_pin_sched.py`](assets/vslice_glm/prefix_pin_sched.py)）：单前缀两条请求能看到 90% 命中，
+但 24 worker 闭环下只有 0.21%——因为 24 个 worker 远多于 HBM 能留的 5 个前缀，pin 会不停轮换，
+worker 的下一条回来时前缀已被换掉。**pin 单独不够，必须配合“活跃窗口 ≤5/rank”的准入**：
+只让 5 个 worker 的请求在飞，pin 这 5 个前缀直到它们的 40 条跑完，再换下一批。
+下一步是 windowed admission + pin，而不是继续调 pin 数量。
