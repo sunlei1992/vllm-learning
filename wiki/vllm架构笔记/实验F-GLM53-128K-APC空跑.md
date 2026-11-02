@@ -238,3 +238,40 @@ worker 的下一条回来时前缀已被换掉。**pin 单独不够，必须配�
 6. 如果真实场景 TTFT 因 Mooncake load wait 达到数秒，q2 把 p99 从 ~10s 降到 ~2s，总吞吐按 `N_eff/(TTFT+decode)` 可提升 ~20–30%。
 
 下一步：把这个策略和 Mooncake L2 load wait 一起建模，再判断真实总吞吐收益；当前空跑只能证明“减少 thrash + 降 TTFT”，不能证明 1K 输出下的总吞吐翻倍。
+
+## 11. 新 case：128K/1、24 并发、90% 合并 APC（2026-11-02）
+
+目标 case：128K 输入、1 输出、24 公共前缀、24 并发；90% token 与公共前缀一致，HBM+Mooncake 合并 APC 90%。
+
+### 11.1 已测：90% 本地命中上界（3.2M tokens HBM）
+
+用 320 GiB BF16/rank（≈3.82M tokens）让 24 个 128K 前缀全部常驻，模拟“90% 已经是本地命中”的上界；24 worker、输出 1、960 条：
+
+| 策略 | max_num_seqs | APC hit | makespan | throughput（CPU proxy） | p99 latency |
+|---|---:|---:|---:|---:|---:|
+| stock5 | 5 | **87.75%** | **40.25s** | **23.85 req/s** | **1.50s** |
+| stock12 | 12 | 87.75% | 44.53s | 21.56 req/s | 1.56s |
+| stock32 | 32 | 87.75% | 44.61s | 21.52 req/s | 1.60s |
+| pin + q2 | 5 | 87.75% | 44.83s | 21.42 req/s | 2.09s |
+
+结论：
+
+1. **当 90% 已经是本地命中时，q2 没有任何命中收益**（都是 87.75%），反而慢 **11.4%**（40.25→44.83s），p99 从 1.50→2.09s；
+2. 原因是 q2 的 pin/quantum 额外占 HBM、增加等待；前缀已经常驻时，pin 是纯开销；
+3. 这个上界说明：**q2 只适合“本地命中低、external load 多”的场景**；不适合“90% 已经本地常驻”。
+
+### 11.2 未完成：fake Mooncake external-load 版本
+
+`sim-int:store3` 有 `SimulatedAscendStoreConnector` + 传输计时，但 GLM API server 在 model load 阶段报 `Failed to find a kernel that can implement the ScaledMM linear layer`；`sim030:glm53` 没有 fake store。当前无法在本地直接跑“90% external + load 5.8 GiB”版本。
+
+按 cost model 估：
+
+- q1：960 次 external load ×5.8 GiB ≈5.6 TB；100/400 GB/s → 56/14s；
+- q2：480 次 ≈2.8 TB；100/400 GB/s → 28/7s；
+- q4：240 次 ≈1.4 TB；100/400 GB/s → 14/3.5s。
+
+如果 external load 是瓶颈，q2/q4 仍可能有效；如果 load 很快，q2 只会增加 pin 开销（如 11.1 所示）。
+
+**当前结论**：新 case 的 90% 是“合并 HBM+Mooncake”，不是“本地 90%”。  
+- 若本地命中已经 90%：**stock5 最好，q2 不要用**；  
+- 若 90% 里有大量 external load：q2/q4 值得测，但必须先解决 fake Mooncake + GLM 的镜像兼容性，或上真机测 external load 占比。
