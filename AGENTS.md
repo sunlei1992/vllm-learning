@@ -194,6 +194,10 @@
   **闭环下 cap/grouping 反而降低 N_eff，不提高命中率；需要 prefix pin/retention**，不是继续调 cap。
   **pin5 实测**：单前缀两条请求 90% 命中，但 24 worker 闭环仍只有 0.21%（pin 在 24 前缀间轮换，
   worker 回来时已被换掉）。**pin 必须配合 active window ≤5/rank 的准入**，单独 pin 不够。
+  **容量匹配 + pin quantum（2026-11-02）**：`max_num_seqs=5`（每 rank 5 条）是最大的单项收益，
+  stock 49.57→44.36s；再加 pin + `PIN_QUANTUM=2`：**43.84s、26.8% 命中、p99 2.17s**，
+  相对 stock32 -11.6%。q1/q3 都不如 q2。注意这是 CPU proxy；1K 输出/TPOT 20ms 下 decode 占 20.46s，
+  总吞吐收益取决于真实 TTFT，不能把 11.6% 直接当总吞吐。
 - **#61506 仿真器（实验C）**：分支 `sim-integrated`（worktree `tmp/vllm-sim-int`，基于 `a98247ab`），
   提交 `1cd22c891b`，镜像 `sim-int:dry-run`。移植时 43 文件里 4 个冲突（gpu_worker `_bind_device`、
   cpu.py 仿真 block_size、config 钩子、base_loader meta 跳过 repack），**无 csrc 改动**→复用已编译扩展。

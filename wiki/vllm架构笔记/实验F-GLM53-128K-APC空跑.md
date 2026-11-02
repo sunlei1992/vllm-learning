@@ -207,3 +207,34 @@ pin5 已实现（[`prefix_pin_sched.py`](assets/vslice_glm/prefix_pin_sched.py)�
 worker 的下一条回来时前缀已被换掉。**pin 单独不够，必须配合“活跃窗口 ≤5/rank”的准入**：
 只让 5 个 worker 的请求在飞，pin 这 5 个前缀直到它们的 40 条跑完，再换下一批。
 下一步是 windowed admission + pin，而不是继续调 pin 数量。
+
+## 10. 容量匹配 max_num_seqs + prefix pin quantum（2026-11-02）
+
+上一轮 pin5 在 `max_num_seqs=32` 下失败：新前缀不断进来，把 pin 挤掉；后来 `max_num_seqs=5 + pin5` 又因为没有租约，worker 跑完后 pin 不释放，新前缀拿不到 block，120 条跑了 114s、p99 109s、命中 0。修复：
+
+- `max_num_seqs=5`（每 rank 5 条，和 HBM 5 个前缀容量匹配）；
+- pin 加 **TTL**（`PIN_TTL`）：前缀空闲超过 TTL 就释放；
+- pin 加 **quantum**（`PIN_QUANTUM`）：一个前缀连续跑 Q 条后释放，避免一个前缀长期占用；
+- scheduler 优先 pin 前缀的 waiting，pins 满时 **defer 未 pin 前缀**，防止新前缀把 pin 挤掉。
+
+960 条、24 worker、65 GiB/rank、输出 1 token：
+
+| 策略 | max_num_seqs | quantum | APC hit | makespan | throughput（CPU proxy） | p99 latency |
+|---|---:|---:|---:|---:|---:|---:|
+| stock | 32 | - | 0.48% | 49.57s | 19.37 req/s | 1.76s |
+| stock | 5 | - | 0.00% | **44.36s** | **21.64 req/s** | 1.47s |
+| pin5 | 32 | - | 0.21% | 49.28s | 19.48 req/s | 1.76s |
+| pin + q1 | 5 | 1 | 22.3% | 47.11s | 20.38 req/s | 2.18s |
+| **pin + q2** | 5 | 2 | **26.8%** | **43.84s** | **21.90 req/s** | 2.17s |
+| pin + q3 | 5 | 3 | 23.2% | 46.18s | 20.79 req/s | 2.07s |
+
+结论：
+
+1. **最大的单项收益来自 `max_num_seqs=5`**：49.57→44.36s（-10.5%），因为不再把 24 个前缀硬塞进 5 个槽，减少了 thrash；
+2. **pin + quantum2** 再把它推到 43.84s（相对 stock32 **-11.6%**，相对 stock5 **-1.2%**），命中率 0.48%→26.8%；
+3. quantum1/3 都不如 q2：q1 没有复用，q3 让单个前缀占太久、尾延迟/调度变差；
+4. p99 latency 2.17s，仍远低于 10s；但比 stock5 的 1.47s 高，因为 pin 前缀的 worker 会多等一轮；
+5. **这是 CPU proxy，不是真实总吞吐**。1K 输出、TPOT 20ms 时，decode 占 ~20.46s，TTFT 从 1.1→1.0s 只带来 ~0.5% 总吞吐；q2 的价值主要在“减少 prefix thrash / 降低 TTFT 抖动”，不是在 decode-bound 场景翻倍；
+6. 如果真实场景 TTFT 因 Mooncake load wait 达到数秒，q2 把 p99 从 ~10s 降到 ~2s，总吞吐按 `N_eff/(TTFT+decode)` 可提升 ~20–30%。
+
+下一步：把这个策略和 Mooncake L2 load wait 一起建模，再判断真实总吞吐收益；当前空跑只能证明“减少 thrash + 降 TTFT”，不能证明 1K 输出下的总吞吐翻倍。

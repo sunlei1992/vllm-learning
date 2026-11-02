@@ -80,8 +80,12 @@
 | cap5（每 rank 5 个活跃前缀） | 51.49s | 18.64 req/s | 0.31% |
 | cap2（v2 默认） | 56.47s | 17.00 req/s | 0.19% |
 | pin5（保留最近 5 个前缀块） | 49.28s | 19.48 req/s | 0.21% |
+| stock + max_num_seqs=5 | **44.36s** | 21.64 req/s | 0.00% |
+| pin + quantum1 + seqs5 | 47.11s | 20.38 req/s | 22.3% |
+| **pin + quantum2 + seqs5** | **43.84s** | **21.90 req/s** | **26.8%** |
+| pin + quantum3 + seqs5 | 46.18s | 20.79 req/s | 23.2% |
 
-闭环下每个前缀只有 1 条在飞，没有 40 条可攒；限制活跃前缀只会降低 `N_eff`，不会提高命中率。**grouping/cap 不是闭环 24 前缀的正确杠杆，需要 prefix pin/retention。** 详见实验F §9。
+闭环下每个前缀只有 1 条在飞，没有 40 条可攒；单纯 cap/grouping 只会降低 `N_eff`。**容量匹配的 `max_num_seqs=5` + pin + quantum2** 是目前最好的组合：43.84s、26.8% 命中、p99 2.17s，相对 stock32 -11.6%。q1/q3 都不如 q2。详见实验F §9–§10。
 
 ## 解读
 

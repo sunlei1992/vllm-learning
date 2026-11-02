@@ -10,6 +10,7 @@ it assumes one KV group and a fixed prefix length.
 
 import math
 import os
+import time
 from collections import OrderedDict
 
 from vllm.v1.core.sched.scheduler import Scheduler
@@ -23,6 +24,10 @@ class PrefixPinScheduler(Scheduler):
         self._pins: "OrderedDict[int, list]" = OrderedDict()
         self._pinned_ids: set[int] = set()
         self._keys: dict[str, int] = {}
+        self._pin_time: dict[int, float] = {}
+        self._served: dict[int, int] = {}
+        self._pin_ttl = float(os.getenv("PIN_TTL", "0.5"))
+        self._quantum = int(os.getenv("PIN_QUANTUM", "2"))
 
     def _key(self, request) -> int:
         key = self._keys.get(request.request_id)
@@ -38,24 +43,63 @@ class PrefixPinScheduler(Scheduler):
             return
         for b in blocks:
             self._pinned_ids.discard(b.block_id)
+        self._pin_time.pop(key, None)
+        self._served.pop(key, None)
         self.kv_cache_manager.block_pool.free_blocks(blocks[::-1])
 
     def _pin(self, key: int, blocks: list) -> None:
         pool = self.kv_cache_manager.block_pool
+        if key in self._pins:
+            for b in blocks:
+                if b.block_id in self._pinned_ids:
+                    pool.free_blocks([b])
+                else:
+                    pool.free_blocks([b])
+                    pool.touch([b])
+                    self._pinned_ids.add(b.block_id)
+            self._served[key] += 1
+            self._pin_time[key] = time.monotonic()
+            if self._served[key] >= self._quantum:
+                self._release(key)
+            return
         for b in blocks:
-            if b.block_id in self._pinned_ids:
-                # The block is already pinned; drop only this request's ref.
-                pool.free_blocks([b])
-            else:
-                pool.free_blocks([b])
-                pool.touch([b])
-                self._pinned_ids.add(b.block_id)
+            pool.free_blocks([b])
+            pool.touch([b])
+            self._pinned_ids.add(b.block_id)
         self._pins[key] = blocks
+        self._served[key] = 1
+        self._pin_time[key] = time.monotonic()
+        if self._served[key] >= self._quantum:
+            self._release(key)
+            return
         while len(self._pins) > self._pin_max:
             old_key = next(iter(self._pins))
             if old_key == key:
                 break
             self._release(old_key)
+
+    def schedule(self, *args, **kwargs):
+        now = time.monotonic()
+        busy = {self._key(r) for r in list(self.running) + list(self.waiting)}
+        for key in list(self._pins):
+            if key not in busy and now - self._pin_time.get(key, now) > self._pin_ttl:
+                self._release(key)
+
+        pinned = set(self._pins)
+        if pinned:
+            head = [r for r in self.waiting if self._key(r) in pinned]
+            tail = [r for r in self.waiting if self._key(r) not in pinned]
+            self.waiting.clear()
+            self.waiting.extend(head)
+            self.waiting.extend(tail)
+        deferred = []
+        if len(self._pins) >= self._pin_max:
+            deferred = [r for r in self.waiting if self._key(r) not in pinned]
+            for r in deferred:
+                self.waiting.remove(r)
+        ret = super().schedule(*args, **kwargs)
+        self.waiting.extend(deferred)
+        return ret
 
     def _free_request_blocks(self, request):
         blocks = self.kv_cache_manager.pop_blocks_for_free(request)
