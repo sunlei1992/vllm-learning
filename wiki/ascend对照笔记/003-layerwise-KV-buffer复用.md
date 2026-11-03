@@ -512,3 +512,165 @@ Layerwise KV cache reuse merged N descriptors into M descriptors using K buffer 
 3. 用了 hybrid / mamba / 多 group 布局 —— 代码直接拒绝复用
 4. 用了 MTP/draft 层 —— 这些层被排除在复用外
 
+
+## 12. 图模式与 P/D 边界（2026-11-03 追加）
+
+### 12.1 layerwise 不能用 FULL 图，但也不是"不能开图"
+
+`AscendStoreConnector` 声明了自己的图模式要求：
+
+```python
+@classmethod
+def requires_piecewise_for_cudagraph(cls, extra_config):
+    """AscendStore requires PIECEWISE CUDA graph mode when layerwise
+    operations are enabled."""
+    return extra_config.get("use_layerwise", False)
+```
+
+vLLM 的 `VllmConfig` 会读这个类方法，**自动把 `cudagraph_mode` 从 FULL 降成 PIECEWISE**
+（v0.30.0 与 main 都有，`vllm/config/vllm.py`），并打 warning：
+
+```text
+KV connector AscendStoreConnector requires PIECEWISE CUDA graph mode
+due to layerwise async operations that cannot be captured in CUDA graphs.
+Overriding cudagraph_mode from FULL to PIECEWISE.
+```
+
+原因是 layerwise 的 save/load 是**层边界上的 host↔device 异步拷贝**，FULL graph
+把整个 forward 捕获成一张图，层间没有插入点；PIECEWISE 在 attention/MLA 边界断图才能插。
+
+另外 VA 文档更保守（`layerwise_and_sparse_kv_cache_offloading.md`）：
+
+> Shared-buffer Layerwise Prefill Offload **requires eager mode** and either the
+> Memcache backend (GVA plane) or the Mooncake backend (block-key plane).
+
+示例命令也是 `--enforce-eager`。
+
+| 图模式 | 是否可用 | 说明 |
+| :-- | :-- | :-- |
+| FULL | ❌ | 自动降级 |
+| PIECEWISE | ⚠️ | 上游只保证降级，VA 文档未覆盖组合 |
+| **eager（`--enforce-eager`）** | ✅ | 文档推荐，最稳 |
+
+对 P 节点代价很小：prefill 是动态 shape，图本来收益就小。
+
+### 12.2 `use_layerwise` 只在 P 节点支持
+
+VA 0.30 的 `kv_cache_pool_ascend_store.md` 写得很直接：
+
+> `use_layerwise` only supported on the **Prefill node** of the Mooncake/Memcache backends.
+
+> it is only supported on the Prefill node.
+
+所以"P 开 layerwise、D 不开"不是 hack，而是**官方形态**。官方组合是：
+
+| 节点 | 连接器 | offload |
+| :-- | :-- | :-- |
+| **P** | `MultiConnector` = `SfaRemoteD2HConnector`(producer) + `AscendStoreConnector`(producer, `use_layerwise`) | layerwise → memcache（省 HBM） |
+| **D** | `SfaRemoteD2HConnector`(consumer) | sparse decode offload（CPU pool） |
+
+### 12.3 P 开 D 不开时，KV 到底怎么传
+
+**不是 P 推给 D，而是 D 来拉。** 代码注释（`sfa_pd_rd2h/worker.py`）：
+
+> It registers P's local KV tensors with memfabric and runs a pull-mode sending thread.
+> **P never pushes KV**; it sends READ_READY_BATCH messages so D can read P's source blocks
+> and reply with READ_DONE / READ_FAILED.
+
+时序：
+
+```text
+P: 算完 layer 0 → save 到 memcache ─┐
+   └→ 发 READ_READY(layer 0) ───────┼→ D: RDMA 读 layer 0 → READ_DONE
+P: 算完 layer 1 → save 到 memcache ─┤
+   └→ 发 READ_READY(layer 1) ───────┼→ D: RDMA 读 layer 1 → READ_DONE
+...                                （D 边拉边填 CPU pool，不等 P 全算完）
+```
+
+D 侧（`connector.py` 头注释）：
+
+> On the Decode node (kv_consumer), remote Prefill exposes its KV and Decode pulls the bulk MLA
+> KV directly into a CPU pinned offload pool; the indexer KV lands in HBM. The CPU pool and
+> sparse resident-cache load path are owned by `SparseKVOffloadManager`.
+
+**关键：D 不能"什么都不开"**，构造时有硬断言：
+
+```python
+if self.is_producer:   # P
+    assert not decode_offload_enabled, \
+        "SfaRemoteD2HConnector producer (P) must run with sparse_kv_offload_config.enabled=false."
+if self.is_consumer:   # D
+    assert decode_offload_enabled, \
+        "SfaRemoteD2HConnector consumer (D) must run with sparse_kv_offload_config.enabled=true."
+```
+
+| 节点 | `sparse_kv_offload_config` |
+| :-- | :-- |
+| P | 必须**关闭** |
+| D | 必须**开启** |
+
+### 12.4 两个"layerwise"不要混
+
+| 名称 | 在哪 | 含义 |
+| :-- | :-- | :-- |
+| `AscendStoreConnector.use_layerwise` | **只有 P** | KV buffer 复用（本笔记的特性） |
+| D2H connector 的 layer-wise | P 和 D | **传输粒度**逐层（`SfaRemoteD2HConnector` 默认 `use_layerwise=True`） |
+
+### 12.5 配置与约束
+
+P：
+
+```bash
+--enforce-eager \
+--kv-transfer-config '{
+  "kv_connector": "MultiConnector",
+  "kv_role": "kv_producer",
+  "kv_connector_extra_config": {
+    "connectors": [
+      {"kv_connector": "SfaRemoteD2HConnector", "kv_role": "kv_producer"},
+      {"kv_connector": "AscendStoreConnector", "kv_role": "kv_producer",
+       "kv_connector_extra_config": {
+         "backend": "memcache",
+         "use_layerwise": true,
+         "layerwise_num_shared_buffers": 3,
+         "layerwise_independent_layers": [0]
+       }}
+    ]
+  }
+}'
+```
+
+D（不开 buffer 复用，但必须开 sparse offload）：
+
+```bash
+--additional-config '{
+  "sparse_kv_offload_config": {"enabled": true, "dram_size_per_dp_GB": 110}
+}' \
+--kv-transfer-config '{
+  "kv_connector": "SfaRemoteD2HConnector",
+  "kv_role": "kv_consumer",
+  "kv_port": 20050
+}'
+```
+
+| 约束 | 值 |
+| :-- | :-- |
+| 连接器 | 两端必须 `SfaRemoteD2HConnector`（P 侧包在 `MultiConnector` 里） |
+| TP 关系 | P 的 TP ≥ D 的 TP，且能被整除 |
+| 端口 | D 从 `kv_port` 起预留 `DP×TP` 个连续端口 |
+| D 主机内存 | `dram_size_per_dp_GB`（默认 110 GiB/DP）要能装下完整 KV；TP 共享、DP 独立 |
+| proxy | 必须用 **layerwise 专用 proxy**（`load_balance_proxy_layerwise_server_example.py`） |
+| 硬件 | Sparse Decode Offload 当前**不支持 950PR&950DT**（文档明确） |
+
+### 12.6 对我们的意义
+
+```
+P：layerwise（eager）→ 省 HBM、保 TTFT
+D：sparse offload + FULL graph → 保 TPOT
+```
+
+正好对应 128K/24 前缀场景的两条痛点。风险：
+
+1. P 的 layerwise 与 D 的 sparse offload 是**两套 host pool**，容量要分别算；
+2. 950PR&950DT 上 sparse decode offload 还没支持，D 侧方案要等；
+3. 必须用 layerwise proxy，普通 P/D proxy 不通。

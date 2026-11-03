@@ -274,6 +274,15 @@
   P2 用 fake AscendStore 跑 24 公共前缀（24 会话×6 轮）：store 16 GiB 命中 80.0%/TTFT 18.6ms，
   store 8 GiB 掉到 54.2%/p90 215ms → **24 个 140K 前缀约需 295 GiB store**。
   剩余只有 P3 真机（RDMA、NPU kernel、带宽）。
+- **layerwise 的图模式与 P/D 边界（2026-11-03）**：layerwise 不能用 FULL graph——
+  `AscendStoreConnector.requires_piecewise_for_cudagraph` 返回 True，vLLM 自动把 `cudagraph_mode`
+  降为 PIECEWISE（0.30/main 都有）；VA 文档进一步要求 `--enforce-eager`。
+  `use_layerwise` 只在 **P 节点**支持（0.30 文档明确）。P 开、D 不开是官方组合：P 用
+  `MultiConnector`（`SfaRemoteD2HConnector` producer + `AscendStoreConnector` layerwise），
+  D 用 `SfaRemoteD2HConnector` consumer **且必须 `sparse_kv_offload_config.enabled=true`**
+  （代码 assert；P 侧必须 false）。传输是 **D 拉 P**（memfabric，`READ_READY_BATCH`/`READ_DONE`，
+  P never pushes）；bulk MLA KV 进 D 的 CPU pinned pool，indexer KV 进 HBM
+  （`SparseKVOffloadManager`）。950PR&950DT 暂不支持 sparse decode offload。详见 003 §12。
 - **GLM-5.3 + VA 0.30 共存**：`va/run_va_glm53.sh`。在纯 vLLM 的 `is_v32=False` 之外还要
   ① 跳过 `register_model`（VA 的 deepseek_mtp 要 AscendConfig）② 在 `Worker.load_model` 里
   `init_ascend_config`（patch_fused_moe 要 eplb_config）③ 给 `RoutedExperts.__init__` 丢掉
@@ -299,3 +308,15 @@
 - 提交信息用 Conventional Commits（`feat(kv-pool): ...`），带 `-s` 签名。
 - 改 vllm-ascend 前先跑一遍相关 UT 基线，改完保持全绿。
 - 新的调研结论写进 `wiki/` 或 `kvcache-research/`，不要只留在对话里。
+
+## 6. 相关项目：mxllm（重要背景）
+
+- 本地路径：`/Users/sunlei/code/gitcode/mxvllm`（旧名 `vllm-cloud`，用户指定本地目录名 `mxvllm`）。
+- 正式项目：**mxllm**，remote `https://gitcode.com/InferTurbo/mxllm.git`。
+- 分支模型：
+  - `main`：开源演进分支，对外合入从 `main` 走；
+  - `glm_v0.26.0_poc`：公司内部推送分支，也是公司环境到个人电脑的**唯一桥接通道**；
+  - 个人电脑有互联网、无公司环境/无 NPU；公司环境有 NPU、无互联网。
+- 主通道：公司 NPU → `glm_v0.26.0_poc` → 个人电脑 → 清洗/移植 → `main`。
+- 不要把内部分支历史直接 merge 进 `main`；合入前清洗内部路径、密钥、配置和测试数据。
+- 详细规则见 `mxllm/AGENTS.md`；不要把它当成普通双分支开发流程。

@@ -1,0 +1,15 @@
+{
+  "mode": "cold",
+  "requests": 48,
+  "groups": 24,
+  "prompt_tokens_reported": 49152,
+  "completion_tokens_reported": 384,
+  "prefix_cache_queries": 49152.0,
+  "prefix_cache_hits": 21504.0,
+  "actual_hit_rate": 0.4375,
+  "hits_per_request": 448.0,
+  "warmup_seconds": 0.0,
+  "total_seconds": 0.68,
+  "latency_p50_ms": 8.7,
+  "latency_max_ms": 261.4
+}

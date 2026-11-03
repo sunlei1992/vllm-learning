@@ -3,8 +3,8 @@
 > 定位：把 AISBench 当**会用的工具**记清楚 —— 能测什么、怎么装、数据怎么造、结果怎么读、哪里会错。
 > 版本基线：`v3.1-20261013-master`（2026-10-16 发布）；仓库最新提交 `7bcb6440`（2026-10-26，`[perf][prefix cache] optimize prefix cache planning for large scenarios (#596)`）。
 > 资料截至 **2026-10-28**。上游：[GitHub AISBench/benchmark](https://github.com/AISBench/benchmark) · [中文文档](https://ais-bench-benchmark.readthedocs.io/zh-cn/latest/) · [官网](https://www.aisbench.com)
-> ⚠️ 本目录目前**全部来自官方文档与仓库源码阅读，没有跑过真机**。标注约定：
-> `【文档】`= 官方文档/代码原文；`【推算】`= 按文档规则自己算出来的，需要用 `inspect` 或实测验证。
+> ⚠️ **001–008 来自官方文档与源码阅读；009 是真跑过的**（CPU 容器，只到 `prepare`/`validate`，未跑 `run`，无 NPU）。标注约定：
+> `【文档】`= 官方文档/代码原文；`【推算】`= 按规则自己算的，需 `inspect` 或实测验证；`【实测】`= 真跑到产物并独立复核过。
 
 ## 笔记索引
 
@@ -19,9 +19,11 @@
 | 007 | [128K / 90% APC / 24 组的方案](007-128K-90%-24组方案.md) ✅ | 本工作区的具体需求：参数映射、可达性算术、可直接用的 scenario |
 | 008 | [坑与 FAQ](008-坑与FAQ.md) ✅ | 版本差异、易错点、常见误解、限制清单 |
 | 009 | [实测：1K / 90% / 24 组 × 2 条](009-实测-1K-90%-24组.md) ✅【实测】 | 容器里真造了一次数：48 条就到 90%（**warmup 模式**），cold 上限只有 49.2% |
+| 010 | [实测：混部空跑验证 APC](010-实测-混部空跑验证APC.md) ✅【实测】 | 用 48 条数据打空跑单实例：warmup 0.8750 / cold 0.4375；差值是 block_size 128；**2 GiB 装不下会归零** |
 
 配套资产：`assets/scenario-128k-apc90-g24.json`（可直接改的 scenario）、`assets/gsm8k_to_jsonl.py`（语料转换脚本）、
-`assets/1k-apc90-g24/`（009 的实测产物：scenario / 48 条 requests.jsonl / manifest / analysis / verify.py / run.sh）。
+`assets/1k-apc90-g24/`（009 的实测产物：scenario / 48 条 requests.jsonl / manifest / analysis / verify.py / run.sh）、
+`assets/1k-apc90-g24/sim/`（010 的回放脚本 `apc_sim_test.py` + 两份结果 JSON + `run.sh`）。
 
 ## 30 秒速查
 
