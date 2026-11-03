@@ -26,6 +26,7 @@
 | 09 | **调度层可观测性与性能测量** ✅已写 | 改调度怎么证明有效？queue time、每步 batch、调度器 CPU 开销怎么看？ | `vllm/v1/metrics/`、`vllm/benchmarks/` | `loggers.py:168`、`core.py:509` |
 | 10 | **调度优化测试工作流** ✅草案+单实例实测 | 从策略预演到 A/B 压测，怎么防止「假提升」？ | `sim_policy.py`、`routeserver-sim/`、`pd_bench.sh` | — |
 | 11 | **RouteServer 容器启动与部署** ✅已写 | 发布包长什么样？容器里靠什么拉起？为什么"起来就退"？ | `deploy/deploy.sh`、`cmd/config-tool/`、`tmp/routeserver/` | `deploy.sh:848` 后台起进程、`:213` `--daemon` |
+| 12 | **mxllm 贡献规范与 CI** ✅已写 | 开源 main 怎么提 PR？patch ID/Target/Why/How 放哪？smoke-demo 为什么老挂？ | `mxllm/AGENTS.md`、PR #132/#137/#139 | `patch/__init__.py`、`smoke-demo` |
 | 实验A | **截断加载实验 GLM-5.2** ✅已写 | 大模型怎么本地跑？dense/MoE 两种调试模式怎么配？ | `models/zai-org_GLM-5.2` + 本地补丁 | `debug_glm52.py --moe` |
 | 实验B | **simulate-forward 仿真环境** ✅已写 | 没有 NPU/权重怎么跑真 Scheduler？Triton JIT 为什么让单次请求慢 146s？ | PR #47922 + `tmp/vllm-030`（分支 `sim`） | `vllm/v1/worker/simulated/model_runner.py:44` |
 | 实验C | **移植 PR #61506（时间模型 + P/D 分离）** ✅已写 | 不只是调度：能估 TTFT/TPOT，能跑 P/D 比例对比 | PR #61506 + `tmp/vllm-sim-int`（分支 `sim-integrated`） | `vllm/v1/worker/simulated/disaggregated.py:286` |

@@ -674,3 +674,39 @@ D：sparse offload + FULL graph → 保 TPOT
 1. P 的 layerwise 与 D 的 sparse offload 是**两套 host pool**，容量要分别算；
 2. 950PR&950DT 上 sparse decode offload 还没支持，D 侧方案要等；
 3. 必须用 layerwise proxy，普通 P/D proxy 不通。
+
+## 13. 950DT 对“layerwise buffer reuse”的支持边界（2026-11-03）
+
+社区里有说法“华为 950DT 不支持 layerwise”。这个说法**太宽泛**，需要把三个概念拆开：
+
+| 概念 | 位置 | 950DT |
+| :-- | :-- | :-- |
+| `AscendStoreConnector.use_layerwise`：Prefill 逐层 KV offload / shared-buffer 复用（本笔记特性） | **只有 P** | 官方没有明确禁止；但 Prefill 部署文档目前只给 A3，950DT 属于**未文档化/未认证** |
+| Sparse Decode Offload：D 侧稀疏 KV 卸载 | **只有 D** | **官方明确不支持 950PR&950DT** |
+| `SfaRemoteD2HConnector` 的 layerwise：P/D 逐层传输粒度 | P 和 D | 与 buffer 复用不是同一件事；受 TP/CP/PP 约束 |
+
+关键文档原文：
+
+- `kv_cache_pool_ascend_store.md`：硬件支持 **A2/A3/950PR&950DT**；`use_layerwise` 仅在 **Prefill** 节点的 Mooncake/Memcache 后端支持。
+- `layerwise_and_sparse_kv_cache_offloading.md`：Prefill layerwise 需要 `--enforce-eager` + Memcache 或 Mooncake；**Sparse Decode Offload is currently not supported on 950PR&950DT Products**。
+- 同一篇文档的 Prefill 准备只有 **A3 series** 页面，没有 950DT 步骤，因此 950DT 的 Prefill layerwise 属于“有代码路径、未官方认证”。
+
+对 GLM-5.3 的局部结论：
+
+- 78 层、主 MLA + `AscendSFAIndexerCacheSpec`、单 UniformType group、无 hybrid；
+- 78 个物理层全部配对 indexer，`buffer_slots=3`（1 独立 + 2 共享）的复用布局已在本地 UT 验证；
+- 但**缺 950DT 真机的 indexer 数据面验证**。
+
+所以准确表述是：
+
+> 950DT 明确不支持的是 **Decode 的 Sparse KV Offload**；
+> **Prefill 的 layerwise shared-buffer reuse** 在 950DT 上不是“文档明确支持”，也不是“硬件明确不支持”，而是“未认证，需要按 connector + 模型 + 拓扑做真机验证”。
+
+验证时注意：
+
+1. 只在 P 开 `use_layerwise=true`，D 保持 `false`；
+2. 必须 `--enforce-eager`；
+3. 用 Mooncake block-key 或 Memcache backend；
+4. 若还要 P→D layerwise transfer，官方要求 `SfaRemoteD2HConnector`，不是普通 `MooncakeConnectorV1`；
+5. 启动日志确认 `Layerwise KV cache reuse merged ...`；
+6. 对比开启前后 HBM 占用 / KV blocks / 输出一致性；失败时区分是 Mooncake API、layout/TP 约束，还是平台能力检查。
