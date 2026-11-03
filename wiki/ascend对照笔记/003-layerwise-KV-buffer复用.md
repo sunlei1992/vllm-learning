@@ -687,8 +687,8 @@ D：sparse offload + FULL graph → 保 TPOT
 
 关键文档原文：
 
-- `kv_cache_pool_ascend_store.md`：硬件支持 **A2/A3/950PR&950DT**；`use_layerwise` 仅在 **Prefill** 节点的 Mooncake/Memcache 后端支持。
-- `layerwise_and_sparse_kv_cache_offloading.md`：Prefill layerwise 需要 `--enforce-eager` + Memcache 或 Mooncake；**Sparse Decode Offload is currently not supported on 950PR&950DT Products**。
+- `kv_cache_pool_ascend_store.md`：硬件支持 **A2/A3/950PR&950DT**；通用 KV pool 的 `use_layerwise` 仅在 **Prefill** 节点支持。最新 main 的 shared-buffer 文档进一步要求 **Memcache**（见 §14）。
+- `layerwise_and_sparse_kv_cache_offloading.md`：最新 main 写的是 **shared-buffer Layerwise Prefill Offload requires Memcache and eager mode**；**Sparse Decode Offload is currently not supported on 950PR&950DT Products**。Mooncake 的 layerwise 属于 KVPP pooling，不做跨层 shared-buffer 复用。
 - 同一篇文档的 Prefill 准备只有 **A3 series** 页面，没有 950DT 步骤，因此 950DT 的 Prefill layerwise 属于“有代码路径、未官方认证”。
 
 对 GLM-5.3 的局部结论：
@@ -706,7 +706,59 @@ D：sparse offload + FULL graph → 保 TPOT
 
 1. 只在 P 开 `use_layerwise=true`，D 保持 `false`；
 2. 必须 `--enforce-eager`；
-3. 用 Mooncake block-key 或 Memcache backend；
+3. 用 **Memcache** backend（shared-buffer）；若测 KVPP layerwise pooling 才用 Mooncake，但它不做跨层 buffer 复用；
 4. 若还要 P→D layerwise transfer，官方要求 `SfaRemoteD2HConnector`，不是普通 `MooncakeConnectorV1`；
 5. 启动日志确认 `Layerwise KV cache reuse merged ...`；
 6. 对比开启前后 HBM 占用 / KV blocks / 输出一致性；失败时区分是 Mooncake API、layout/TP 约束，还是平台能力检查。
+
+
+## 14. 最新 main 复核（2026-11-03）
+
+复核对象：`vllm-ascend` `origin/main` = `1bf75989c`（本地 fetch 后的最新）。
+
+### 14.1 关键结论：核心限制没有解除，但 shared-buffer 的 backend 要求收紧了
+
+最新 `layerwise_and_sparse_kv_cache_offloading.md` 已把 Prefill 要求改成：
+
+```text
+Shared-buffer Layerwise Prefill Offload requires Memcache and eager mode.
+```
+
+不再是旧文档里的 “Memcache 或 Mooncake”。
+Mooncake 的 `use_layerwise` 现在对应 **KVPP Mooncake layerwise pooling**，文档明确说它 **does not enable cross-layer reuse of persistent owner caches**，和 `layerwise_num_shared_buffers` 的 shared-buffer 复用不是同一个特性。
+
+### 14.2 Sparse Decode Offload 仍然是 950DT 的硬限制
+
+最新代码 `vllm_ascend/ascend_config.py` 增加了：
+
+```python
+if is_950():
+    raise ValueError("Sparse KV offload is not supported on 950PR&950DT Products")
+```
+
+所以不只是文档，代码也会直接拒绝。`SfaRemoteD2HConnector` 的 D 侧仍然要求：
+
+```text
+sparse_kv_offload_config.enabled=true
+```
+
+因此 “P 开 layerwise shared buffer + D 用 SfaRemoteD2H consumer” 在 950DT 上仍然走不通。
+
+### 14.3 最近的相关合入
+
+| Commit | 内容 | 对我们的意义 |
+| :-- | :-- | :-- |
+| `74dfd48b0` | `[Doc][main] Update sparse kv offload docs` | shared-buffer 改为 **Memcache + eager**；新增 `is_950()` 拒绝 sparse offload |
+| `2f285ddcc` | `Preserve GLM shared slots with layerwise KV transfer` | GLM-5.3-Flash 用 Memcache `use_layerwise=true`、`kv_both`、`--enforce-eager` 跑通；未声明 950DT |
+| `23e0e3764` | `Support PCP for Mooncake layerwise pooling` | KVPP / Mooncake layerwise pooling 增强；不是 shared-buffer |
+| `9d2f25815` | `Split AscendStore layerwise pool worker and scheduler` | layerwise 代码重构，路径变为 `kv_pool/ascend_store/layerwise/...` |
+| `1bebfa67c` | `Wait for layerwise KV loads on all MLA paths` | 修 MLA layerwise load 同步；对 P 侧稳定性有帮助 |
+| `1985de9f4` | `Add decode offloading to Mooncake Store consumers` | Mooncake consumer decode offload；不等于 950DT sparse offload 支持 |
+
+### 14.4 对 950DT 的最终判断（更新版）
+
+- **P 节点 shared-buffer reuse**：最新 main 要求 **Memcache + eager**；950DT 没有明确被禁止，但仍缺 950DT 真机验证。
+- **Mooncake 上做 shared-buffer reuse**：最新文档不支持；Mooncake 只做 KVPP layerwise pooling，不做跨层复用。
+- **P/D 完整链路**：D 仍必须 `SfaRemoteD2HConnector` + sparse offload；而 sparse offload 在 950DT 上被代码拒绝，所以 **完整 P/D 仍不可用**。
+- **P-only 验证**：可以用 Memcache + `use_layerwise=true` + `layerwise_num_shared_buffers=3` + eager 做 HBM 降低验证；这不是完整 P/D 服务。
+- **替代方案**：KVPP Mooncake layerwise pooling 在 950DT 上有文档支持，但它是 layer-split，不是 `layerwise_num_shared_buffers` 的跨层 buffer 复用。
