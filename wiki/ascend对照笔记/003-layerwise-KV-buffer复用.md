@@ -762,3 +762,92 @@ sparse_kv_offload_config.enabled=true
 - **P/D 完整链路**：D 仍必须 `SfaRemoteD2HConnector` + sparse offload；而 sparse offload 在 950DT 上被代码拒绝，所以 **完整 P/D 仍不可用**。
 - **P-only 验证**：可以用 Memcache + `use_layerwise=true` + `layerwise_num_shared_buffers=3` + eager 做 HBM 降低验证；这不是完整 P/D 服务。
 - **替代方案**：KVPP Mooncake layerwise pooling 在 950DT 上有文档支持，但它是 layer-split，不是 `layerwise_num_shared_buffers` 的跨层 buffer 复用。
+
+## 15. 本地自研 P/D 原型（2026-11-04）
+
+这一节记录的是**本地原型**，不是上游 main 的正式能力；分支 `local/layerwise-pd-proto`（基于 `local/simulated-ascend-store`）。
+
+### 15.1 已完成链路
+
+```text
+P CPU tensor
+  → CPUByteCodec 切 TP shard
+  → LayerwisePublisher（shared slot fence）
+  → MooncakeSessionTransport
+  → LayerwiseConsumer
+  → codec 写回 D CPU tensor
+```
+
+对应文件：
+
+- `layerwise_pd.py`：publisher/consumer、slot fence、in-memory transport；
+- `mooncake_tcp_transport.py`：per-shard fallback + one-object-per-layer session/range；
+- `layerwise_pd_codec.py`：CPU tensor ↔ TP-shard bytes；
+- `layerwise_pd_connector.py`：`KVConnectorBase_V1` 生命周期骨架 + transport 注入；
+- `test_layerwise_glm_shape_e2e.py`：78 层、main MLA + indexer、3 shared slots、多请求复用。
+
+### 15.2 真实 Mooncake TCP 已跑通（Docker）
+
+之前“本机没有 wheel”的判断不成立。Docker Desktop `linux/arm64` 下可直接：
+
+```bash
+pip install mooncake-transfer-engine-non-cuda
+```
+
+实测版本 `0.3.14`，容器：
+
+```text
+python:3.12-slim-trixie
+libcurl4 libibverbs1 rdma-core librdmacm1 libnuma1 liburing2
+```
+
+先起 `mooncake_master`，再跑 `MooncakeSessionTransport` 的 session/range round-trip，输出：
+
+```text
+REAL_MOONCAKE_TCP_OK 25
+```
+
+复现脚本：
+
+```text
+vllm-ascend-src/tests/ut/distributed/ascend_store/run_mooncake_tcp_docker.sh
+```
+
+因此 **Mooncake TCP 不再是本地阻塞项**；它是真实 H2H，不是 fake。
+
+### 15.3 本地能验证 / 不能验证
+
+能验证：
+
+- shared slot 生命周期与 fence；
+- TP8→D TP1 的字节聚合（synthetic）；
+- session/range put/get；
+- CPU tensor round-trip；
+- connector producer/consumer 生命周期；
+- 78 层 GLM-shaped synthetic e2e。
+
+不能验证：
+
+- GLM-5.3 真实 CPU 推理（W4A4/Ascend 算子、真实 KV/attention/MoE）；
+- NPU H2D 和真实 KV layout；
+- P 侧真实 `LayerwiseKVPoolWorker` 接入；
+- 950DT 性能。
+
+### 15.4 与上游 main 的关系
+
+上游 main 的 shared-buffer 文档要求 **Memcache + eager**；本原型走的是 **Mooncake block-key shared buffer**，属于本地/下游验证分支，不能宣称是 upstream 已支持组合。
+
+### 15.5 当前测试
+
+```text
+100 passed, 2 skipped
+```
+
+2 个 skipped 是 host venv 没有 Mooncake wheel 的 opt-in pytest；Docker 脚本已独立跑通真实 TCP。
+
+### 15.6 下一步
+
+1. 用同一套 78 层 synthetic 在 Docker 内接真实 Mooncake TCP（而不只是 1 层 smoke）；
+2. 实现 Ascend H2D codec；
+3. 把 publisher 接到真实 `LayerwiseKVPoolWorker` 的 slot 生命周期；
+4. 950DT 上换 URMA 做 24 前缀/128K/40 请求。
