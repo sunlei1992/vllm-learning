@@ -1275,7 +1275,7 @@ P3：真实 vLLM CPU tensor alias（share buffer 分配层）
 P4：真实逐层 KV transfer（Mooncake P/D）
 ```
 
-两者还没有在同一个 vLLM forward 里合并。
+两者还没有在同一个 vLLM forward 里合并；**这一点随后由 §19 的 P6 补上**。
 
 ### 18.7 验证矩阵：到底测了什么
 
@@ -1287,6 +1287,7 @@ P4：真实逐层 KV transfer（Mooncake P/D）
 | P3 Qwen3 alias | 真实 vLLM CPU 的 28→4 tensor alias + 单次 forward | 逐层 reload、decode 正确性、transfer |
 | P4 Mooncake P/D | 真实 pure vLLM CPU 逐层 save/load、D 侧 External Cache Hit | shared buffer；P 仍是完整独立 KV |
 | P5 failure | slot fence 失败/重试/checksum 逻辑 | 真实 KV 损坏检测 |
+| P6 shared-buffer e2e | 单引擎 4 层 tiny：2 个物理 slot + 逐层 save/load + decode | Mooncake store、完整 Qwen3/GLM、性能 |
 | vllm-ascend UT | layout/descriptor/事件语义 | NPU H2D、真实 78 层运行 |
 
 关键区别：
@@ -1294,7 +1295,7 @@ P4：真实逐层 KV transfer（Mooncake P/D）
 - **P3 是 layerwise shared buffer 的“分配/alias”验证**，但没有传输；
 - **P4 是 layerwise KV transfer 的“逐层搬运”验证**，但没有共享 slot；
 - **P1/P5 是 shared-slot 生命周期的模型测试**，不是实际物理 KV 内存；
-- **真正合并**需要：P3 的 alias + P4 的逐层 save/load + decode 时 reload，这个还没做。
+- **P6 已把 P3 的 alias 与逐层 save/load 合并到同一个单引擎 forward；见 §19。**
 
 
 ### 18.6 代码索引
@@ -1390,6 +1391,11 @@ wiki/vllm架构笔记/assets/qwen_cpu_kv/
   qwen_cpu_example_connector.py
   qwen_cpu_pd_role.py
   qwen_cpu_shared_alias.py
+  shared_buffer/
+    run_shared_buffer.py
+    layerwise_shared_buffer_connector.py
+    make_tiny4_model.py
+    README.md
   README.md
 ```
 
@@ -1408,4 +1414,88 @@ PYTHONPATH=. ../.venv-va030/bin/python -m pytest -q \
 
 ```bash
 bash tests/ut/distributed/ascend_store/mooncake_tcp/run_cross_container.sh
+```
+
+
+## 19. 单引擎 layerwise shared buffer 完整跑通（2026-11-04）
+
+### 19.1 配置
+
+```text
+模型：Qwen2.5-tiny4（4 层，随机权重）
+物理 KV：2 个 slot
+  layer0       → independent slot
+  layer1/2/3   → shared slot
+connector：LayerwiseSharedBufferConnector
+```
+
+连接器行为：
+
+```text
+wait_for_layer_load(layer)
+  → 从 store 取该层历史 KV
+  → 首次 prefill 没有历史，zero_
+  → 之后 decode 命中，copy_ 回共享 slot
+
+save_kv_layer(layer)
+  → 当前层算完，把共享 slot 内容保存到该层 key
+```
+
+### 19.2 baseline
+
+```text
+TOKENS [34122, 147096, 136438, 147096]
+```
+
+### 19.3 shared buffer
+
+```text
+ALIAS_CONFIG layers 4 tensors_before 1 page 65536
+ALIAS_TENSORS 2 blocks 9047
+
+CONN_LOAD layer0 zero
+CONN_SAVE layer0
+CONN_LOAD layer1 zero
+CONN_SAVE layer1
+CONN_LOAD layer2 zero
+CONN_SAVE layer2
+CONN_LOAD layer3 zero
+CONN_SAVE layer3
+
+CONN_LOAD layer0 hit
+CONN_SAVE layer0
+...
+TOKENS [34122, 147096, 136438, 147096]
+```
+
+即：
+
+- prefill 时每层首次 `zero`；
+- decode 每一步每层都先 `hit` 再 `save`；
+- 输出与 baseline 完全一致。
+
+### 19.4 这说明什么
+
+已证明：
+
+- 真实 vLLM CPU 的 4 层 KV 被 alias 到 2 个物理 tensor；
+- 逐层 save/load 被真实调用；
+- decode 时先恢复历史 KV，再计算；
+- 输出与 baseline 一致。
+
+仍未证明：
+
+- Mooncake 作为 shared-buffer store（P4 是 P/D transfer，不是这个）；
+- 完整 Qwen3/GLM；
+- 多请求并发；
+- 性能。
+
+### 19.5 脚本
+
+```text
+wiki/vllm架构笔记/assets/qwen_cpu_kv/shared_buffer/
+  run_shared_buffer.py
+  layerwise_shared_buffer_connector.py
+  make_tiny4_model.py
+  README.md
 ```
