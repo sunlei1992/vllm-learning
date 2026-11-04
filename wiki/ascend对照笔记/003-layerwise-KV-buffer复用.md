@@ -801,10 +801,11 @@ python:3.12-slim-trixie
 libcurl4 libibverbs1 rdma-core librdmacm1 libnuma1 liburing2
 ```
 
-先起 `mooncake_master`，再跑 `MooncakeSessionTransport` 的 session/range round-trip，输出：
+先起 `mooncake_master`，再跑 `MooncakeSessionTransport` 的 session/range round-trip。
+脚本已从 1 层扩到 **78 层 + 3 个 shared slot**，输出：
 
 ```text
-REAL_MOONCAKE_TCP_OK 25
+REAL_MOONCAKE_TCP_OK 78
 ```
 
 复现脚本：
