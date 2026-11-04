@@ -1171,3 +1171,103 @@ P0 ✅  P1 ✅  P2 ✅  P3 结构验证 ✅  P4 ✅  P5 ✅
 
 P4 的“完整 GLM/Qwen3 + 并发 P/D + 性能”仍需要真实模型/更高内存/NPU；本地 tiny P4 只验证
 connector 和 Mooncake 数据面。
+
+## 18. 当前收口（2026-11-04）
+
+### 18.1 验证状态
+
+```text
+P0 ✅  fake KVCacheConfig alias
+P1 ✅  24 prefixes × 40 requests slot fence
+P2 ✅  跨容器 Mooncake TCP
+P3 ✅  CPU descriptor alias + Qwen3 dummy forward（结构验证）
+P4 ✅  pure vLLM CPU P/D，逐层 KV 经 Mooncake TCP
+P5 ✅  put 失败、checksum、缺 shard
+```
+
+本地 UT：
+
+```text
+105 passed, 2 skipped
+```
+
+P2 跨容器结果：
+
+```text
+CROSS_CONTAINER_MOONCAKE_OK 144
+```
+
+P4 结果：
+
+```text
+kv_producer TOKENS [16856]
+kv_consumer External Cache Hit!
+kv_consumer TOKENS [16856]
+```
+
+P4 使用 2 层 Qwen2.5 tiny synthetic + 随机权重，只验证 connector/data path，不是 Qwen3/GLM
+正确性或性能。
+
+### 18.2 代码位置
+
+vllm-ascend 分支：
+
+```text
+local/layerwise-pd-proto
+```
+
+关键提交：
+
+```text
+61af13975 test(kv-pool): add local verification for alias, fence and cross-container TCP
+35d8987ed test(kv-pool): exercise 78 shared-slot layers over real Mooncake TCP
+```
+
+该分支只推送到个人 fork：
+
+```text
+git@github.com:sunlei1992/vllm-ascend.git
+```
+
+没有 PR，也没有推送到 `vllm-project/vllm-ascend`。
+
+P4 的 connector/脚本归档在：
+
+```text
+wiki/vllm架构笔记/assets/qwen_cpu_kv/p4/
+```
+
+### 18.3 P4 运行环境
+
+```text
+sim030:glm53
++ vLLM 0.30 CPU
++ mooncake-transfer-engine-non-cuda
+= sim030:mooncake
+```
+
+Docker Desktop VM 从 8GB 调到 16GB；原配置备份：
+
+```text
+~/Library/Group Containers/group.com.docker/settings-store.json.bak-p4
+```
+
+### 18.4 仍未完成
+
+- 完整 Qwen3/GLM 真实权重；
+- P4 的并发在线 P/D；
+- shared buffer alias + 逐层 reload 的完整 decode；
+- 950DT 的 H2D/URMA 和性能。
+
+### 18.5 结论
+
+本地已经闭环：
+
+```text
+alias descriptor
+  → shared-slot fence
+  → 跨容器 Mooncake TCP
+  → pure vLLM CPU 逐层 P/D
+```
+
+剩余部分需要真实模型规模、并发服务或 950DT 才能继续验证。
