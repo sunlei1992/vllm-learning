@@ -988,3 +988,145 @@ c573e933c  GLM-shaped 78-layer e2e
 3. 把 `ExampleConnector` 改成逐层 save/load，先接本地目录；
 4. 把目录替换成 `MooncakeSessionTransport`；
 5. 最后尝试注入纯 vLLM CPU，做真实 Qwen3 + shared slot 的 decode。
+
+## 17. P0–P5 本地验证结果（2026-11-04）
+
+### P0 fake KVCacheConfig alias
+
+用 Qwen3 形状的 28 层 `FullAttentionSpec`（8 KV heads、head_size=128、block_size=2）调用
+`apply_layerwise_kv_cache_plan`：
+
+```text
+28 个 layer 独立 descriptor
+→ 4 个物理 descriptor
+→ layers 数量 [1, 9, 9, 9]
+→ layer_stride == 0
+→ block_stride == page_size_bytes
+→ size == num_blocks * page_size_bytes
+```
+
+代码：
+
+```text
+vllm-ascend-src/tests/ut/distributed/ascend_store/test_layerwise_cache_layout.py
+  test_qwen3_like_layers_alias_to_four_slots
+```
+
+### P1 24 前缀 × 40 请求 slot fence
+
+78 层、3 个 shared slot + 1 个 independent slot、2 个 TP shard：
+
+```text
+24 × 40 × 78 = 74,880 次 layer publish
+→ 全部通过
+→ wait_put_order == 74,880
+→ 每条 consumer receive 的 checksum 与写入一致
+```
+
+代码：
+
+```text
+test_layerwise_slot_stress.py
+  test_24_prefixes_40_requests_slot_fence
+```
+
+### P2 跨容器 Mooncake TCP
+
+单独构建带 non-CUDA Mooncake wheel 的 Linux arm64 镜像：
+
+```text
+mooncake-master 容器
+client 容器
+Docker network: mooncake-p2p
+```
+
+结果：
+
+```text
+CROSS_CONTAINER_MOONCAKE_OK 144
+```
+
+144 = 24 prefixes × 6 layers。说明不是只有同容器 loopback 能通。
+
+代码：
+
+```text
+tests/ut/distributed/ascend_store/mooncake_tcp/
+  Dockerfile
+  client.py
+  run_cross_container.sh
+```
+
+### P3 CPU reference plugin + Qwen3 forward（部分）
+
+纯 vLLM 0.28 的 `KVCacheTensor` 字段是 `shared_by`，不是 0.31 的 `layers/layer_stride`。
+在 `get_kv_cache_config_from_groups` 后注入：
+
+```text
+28 个 layer tensor
+→ 4 个 slot tensor（1 independent + 3 shared）
+→ CPU 指针只有 4 个唯一值
+```
+
+运行 Qwen3-0.6B dummy：
+
+```text
+ALIAS_PATCH layers=28 tensors=4 blocks=375 page_size=524288
+UNIQUE_PTRS 4
+TOKENS [150903]
+```
+
+**边界**：这只是 CPU descriptor + forward 的结构验证。随机权重下 token 不具语义；而且没有
+逐层 reload/fence，不能据此声称 decode 正确。真正的 decode 需要 P4 的 connector。
+
+脚本：
+
+```text
+wiki/vllm架构笔记/assets/qwen_cpu_kv/qwen_cpu_shared_alias.py
+```
+
+### P4 ExampleConnector 换 Mooncake（未完成）
+
+当前本机限制：
+
+- 纯 vLLM host `.venv` 没有 Mooncake wheel（只有 Linux wheel）；
+- `.venv-va030` 的 vLLM 0.31 CPU 跑 Qwen3 会在 triton-cpu slot mapping 处失败；
+- 因此 P4 需要“带 vLLM CPU + Mooncake wheel + Qwen config”的同一个 Linux 容器；
+- 还要实现逐层 save/load 和 decode 前 reload。
+
+已完成的替代验证：
+
+- 纯 vLLM CPU + `ExampleConnector` 的 P/D 分离已跑通，D 侧 `External Cache Hit!`；
+- Mooncake TCP 已在 P2 跨容器跑通；
+- 但二者还没有合并成一个 connector。
+
+### P5 失败注入 + checksum
+
+覆盖：
+
+- put 失败不推进 slot，重试成功；
+- shared slot 覆盖后，旧对象 checksum 不变；
+- 缺 shard 时读取失败，不返回半层。
+
+代码：
+
+```text
+test_layerwise_failure_injection.py
+```
+
+### 当前测试汇总
+
+```text
+105 passed, 2 skipped
+```
+
+2 个 skipped 是 host 没有 Mooncake wheel 的 opt-in pytest；P2 Docker 已独立验证真实 TCP。
+
+### 结论
+
+```text
+P0 ✅  P1 ✅  P2 ✅  P3 结构验证 ✅  P4 ❌  P5 ✅
+```
+
+P4 不是逻辑不可行，而是需要把 vLLM CPU + Mooncake + Qwen 放进同一个 Linux 运行时，
+并实现逐层 save/load；这是下一步的主要工程量。
