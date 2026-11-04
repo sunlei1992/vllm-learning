@@ -1474,7 +1474,30 @@ TOKENS [34122, 147096, 136438, 147096]
 - decode 每一步每层都先 `hit` 再 `save`；
 - 输出与 baseline 完全一致。
 
-### 19.4 这说明什么
+### 19.4 28 层尝试：未通过
+
+4 层固定权重通过后，扩到 28 层固定权重：
+
+```text
+baseline: [87630, 87630, 87630, 87630]
+shared:   [87630, 47704, 539, 92925]
+```
+
+- 28 层模型使用 `Qwen2.5-tiny28-fixed`（55M，真实随机 safetensors）；
+- `ALIAS_CONFIG layers=28 tensors=4`；
+- `CONN_LOAD`/`CONN_SAVE` 确实被调用；
+- 28 层 + `NUM_SHARED=1`（2 slots）也失败，不是 4-slot 特有；
+- 当前结论：**28 层 decode 仍有 bug，不能说已跑通。**
+
+可能方向：
+
+- 28 层 alias 下每层 `kv_cache` 视图与 `register_kv_caches` 映射不一致；
+- save/load 的层归属或 block/slot 语义；
+- vLLM 0.30 CPU 在 28 层下的 KV cache layout 与 4 层不同。
+
+需要下一步加 checksum/指针诊断，或降到 8/16 层二分。
+
+### 19.5 这说明什么
 
 已证明：
 

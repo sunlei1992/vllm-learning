@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -10,6 +11,8 @@ from vllm.v1.kv_cache_interface import KVCacheTensor, UniformTypeKVCacheSpecs
 
 sys.path.insert(0, "/app")
 ALIAS = os.getenv("ALIAS", "0") == "1"
+MODEL_DIR = os.getenv("MODEL_DIR", "/models/Qwen2.5-tiny4")
+print("MODEL_DIR", MODEL_DIR, "layers", json.load(open(os.path.join(MODEL_DIR, "config.json")))["num_hidden_layers"], flush=True)
 
 
 def install_stride_patch() -> None:
@@ -50,8 +53,10 @@ def install_alias_patch() -> None:
         print("ALIAS_CONFIG layers", len(layer_names), "tensors_before", len(config.kv_cache_tensors), "page", page_size)
         if not ALIAS:
             return config
-        # 4 layers -> independent layer0 + one shared slot for 1,2,3.
-        slots = [[layer_names[0]], layer_names[1:]]
+        num_shared = int(os.getenv("NUM_SHARED", "1"))
+        shared = layer_names[1:]
+        slots = [[layer_names[0]]] + [shared[i::num_shared] for i in range(num_shared)]
+        slots = [slot for slot in slots if slot]
         config.kv_cache_tensors = [
             KVCacheTensor(
                 size=page_size * config.num_blocks,
@@ -88,8 +93,8 @@ if ALIAS:
     )
 
 llm = LLM(
-    model="/models/Qwen2.5-tiny4",
-    load_format="dummy",
+    model=MODEL_DIR,
+    load_format=os.getenv("LOAD_FORMAT", "dummy"),
     max_model_len=64,
     gpu_memory_utilization=0.05,
     kv_cache_memory_bytes=64 * 1024**2,
@@ -98,7 +103,7 @@ llm = LLM(
 )
 out = llm.generate(
     ["Hello, my name is"],
-    SamplingParams(max_tokens=4, temperature=0.0, seed=0),
+    SamplingParams(max_tokens=int(os.getenv("MAX_TOKENS", "4")), temperature=0.0, seed=0),
 )
 print("ALIAS", ALIAS)
 print("TOKENS", out[0].outputs[0].token_ids)

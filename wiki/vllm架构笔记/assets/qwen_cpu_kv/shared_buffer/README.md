@@ -92,3 +92,20 @@ Notes:
 - `kv_cache_memory_bytes=64MiB` keeps each layer object small; otherwise Mooncake
   `put session start` can hit segment-full / overwrite errors.
 - Each save uses a versioned key; load uses the latest version.
+
+## 28-layer known failure (2026-11-04)
+
+4-layer fixed random weights pass; 28-layer fixed weights fail after the
+first token:
+
+```text
+baseline: [87630, 87630, 87630, 87630]
+shared:   [87630, 47704, 539, 92925]
+```
+
+- The 28-layer model is `models/Qwen2.5-tiny28-fixed` (55M params, actual random
+  safetensors, not dummy).
+- `ALIAS_CONFIG layers=28 tensors=4`.
+- `CONN_LOAD`/`CONN_SAVE` are called; this is not a "connector not invoked" issue.
+- 28 layers with `NUM_SHARED=1` (2 slots) also fails; not specific to 4 slots.
+- The failure is still open; do not claim 28-layer decode passes.

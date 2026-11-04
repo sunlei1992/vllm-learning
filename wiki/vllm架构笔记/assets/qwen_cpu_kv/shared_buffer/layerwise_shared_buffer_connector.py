@@ -49,6 +49,7 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
         self._mooncake = None
         self._versions: dict[tuple[str, str], int] = {}
         self._latest: dict[tuple[str, str], str] = {}
+        self._checksums: dict[str, str] = {}
         master = extra.get("mooncake_master")
         if master:
             from mooncake_tcp_transport import connect_mooncake_tcp_session
@@ -91,7 +92,11 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
     def wait_for_layer_load(self, layer_name):
         if self._current_key is None:
             return
-        tensor = self._kv_caches.get(layer_name)
+        from vllm.forward_context import get_forward_context
+        ctx = get_forward_context()
+        tensor = getattr(ctx.no_compile_layers[layer_name], "kv_cache", None)
+        if tensor is None:
+            tensor = self._kv_caches.get(layer_name)
         if tensor is None:
             return
         base_key = (self._current_key, layer_name)
@@ -113,6 +118,9 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
             else:
                 saved = payload
             tensor.copy_(saved.to(tensor.device))
+            actual = hashlib.sha256(tensor.detach().cpu().contiguous().numpy().tobytes()).hexdigest()
+            expected = self._checksums.get(object_key)
+            print("CONN_CHECK", layer_name, "ok" if actual == expected else "BAD", flush=True)
 
     def save_kv_layer(self, layer_name, kv_layer, attn_metadata, **kwargs):
         del attn_metadata, kwargs
@@ -131,6 +139,9 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
         else:
             self._store[object_key] = kv_layer.detach().cpu().clone()
         self._latest[base_key] = object_key
+        self._checksums[object_key] = hashlib.sha256(
+            kv_layer.detach().cpu().contiguous().numpy().tobytes()
+        ).hexdigest()
         print("CONN_SAVE", layer_name, flush=True)
 
     def wait_for_save(self):
