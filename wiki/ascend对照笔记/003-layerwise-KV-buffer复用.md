@@ -1499,3 +1499,62 @@ wiki/vllm架构笔记/assets/qwen_cpu_kv/shared_buffer/
   make_tiny4_model.py
   README.md
 ```
+
+## 20. GPU 环境开发规划（2026-11-04，尚未执行）
+
+### 20.1 能完成什么
+
+如果拿到 NVIDIA GPU 环境，可以基于 vLLM GPU 完成通用层：
+
+```text
+KVCacheConfig / KVCacheTensor alias
+layerwise shared-slot 分配
+逐层 save/load connector
+slot 覆盖 fence
+decode 历史 KV reload
+P/D（Mooncake/NIXL）
+并发与性能趋势
+```
+
+GPU 比 CPU 更接近真实：PagedAttention、真实 KV layout、多请求并发、更长 decode 都可验证。
+
+### 20.2 不能替代什么
+
+GPU 不能验证 Ascend 950DT 的平台部分：
+
+| 内容 | GPU |
+| :-- | :-- |
+| CANN / torch_npu | ❌ |
+| Ascend MLA/SFA/indexer kernel | ❌ |
+| GVA / Memcache | ❌ |
+| URMA / UB / Ascend Direct | ❌ |
+| 950DT HBM 容量 | ❌ |
+| `AscendStoreConnector` / `LayerwiseKVPoolWorker` | ❌ |
+
+因此 GPU 只能完成“通用逻辑 + 高保真参考”，最后仍需 950DT 收尾。
+
+### 20.3 执行顺序
+
+```text
+G1  GPU 单引擎 4 层 tiny + 2 slot，decode 对比 baseline
+G2  Qwen3-0.6B / 28 层 alias 到 4 slot，长 decode + checksum
+G3  多请求并发、TTFT/吞吐/KV 峰值
+G4  GPU P/D + Mooncake/NIXL 逐层传输
+G5  移植回 vllm-ascend，替换 AscendStore/NPU event/URMA
+```
+
+### 20.4 GPU 环境要求
+
+- NVIDIA GPU，单引擎建议 24GB+；P/D 最好 2 张；
+- 对应 CUDA 驱动的 vLLM GPU 版本；
+- Mooncake GPU wheel 或 NIXL；
+- 能跑 Qwen3-0.6B / 28 层 alias 测试。
+
+### 20.5 预期边界
+
+```text
+GPU 可完成：80%–90% 通用开发与验证
+950DT 必须完成：Ascend 数据面、H2D、GVA/Memcache、URMA、真实 MLA/SFA、性能
+```
+
+这不是“调参”差异，而是平台相关实现差异。
