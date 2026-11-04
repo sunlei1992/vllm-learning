@@ -1266,18 +1266,35 @@ Docker Desktop VM 从 8GB 调到 16GB；原配置备份：
 - shared buffer alias + 逐层 reload 的完整 decode；
 - 950DT 的 H2D/URMA 和性能。
 
-### 18.5 结论
+### 18.5 结论（注意：不是合并验证）
 
-本地已经闭环：
+本地不是一条“shared buffer + transfer + decode”的完整闭环，而是分别验证了：
 
 ```text
-alias descriptor
-  → shared-slot fence
-  → 跨容器 Mooncake TCP
-  → pure vLLM CPU 逐层 P/D
+P3：真实 vLLM CPU tensor alias（share buffer 分配层）
+P4：真实逐层 KV transfer（Mooncake P/D）
 ```
 
-剩余部分需要真实模型规模、并发服务或 950DT 才能继续验证。
+两者还没有在同一个 vLLM forward 里合并。
+
+### 18.7 验证矩阵：到底测了什么
+
+| 实验 | 实际验证 | 没有验证 |
+| :-- | :-- | :-- |
+| P0 fake config | `KVCacheTensor` 分组、`shared_by`/`layer_stride` alias 数学 | 真实分配、前向 |
+| P1 24×40 stress | slot fence 的**逻辑模型**：save 前不覆盖 | 真实物理内存复用；payload 在 transport 中按 key 存储 |
+| P2 跨容器 TCP | Mooncake TCP H2H、session/range | vLLM KV cache、shared buffer |
+| P3 Qwen3 alias | 真实 vLLM CPU 的 28→4 tensor alias + 单次 forward | 逐层 reload、decode 正确性、transfer |
+| P4 Mooncake P/D | 真实 pure vLLM CPU 逐层 save/load、D 侧 External Cache Hit | shared buffer；P 仍是完整独立 KV |
+| P5 failure | slot fence 失败/重试/checksum 逻辑 | 真实 KV 损坏检测 |
+| vllm-ascend UT | layout/descriptor/事件语义 | NPU H2D、真实 78 层运行 |
+
+关键区别：
+
+- **P3 是 layerwise shared buffer 的“分配/alias”验证**，但没有传输；
+- **P4 是 layerwise KV transfer 的“逐层搬运”验证**，但没有共享 slot；
+- **P1/P5 是 shared-slot 生命周期的模型测试**，不是实际物理 KV 内存；
+- **真正合并**需要：P3 的 alias + P4 的逐层 save/load + decode 时 reload，这个还没做。
 
 
 ### 18.6 代码索引
