@@ -1483,12 +1483,25 @@ TOKENS [34122, 147096, 136438, 147096]
 - decode 时先恢复历史 KV，再计算；
 - 输出与 baseline 一致。
 
-仍未证明：
+随后已补 Mooncake 作为 shared-buffer store：
 
-- Mooncake 作为 shared-buffer store（P4 是 P/D transfer，不是这个）；
-- 完整 Qwen3/GLM；
-- 多请求并发；
-- 性能。
+```text
+ALIAS_TENSORS 2 blocks 256
+CONN_LOAD layer0 zero
+CONN_SAVE layer0
+...
+CONN_LOAD layer0 hit
+CONN_SAVE layer0
+...
+TOKENS [34122, 147096, 136438, 147096]
+```
+
+要点：
+
+- Mooncake store 也走逐层 save/load；
+- 每次 save 用版本 key，load 取 latest，避免 `put session start` 覆盖已存在对象；
+- `kv_cache_memory_bytes=64MiB` 防止每个 layer 对象把 segment 填满；
+- 仍然只验证单引擎 4 层 tiny，不是完整 Qwen3/GLM 或性能。
 
 ### 19.5 脚本
 

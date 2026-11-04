@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+import torch
+
 from vllm.distributed.kv_transfer.kv_connector.v1.base import (
     KVConnectorBase_V1,
     KVConnectorMetadata,
@@ -43,6 +45,20 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
         self._store = {}
         self._kv_caches = {}
         self._current_key = None
+        extra = self._kv_transfer_config.kv_connector_extra_config
+        self._mooncake = None
+        self._versions: dict[tuple[str, str], int] = {}
+        self._latest: dict[tuple[str, str], str] = {}
+        master = extra.get("mooncake_master")
+        if master:
+            from mooncake_tcp_transport import connect_mooncake_tcp_session
+            self._mooncake = connect_mooncake_tcp_session(
+                master_server_addr=master,
+                num_shards=1,
+                key_prefix=extra.get("mooncake_key_prefix", "shared"),
+                global_segment_size=extra.get("mooncake_segment_size", 2 * 1024**3),
+                local_buffer_size=extra.get("mooncake_local_buffer", 256 * 1024**2),
+            )
 
     def get_num_new_matched_tokens(self, request, num_computed_tokens):
         del request, num_computed_tokens
@@ -78,18 +94,43 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
         tensor = self._kv_caches.get(layer_name)
         if tensor is None:
             return
-        saved = self._store.get((self._current_key, layer_name))
-        print("CONN_LOAD", layer_name, "hit" if saved is not None else "zero", flush=True)
-        if saved is None:
+        base_key = (self._current_key, layer_name)
+        object_key = self._latest.get(base_key)
+        if self._mooncake is not None and object_key is not None:
+            try:
+                payload = self._mooncake.get_layer(object_key, 0)
+                self._mooncake.wait_get(object_key)
+            except KeyError:
+                payload = None
+        else:
+            payload = self._store.get(object_key) if object_key is not None else None
+        print("CONN_LOAD", layer_name, "hit" if payload is not None else "zero", flush=True)
+        if payload is None:
             tensor.zero_()
         else:
+            if self._mooncake is not None:
+                saved = torch.load(__import__("io").BytesIO(payload), weights_only=True)["tensor"]
+            else:
+                saved = payload
             tensor.copy_(saved.to(tensor.device))
 
     def save_kv_layer(self, layer_name, kv_layer, attn_metadata, **kwargs):
         del attn_metadata, kwargs
         if self._current_key is None:
             return
-        self._store[(self._current_key, layer_name)] = kv_layer.detach().cpu().clone()
+        base_key = (self._current_key, layer_name)
+        version = self._versions.get(base_key, 0) + 1
+        self._versions[base_key] = version
+        object_key = f"{self._current_key}:{layer_name}:v{version}"
+        if self._mooncake is not None:
+            import io
+            buffer = io.BytesIO()
+            torch.save({"tensor": kv_layer.detach().cpu().clone()}, buffer)
+            self._mooncake.put_layer(object_key, 0, 0, buffer.getvalue())
+            self._mooncake.wait_put(object_key)
+        else:
+            self._store[object_key] = kv_layer.detach().cpu().clone()
+        self._latest[base_key] = object_key
         print("CONN_SAVE", layer_name, flush=True)
 
     def wait_for_save(self):

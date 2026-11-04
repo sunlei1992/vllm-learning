@@ -80,14 +80,19 @@ if ALIAS:
         kv_connector_module_path="layerwise_shared_buffer_connector",
         kv_role="kv_both",
         engine_id="shared-cpu",
-        kv_connector_extra_config={},
+        kv_connector_extra_config=({"mooncake_master": "mooncake-master:50051",
+                                    "mooncake_key_prefix": "shared",
+                                    "mooncake_segment_size": 4 * 1024**3,
+                                    "mooncake_local_buffer": 256 * 1024**2}
+                                   if os.getenv("MOONCAKE") == "1" else {}),
     )
 
 llm = LLM(
     model="/models/Qwen2.5-tiny4",
     load_format="dummy",
     max_model_len=64,
-    gpu_memory_utilization=0.25,
+    gpu_memory_utilization=0.05,
+    kv_cache_memory_bytes=64 * 1024**2,
     enforce_eager=True,
     kv_transfer_config=kv,
 )
