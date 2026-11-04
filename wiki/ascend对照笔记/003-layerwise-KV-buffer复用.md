@@ -1558,3 +1558,99 @@ GPU 可完成：80%–90% 通用开发与验证
 ```
 
 这不是“调参”差异，而是平台相关实现差异。
+
+## 21. 内网 handoff 包（2026-11-04）
+
+### 21.1 位置
+
+vllm-ascend 分支：
+
+```text
+local/layerwise-pd-proto @ aba653618
+handoff/layerwise_pd/
+```
+
+GitHub：
+
+<https://github.com/sunlei1992/vllm-ascend/tree/local/layerwise-pd-proto/handoff/layerwise_pd>
+
+### 21.2 结构
+
+```text
+handoff/layerwise_pd/
+  README.md
+  ARCHITECTURE.md          # 类关系、数据结构、不变量、agent 边界
+  PSEUDOCODE.md            # NPU 实现说明
+  TASKS.md                 # T00-T09，每条有命令和预期输出
+  RESULTS_TEMPLATE.md      # PASS/FAIL 记录模板
+  interfaces.py            # 冻结的 Protocol/dataclass
+  planner.py               # 纯 CPU 层分组
+  events.py                # ThreadingEvent / NoopEvent
+  transport.py             # MemoryTransport
+  slot_manager.py          # slot owner + previous-put fence
+  codec.py                 # CPU tensor codec
+  connector.py             # planner + slot manager + transport + codec
+  ascend_pseudocode.py     # 内网 agent 唯一允许修改的文件
+  tests/                   # 6 个 CPU contract tests
+  tests_npu_smoke.py       # T05 NPU codec + fence smoke
+```
+
+### 21.3 内网 agent 的边界
+
+允许修改：
+
+```text
+ascend_pseudocode.py
+```
+
+禁止修改：
+
+```text
+interfaces.py
+planner.py
+slot_manager.py
+connector.py
+codec.py
+transport.py
+tests/
+```
+
+如果接口无法表达 NPU 现实，必须停止并写 `RESULTS.md`，不能自行重构。
+
+### 21.4 本地验证
+
+```text
+6 passed
+```
+
+覆盖：
+
+- 28 层 → 4 slot；
+- previous-put fence；
+- 失败不推进 slot；
+- CPU tensor round-trip；
+- 4 层 / 2 slot connector；
+- 24×40 slot stress。
+
+### 21.5 TASKS
+
+```text
+T00 CPU contract
+T01 NPU environment probe
+T02 NpuEvent
+T03 AscendLayerCodec
+T04 AscendStoreTransport
+T05 NPU codec + fence smoke
+T06 28 layers / 4 slots
+T07 decode compare
+T08 24 prefixes
+T09 metrics
+```
+
+T02–T04 只填 `ascend_pseudocode.py`；T05 使用 `tests_npu_smoke.py`。
+
+### 21.6 尚未完成
+
+- 生成 `git bundle` / patch；
+- 把 handoff 包搬到 mxllm `glm_v0.26.0_poc`；
+- 内网实际执行 T00–T09。
