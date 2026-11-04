@@ -1,11 +1,18 @@
 # 003 — layerwise KV buffer 复用（block-key / Mooncake 数据面）
 
-> 日期：2026-10-26
-> 分支：`feature/mooncake-layerwise-reuse`（基于 `8237ee6d6`，4 个提交，已推送到
-> `git@github.com:sunlei1992/vllm-ascend.git`）
+> 最后更新：2026-11-04
+>
+> 历史 upstream 分支：`feature/mooncake-layerwise-reuse`（基于 `8237ee6d6`，4 个提交）
+>
+> 当前本地验证分支：`local/layerwise-pd-proto` @ `61af13975`，已推送到
+> [`sunlei1992/vllm-ascend`](https://github.com/sunlei1992/vllm-ascend/tree/local/layerwise-pd-proto)
+>
+> 代码索引：见文末 [§18.6 代码索引](#186-代码索引)
+>
 > 上游相关：[vllm-ascend#12852](https://github.com/vllm-project/vllm-ascend/pull/12852)
 > （`[Feature][KV Offload] Add layerwise prefill KV buffer reuse`）
-> 状态：个人验证阶段，**暂不提交社区**
+>
+> 状态：个人验证阶段，**暂不提交社区；没有上游 PR**
 
 ---
 
@@ -1271,3 +1278,117 @@ alias descriptor
 ```
 
 剩余部分需要真实模型规模、并发服务或 950DT 才能继续验证。
+
+
+### 18.6 代码索引
+
+#### 代码仓库
+
+| 内容 | 地址 |
+| :-- | :-- |
+| vllm-ascend 个人 fork | <https://github.com/sunlei1992/vllm-ascend> |
+| 当前验证分支 | <https://github.com/sunlei1992/vllm-ascend/tree/local/layerwise-pd-proto> |
+| 与 main 的 diff | <https://github.com/sunlei1992/vllm-ascend/compare/main...local/layerwise-pd-proto> |
+| 学习/实验 wiki 仓库 | <https://github.com/sunlei1992/vllm-learning> |
+
+拉取代码：
+
+```bash
+git clone git@github.com:sunlei1992/vllm-ascend.git
+cd vllm-ascend
+git checkout local/layerwise-pd-proto
+
+git clone git@github.com:sunlei1992/vllm-learning.git
+```
+
+注意：该分支只存在于个人 fork，不在 `vllm-project/vllm-ascend`，也没有提 PR。
+
+#### vllm-ascend 关键文件
+
+相对仓库根目录：
+
+```text
+vllm_ascend/distributed/kv_transfer/kv_pool/ascend_store/
+  layerwise_pd.py              # publisher/consumer、slot fence、in-memory transport
+  layerwise_pd_codec.py        # CPU tensor <-> TP shard bytes
+  layerwise_pd_connector.py    # KVConnectorBase_V1 生命周期骨架
+  mooncake_tcp_transport.py    # per-shard + session/range Mooncake 适配
+
+tests/ut/distributed/ascend_store/
+  test_layerwise_pd.py
+  test_layerwise_pd_codec.py
+  test_layerwise_pd_connector.py
+  test_mooncake_tcp_transport.py
+  test_mooncake_session_transport.py
+  test_mooncake_tcp_real.py
+  test_layerwise_glm_shape_e2e.py
+  test_layerwise_slot_stress.py
+  test_layerwise_failure_injection.py
+  mooncake_tcp/
+    Dockerfile
+    client.py
+    run_cross_container.sh
+  run_mooncake_tcp_docker.sh
+```
+
+#### 关键提交
+
+```text
+ca757e0b3  P/D shared-slot 原型
+00851dd3d  Mooncake TCP per-shard transport
+45b346b8c  real TCP opt-in test
+a61097cca  session/range transport
+822230d8b  connector skeleton
+8019eac8f  transport 注入 connector
+8be4d352b  CPU tensor codec
+d9affe525  Docker real TCP repro
+c573e933c  GLM-shaped 78-layer e2e
+35d8987ed  Docker 78-layer real TCP
+61af13975  P0/P1/P2/P5 local verification
+```
+
+#### P4 脚本
+
+P4 不在 vllm-ascend 里，而是归档在 wiki 仓库：
+
+```text
+wiki/vllm架构笔记/assets/qwen_cpu_kv/p4/
+  p4.Dockerfile
+  make_tiny_model.py
+  p4_mooncake_connector.py
+  p4_run.py
+  run_p4.sh
+  README.md
+```
+
+GitHub 目录：
+
+<https://github.com/sunlei1992/vllm-learning/tree/main/wiki/vllm架构笔记/assets/qwen_cpu_kv/p4>
+
+#### 其他本地实验脚本
+
+```text
+wiki/vllm架构笔记/assets/qwen_cpu_kv/
+  qwen_cpu_dummy.py
+  qwen_cpu_example_connector.py
+  qwen_cpu_pd_role.py
+  qwen_cpu_shared_alias.py
+  README.md
+```
+
+#### 最小验证命令
+
+```bash
+cd vllm-ascend
+PYTHONPATH=. ../.venv-va030/bin/python -m pytest -q \
+  tests/ut/distributed/ascend_store/test_layerwise_pd.py \
+  tests/ut/distributed/ascend_store/test_mooncake_session_transport.py \
+  tests/ut/distributed/ascend_store/test_layerwise_slot_stress.py \
+  tests/ut/distributed/ascend_store/test_layerwise_failure_injection.py
+```
+
+跨容器 Mooncake：
+
+```bash
+bash tests/ut/distributed/ascend_store/mooncake_tcp/run_cross_container.sh
+```
