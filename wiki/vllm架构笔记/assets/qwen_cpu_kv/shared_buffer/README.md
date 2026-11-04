@@ -137,3 +137,22 @@ Fix boundary:
 - pure vLLM CPU needs a decode-path hook/model-runner patch;
 - vllm-ascend NPU has its own `save_kv_layer`/`wait_for_layer_load` worker path,
   so the NPU task must validate there rather than assume CPU P6 is complete.
+
+## Decode hook fix attempt (2026-11-04)
+
+UT confirmed the decode phase has `CONN_START` but no `CONN_LOAD`/`CONN_SAVE`.
+`maybe_transfer_kv_layer` sees `attn_metadata is None` and returns before the
+connector hooks.
+
+A local experiment replaced `get_attention_context` with a sentinel metadata
+for decode. It did not complete: the 28-layer process hung for >27 minutes and
+was killed. Do not use the sentinel patch as a fix.
+
+Correct fix boundary:
+
+- patch the pure-vLLM CPU decode attention/model-runner path so it supplies
+  real metadata and calls `wait_for_layer_load`/`save_kv_layer`; or
+- validate the decode path on vllm-ascend NPU, where the worker has its own
+  metadata and layer lifecycle.
+
+The CPU 4-layer pass remains a degenerate-model false positive.

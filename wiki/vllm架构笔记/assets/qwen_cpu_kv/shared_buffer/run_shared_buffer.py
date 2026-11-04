@@ -11,6 +11,7 @@ from vllm.v1.kv_cache_interface import KVCacheTensor, UniformTypeKVCacheSpecs
 
 sys.path.insert(0, "/app")
 ALIAS = os.getenv("ALIAS", "0") == "1"
+FORCE_DECODE_HOOK = os.getenv("FORCE_DECODE_HOOK", "0") == "1"
 MODEL_DIR = os.getenv("MODEL_DIR", "/models/Qwen2.5-tiny4")
 print("MODEL_DIR", MODEL_DIR, "layers", json.load(open(os.path.join(MODEL_DIR, "config.json")))["num_hidden_layers"], flush=True)
 
@@ -77,6 +78,21 @@ torch.manual_seed(0)
 if ALIAS:
     install_stride_patch()
     install_alias_patch()
+if FORCE_DECODE_HOOK:
+    import vllm.model_executor.layers.attention.attention as attention_module
+
+    _orig_get_context = attention_module.get_attention_context
+
+    class _SentinelMetadata:
+        pass
+
+    def _get_context_with_sentinel(layer_name):
+        metadata, layer, kv_cache, slot_mapping = _orig_get_context(layer_name)
+        if metadata is None:
+            metadata = _SentinelMetadata()
+        return metadata, layer, kv_cache, slot_mapping
+
+    attention_module.get_attention_context = _get_context_with_sentinel
 
 kv = None
 if ALIAS:

@@ -1522,6 +1522,9 @@ decode:
 hook 缺失**。要修必须给纯 vLLM CPU 的 decode attention 加 hook，或直接在
 vllm-ascend 的 NPU worker 路径验证。
 
+本地试过用 sentinel metadata 让 wrapper 继续执行：28 层进程挂死超过 27 分钟，
+被手动杀掉。该 workaround 不可用，必须补真实 decode metadata/hook。
+
 ### 19.6 这说明什么
 
 已证明：
