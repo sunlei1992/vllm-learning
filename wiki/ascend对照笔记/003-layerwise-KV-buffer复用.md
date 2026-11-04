@@ -852,3 +852,139 @@ vllm-ascend-src/tests/ut/distributed/ascend_store/run_mooncake_tcp_docker.sh
 2. 实现 Ascend H2D codec；
 3. 把 publisher 接到真实 `LayerwiseKVPoolWorker` 的 slot 生命周期；
 4. 950DT 上换 URMA 做 24 前缀/128K/40 请求。
+
+## 16. 纯 vLLM CPU 验证：Qwen3-0.6B 与 KV 传输（2026-11-04）
+
+这一节把“本地能验证什么、不能验证什么”再往前推了一步。
+
+### 16.1 Qwen3-0.6B CPU 基线
+
+本地 `models/Qwen_Qwen3-0.6B` 只有 config/tokenizer，没有权重，因此用 vLLM 的：
+
+```python
+LLM(..., load_format="dummy")
+```
+
+随机初始化权重，只验证 CPU 模型加载、KV cache、prefill/decode 链路。
+
+运行：
+
+```bash
+VLLM_TARGET_DEVICE=cpu \
+VLLM_ENABLE_V1_MULTIPROCESSING=0 \
+.venv/bin/python wiki/vllm架构笔记/assets/qwen_cpu_kv/qwen_cpu_dummy.py
+```
+
+结果：
+
+```text
+PROMPT: Hello, my name is
+TOKENS: [150903, 130517, 150903, 130517]
+```
+
+随机权重，token 无语言意义，但 CPU 推理真实执行。
+
+### 16.2 P/D 分离的 KV store/load
+
+用 vLLM 自带 `ExampleConnector`，两个独立进程：
+
+```text
+kv_producer → 逐层 save_kv_layer → 共享存储
+kv_consumer → 逐层 load → External Cache Hit!
+```
+
+D 侧日志：
+
+```text
+External Cache Hit!
+```
+
+D 输出与 P 相同：
+
+```text
+[150903, 130517, 150903, 130517]
+```
+
+脚本：
+
+```text
+wiki/vllm架构笔记/assets/qwen_cpu_kv/
+  qwen_cpu_dummy.py
+  qwen_cpu_pd_role.py
+  qwen_cpu_example_connector.py
+  README.md
+```
+
+说明：纯 vLLM CPU 上 **KV 保存/加载、P/D 角色、逐层 hook** 都是真实可用的。
+
+### 16.3 但这不是 layerwise shared buffer
+
+`ExampleConnector`：
+
+- vLLM 仍为每层分配独立 KV tensor；
+- `save_kv_layer` 只是把该层 KV 拷贝到外部存储；
+- 原层 KV 仍留在 vLLM 的 KV cache 中；
+- 没有 `layer_stride=0` 的 tensor alias；
+- 没有 slot owner / save event / 覆盖 fence；
+- 不降低 P 的 KV 内存。
+
+所以它验证的是 **layerwise KV transfer**，不是 **layerwise shared buffer**。
+
+### 16.4 四块组件的本机状态
+
+| 组件 | 本机状态 | 证据 |
+| :-- | :-- | :-- |
+| 层分组 `buffer_slots` | ✅ | `build_layerwise_reuse_layout` UT |
+| `KVCacheTensor` alias | ✅（fake config） | `apply_layerwise_kv_cache_plan` |
+| slot 复用 fence | ✅（CPU fake） | `layerwise_pd.py` / synthetic |
+| Mooncake TCP 传输 | ✅（Docker 真实） | `REAL_MOONCAKE_TCP_OK 78` |
+
+尚未完成：
+
+```text
+未修改的纯 vLLM CPU 不会调用 apply_layerwise_kv_cache_plan，
+也不会自动把 78 层映射到 3 个 shared slot。
+```
+
+要把它变成真实的 vLLM CPU 运行，需要：
+
+1. 在 `get_kv_cache_config` 后注入 layout plan；
+2. 自定义 connector 做逐层 save/load；
+3. 用 CPU `Event`/`threading.Event` 替代 `torch.npu.Event`；
+4. 让 D 的 load 在 decode 前完成；
+5. 把存储从磁盘换成 Mooncake TCP。
+
+这属于 **CPU reference plugin**，不是单纯 mock 底层 API。
+
+### 16.5 当前分支与提交（vllm-ascend）
+
+本地分支：
+
+```text
+local/layerwise-pd-proto
+```
+
+提交：
+
+```text
+ca757e0b3  P/D shared-slot 原型
+00851dd3d  Mooncake TCP per-shard transport
+45b346b8c  real TCP opt-in test
+a61097cca  session/range transport
+822230d8b  connector skeleton
+8019eac8f  transport 注入 connector
+8be4d352b  CPU tensor codec
+d9affe525  Docker real TCP repro
+c573e933c  GLM-shaped 78-layer e2e
+35d8987ed  Docker 78-layer real TCP
+```
+
+### 16.6 下一步
+
+优先级：
+
+1. 用 Qwen3 的 fake `KVCacheConfig` 验证 `apply_layerwise_kv_cache_plan` 的 alias 结果；
+2. 写 CPU fence 测试（threading.Event + 3 slots）；
+3. 把 `ExampleConnector` 改成逐层 save/load，先接本地目录；
+4. 把目录替换成 `MooncakeSessionTransport`；
+5. 最后尝试注入纯 vLLM CPU，做真实 Qwen3 + shared slot 的 decode。
