@@ -109,3 +109,31 @@ shared:   [87630, 47704, 539, 92925]
 - `CONN_LOAD`/`CONN_SAVE` are called; this is not a "connector not invoked" issue.
 - 28 layers with `NUM_SHARED=1` (2 slots) also fails; not specific to 4 slots.
 - The failure is still open; do not claim 28-layer decode passes.
+
+## 28-layer root cause (2026-11-04)
+
+UT trace:
+
+```text
+prefill:
+  CONN_LOAD zero -> CONN_SAVE for all 28 layers
+  CONN_CHECK all ok
+
+decode:
+  CONN_START <request>
+  ... no CONN_LOAD / CONN_SAVE ...
+```
+
+So the connector is not called on the decode attention path. The first token
+comes from prefill; decode runs on the stale shared slot and diverges.
+
+This is not an alias bug and not a save/load checksum bug. It means pure vLLM
+CPU's decode attention path bypasses `maybe_transfer_kv_layer` (the layerwise
+connector wrapper). The 4-layer pass is a false positive because the random
+tiny model emits a degenerate repeated token.
+
+Fix boundary:
+
+- pure vLLM CPU needs a decode-path hook/model-runner patch;
+- vllm-ascend NPU has its own `save_kv_layer`/`wait_for_layer_load` worker path,
+  so the NPU task must validate there rather than assume CPU P6 is complete.

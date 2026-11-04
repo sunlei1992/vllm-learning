@@ -1497,7 +1497,32 @@ shared:   [87630, 47704, 539, 92925]
 
 需要下一步加 checksum/指针诊断，或降到 8/16 层二分。
 
-### 19.5 这说明什么
+### 19.5 根因：decode 没有走 layerwise hook
+
+UT trace：
+
+```text
+prefill:
+  CONN_LOAD zero -> CONN_SAVE for all 28 layers
+  CONN_CHECK all ok
+
+decode:
+  CONN_START <request>
+  no CONN_LOAD / no CONN_SAVE
+```
+
+即：
+
+- prefill 的 save/checksum 正确；
+- decode 阶段 `start_load_kv` 被调用，但 attention 前没有 `wait_for_layer_load`；
+- 纯 vLLM CPU 的 decode attention 路径没有触发 `maybe_transfer_kv_layer`；
+- 4 层“通过”是随机 tiny 模型输出退化重复 token 的假阳性。
+
+所以 28 层失败不是 alias、不是 checksum、不是 Mooncake，而是 **CPU decode
+hook 缺失**。要修必须给纯 vLLM CPU 的 decode attention 加 hook，或直接在
+vllm-ascend 的 NPU worker 路径验证。
+
+### 19.6 这说明什么
 
 已证明：
 
