@@ -1654,3 +1654,41 @@ T02–T04 只填 `ascend_pseudocode.py`；T05 使用 `tests_npu_smoke.py`。
 - 生成 `git bundle` / patch；
 - 把 handoff 包搬到 mxllm `glm_v0.26.0_poc`；
 - 内网实际执行 T00–T09。
+
+### 21.7 mxllm 搬运（2026-11-04）
+
+桥接分支已过时，handoff 改为基于 mxllm **当前 main**：
+
+```text
+mxllm origin/main = cd09039
+handoff branch     = handoff/layerwise-pd
+handoff commit     = 88bba9d
+```
+
+GitCode：
+
+<https://gitcode.com/InferTurbo/mxllm/tree/handoff/layerwise-pd/handoff/layerwise_pd>
+
+内容：
+
+```text
+handoff/
+  README.md
+  layerwise_pd/              # 完整 handoff 包
+  vllm_ascend/
+    layerwise-feature.bundle # 45K，增量 over 4012bf533
+    patches/                 # 12 个 patch
+```
+
+本地验证：
+
+```text
+6 passed
+```
+
+注意：
+
+- 不是直接改 mxllm `main`；
+- 基于 `origin/main` 建 `handoff/layerwise-pd`；
+- 需要合入时走 GitCode MR；
+- `glm_v0.26.0_poc` 不再作为该功能的基分支。
