@@ -1705,3 +1705,50 @@ handoff/
 - 基于 `origin/main` 建 `handoff/layerwise-pd`；
 - 需要合入时走 GitCode MR；
 - `glm_v0.26.0_poc` 不再作为该功能的基分支。
+
+### 21.8 handoff 可执行性收尾（2026-11-04）
+
+已在干净 worktree 验证：
+
+```text
+base 4012bf533
++ git bundle unbundle
+→ 6 passed
+
+base 4012bf533
++ git am 12 个 patch
+→ 6 passed
+```
+
+mxllm handoff 分支新增：
+
+```text
+104031b docs: add CPU shared-buffer reference experiment
+85ab61a docs: make T06 layout task executable
+```
+
+新增目录：
+
+```text
+handoff/layerwise_pd/experiments/shared_buffer/
+  run_shared_buffer.py
+  layerwise_shared_buffer_connector.py
+  make_tiny4_model.py
+  README.md
+```
+
+T06 现在有精确命令：
+
+```bash
+python -m pytest -q \
+  handoff/layerwise_pd/tests/test_planner.py::test_28_layers_to_four_slots
+```
+
+预期：`1 passed`。
+
+### 21.9 仍缺
+
+- 28 层真实 CPU shared-buffer decode（当前 4 层）；
+- T07/T08 的内网可执行脚本；
+- mxllm MR；
+- 内网 NPU 执行。
