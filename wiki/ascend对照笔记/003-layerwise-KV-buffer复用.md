@@ -1085,20 +1085,61 @@ TOKENS [150903]
 wiki/vllm架构笔记/assets/qwen_cpu_kv/qwen_cpu_shared_alias.py
 ```
 
-### P4 ExampleConnector 换 Mooncake（未完成）
+### P4 ExampleConnector 换 Mooncake ✅
 
-当前本机限制：
+P4 已跑通，运行时是同一个 Linux 容器：
 
-- 纯 vLLM host `.venv` 没有 Mooncake wheel（只有 Linux wheel）；
-- `.venv-va030` 的 vLLM 0.31 CPU 跑 Qwen3 会在 triton-cpu slot mapping 处失败；
-- 因此 P4 需要“带 vLLM CPU + Mooncake wheel + Qwen config”的同一个 Linux 容器；
-- 还要实现逐层 save/load 和 decode 前 reload。
+```text
+sim030:glm53
++ vLLM 0.30 CPU
++ mooncake-transfer-engine-non-cuda
+= sim030:mooncake
+```
 
-已完成的替代验证：
+Docker Desktop VM 内存从 8GB 调到 16GB 后，vLLM CPU 才能加载模型；否则 non-KV 就占 6.6GB。
 
-- 纯 vLLM CPU + `ExampleConnector` 的 P/D 分离已跑通，D 侧 `External Cache Hit!`；
-- Mooncake TCP 已在 P2 跨容器跑通；
-- 但二者还没有合并成一个 connector。
+实现：
+
+```text
+MooncakeExampleConnector(ExampleConnector)
+  scheduler: 继承 prompt-hash 外部命中
+  save_kv_layer: 逐层 tensor -> torch.save -> Mooncake put
+  start_load_kv: Mooncake get -> torch.load -> inject 到 paged KV
+```
+
+为了快速验证，使用 Qwen2.5 shape 的 2 层 tiny config（随机权重），不是 Qwen3/GLM。
+
+实测：
+
+```text
+P kv_producer TOKENS [16856]
+D kv_consumer External Cache Hit!
+D kv_consumer TOKENS [16856]
+```
+
+说明：
+
+- P/D 分离进程；
+- per-layer KV 真实经过 Mooncake TCP；
+- D 不再本地 prefill，而是加载 P 的 KV；
+- token 一致。
+
+脚本：
+
+```text
+wiki/vllm架构笔记/assets/qwen_cpu_kv/p4/
+  Dockerfile
+  make_tiny_model.py
+  p4_mooncake_connector.py
+  p4_run.py
+  run_p4.sh
+```
+
+注意：
+
+- 这是 tiny Qwen2.5 synthetic，不是完整 Qwen3/GLM；
+- P/D 是顺序执行，不是同时在线服务；
+- CPU 延迟无性能参考价值。
 
 ### P5 失败注入 + checksum
 
@@ -1125,8 +1166,8 @@ test_layerwise_failure_injection.py
 ### 结论
 
 ```text
-P0 ✅  P1 ✅  P2 ✅  P3 结构验证 ✅  P4 ❌  P5 ✅
+P0 ✅  P1 ✅  P2 ✅  P3 结构验证 ✅  P4 ✅  P5 ✅
 ```
 
-P4 不是逻辑不可行，而是需要把 vLLM CPU + Mooncake + Qwen 放进同一个 Linux 运行时，
-并实现逐层 save/load；这是下一步的主要工程量。
+P4 的“完整 GLM/Qwen3 + 并发 P/D + 性能”仍需要真实模型/更高内存/NPU；本地 tiny P4 只验证
+connector 和 Mooncake 数据面。

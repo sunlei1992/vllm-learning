@@ -1,0 +1,43 @@
+import argparse
+import sys
+
+import torch
+from pathlib import Path
+
+sys.path.insert(0, "/app")
+
+from vllm import LLM, SamplingParams
+from vllm.config import KVTransferConfig
+
+parser = argparse.ArgumentParser()
+parser.add_argument("role", choices=["kv_producer", "kv_consumer"])
+args = parser.parse_args()
+torch.manual_seed(0)
+
+kv = KVTransferConfig(
+    kv_connector="MooncakeExampleConnector",
+    kv_connector_module_path="p4_mooncake_connector",
+    kv_role=args.role,
+    engine_id="p4-" + args.role,
+    kv_connector_extra_config={
+        "shared_storage_path": "/store",
+        "mooncake_master": "mooncake-master:50051",
+        "mooncake_key_prefix": "p4",
+        "mooncake_segment_size": 2 * 1024**3,
+        "mooncake_local_buffer": 256 * 1024**2,
+    },
+)
+Path("/store").mkdir(parents=True, exist_ok=True)
+llm = LLM(
+    model="/models/Qwen2.5-tiny",
+    load_format="dummy",
+    max_model_len=64,
+    gpu_memory_utilization=0.25,
+    enforce_eager=True,
+    kv_transfer_config=kv,
+)
+out = llm.generate(
+    ["Hello, my name is"],
+    SamplingParams(max_tokens=1, temperature=0.0, seed=0),
+)
+print(args.role, "TOKENS", out[0].outputs[0].token_ids)
