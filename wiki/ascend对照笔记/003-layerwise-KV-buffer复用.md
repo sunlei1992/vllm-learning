@@ -1803,3 +1803,91 @@ python -m pytest -q \
 - T07/T08 的内网可执行脚本；
 - mxllm MR；
 - 内网 NPU 执行。
+
+## 22. decode hook 定位与下一步（2026-11-05）
+
+### 22.1 已确认
+
+28 层 fixed 权重的 trace：
+
+```text
+prefill:
+  CONN_LOAD zero
+  CONN_SAVE
+  CONN_CHECK ok   # 28 层 checksum 全部一致
+
+decode:
+  CONN_START <request>
+  # 没有 CONN_LOAD / CONN_SAVE
+```
+
+进一步验证：
+
+- `attn_metadata is None`，`maybe_transfer_kv_layer` 在 hook 前 return；
+- 运行时把 `Attention.forward` 包一层 decode hook，仍然没有 decode 日志；
+- 说明 CPU decode 不走 `Attention.forward` 的这条 wrapper 路径；
+- sentinel metadata 的 workaround 挂死 >27 分钟，已废弃。
+
+### 22.2 结论
+
+```text
+28 层失败 = vLLM CPU decode attention 没有触发 layerwise connector hook
+不是 alias / checksum / Mooncake / connector 数据面问题
+4 层通过 = 随机 tiny 模型退化输出的假阳性
+```
+
+### 22.3 正确的修改点
+
+需要在 decode attention 的实际调用点补：
+
+```text
+before: connector.wait_for_layer_load(layer_name)
+compute: unified_attention_with_output(...)
+after:  connector.save_kv_layer(layer_name, kv_cache, metadata)
+```
+
+候选位置：
+
+```text
+vllm/model_executor/layers/attention/attention.py
+vllm/model_executor/layers/attention/kv_transfer_utils.py
+vllm/v1/worker 的 CPU model runner
+unified_attention_with_output 的调用点
+```
+
+不能只改：
+
+```text
+LayerwiseSharedBufferConnector
+Attention.forward 的运行时 wrapper
+sentinel metadata
+```
+
+### 22.4 本机验证标准
+
+```text
+28 层 fixed 权重
+4 个 slot
+max_tokens=2/4
+
+decode 必须出现 CONN_LOAD hit + CONN_SAVE
+shared tokens == baseline [87630, 87630, ...]
+```
+
+当前：
+
+```text
+根因定位 ✅
+prefill save/checksum ✅
+decode hook ❌
+28 层 decode ❌
+修复 ❌（尚未完成）
+```
+
+### 22.5 代码/文档状态
+
+- vllm-ascend 分支：`local/layerwise-pd-proto`
+- mxllm handoff：`handoff/layerwise-pd` @ `73b367d`
+- 28 层失败和 decode hook 缺口已写入：
+  - `wiki/.../assets/qwen_cpu_kv/shared_buffer/README.md`
+  - `handoff/layerwise_pd/experiments/shared_buffer/README.md`
