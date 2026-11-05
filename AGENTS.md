@@ -1,7 +1,7 @@
 # AGENTS.md — vLLM 学习/实验工作区
 
 > 给 AI agent 的工作记忆。`wiki/` 是写给人看的学习笔记，本文件是给 agent 接上下文用的。
-> 最近更新：2026-10-29
+> 最近更新：2026-11-05
 
 ## 1. 目录与仓库边界
 
@@ -320,3 +320,55 @@
 - 主通道：公司 NPU → `glm_v0.26.0_poc` → 个人电脑 → 清洗/移植 → `main`。
 - 不要把内部分支历史直接 merge 进 `main`；合入前清洗内部路径、密钥、配置和测试数据。
 - 详细规则见 `mxllm/AGENTS.md`；不要把它当成普通双分支开发流程。
+
+## 7. 多会话/多 agent：代码操作必须使用 Git worktree
+
+> 术语纠正：Git 没有 `workspace` 这个原生命令；这里指的是 **`git worktree`**。
+
+多个会话/agent 同时操作同一仓库时，**不要共用同一个 working tree，也不要在有未提交改动时切分支**。默认规则：
+
+1. **一个任务/会话一个 worktree + 一个独立分支**。
+   - 主工作区保持稳定，不承载临时实验；
+   - 例：`mxvllm-trace/` 对应 `feat/request-trace-main`。
+2. 开始前先检查：
+   ```bash
+   git worktree list
+   git status --short
+   git branch --show-current
+   ```
+3. 如果目标分支已被其他 worktree 占用：
+   - 不要 `git checkout` 抢分支；
+   - 新建 worktree 或新建分支。
+4. **绝不**在有未提交改动时：
+   - `git checkout` 切到另一个会话的分支；
+   - `git stash` / `git reset --hard` / `git clean` 处理别人的改动；
+   - 删除别人的 worktree。
+5. 创建方式：
+   ```bash
+   git fetch origin
+   git worktree add ../<repo>-<task> -b feat/<task> origin/main
+   # 或复用未占用的已有分支
+   git worktree add ../<repo>-<task> feat/<task>
+   ```
+6. 命名约定：
+   ```text
+   <repo>-<task>
+   例：mxvllm-trace、vllm-ascend-layerwise
+   ```
+7. 在 worktree 内开发、测试、commit、push；不要为了 push 再切回主工作区。
+8. worktree 清理：
+   ```bash
+   git worktree remove ../<repo>-<task>
+   git worktree prune
+   ```
+   dirty worktree 必须先确认，禁止强删。
+9. 适用范围：`vllm`、`vllm-ascend`、`mxllm`、`RouteServer`、`Mooncake` 以及所有独立 git 仓库。
+10. 如果用户没有明确要求，但检测到**同一仓库有多个会话/未提交改动/分支已被占用**，默认使用 worktree，并在回复中说明 worktree 路径和分支。
+
+当前示例：
+
+```text
+/Users/sunlei/code/gitcode/mxvllm        # 主工作区，保持当前分支
+/Users/sunlei/code/gitcode/mxvllm-trace  # trace 任务 worktree
+分支：feat/request-trace-main
+```
