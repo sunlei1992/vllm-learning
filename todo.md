@@ -20,6 +20,7 @@
 
 | ID | 事项 | 下一步 | 完成标准 |
 | :-- | :-- | :-- | :-- |
+| T-013 | ShardQ 迁移到 vllm-ascend | Step 0 已完成（`wiki/vllm架构笔记/assets/shardq/`，32 passed）；下一步接 `CommonAttentionMetadata` + 真 Scheduler 验证 | 本机 UT 全绿 + 950DT 上 go/no-go（算子吃全 head） |
 
 ---
 
