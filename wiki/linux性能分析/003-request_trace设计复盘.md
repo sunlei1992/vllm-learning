@@ -457,3 +457,27 @@ decode-7    put_count=2  put_bytes=3026  put_ms=0.670
   避免把「KV 快满但还没分配失败」误判成 `CHUNK_BUDGET`。
 - **字段修正**：删掉 `P4_save_kv_bytes`（整层 tensor 的 numel，实测高估 6 个数量级）；
   字节数只保留 `P4_put_bytes` / `P4_get_bytes`（payload 级）。
+
+### 9.11 per-request coverage（2026-11-07）
+
+`trace_health` 之前只有 stage 粒度，看不出「某个请求的日志断了一半」。新增
+`coverage_by_request` sheet，一行一个请求：
+
+```text
+RequestID  Actions  Steps  StagesOK  StagesTotal  Coverage(%)  FirstState  LastState              Finished  Verdict
+0               30      3        13           13          100    WAITING     FINISHED_LENGTH_CAPPED      True complete
+1               26      6         9            9          100    WAITING     FINISHED_LENGTH_CAPPED      True complete
+2               26      6         9            9          100    WAITING     FINISHED_LENGTH_CAPPED      True complete
+```
+
+判定规则：
+
+| Verdict | 条件 |
+| :-- | :-- |
+| `complete` | 有 FINISHED 事件且 stage 覆盖率 100% |
+| `partial` | 有 FINISHED 但 stage 有缺失 |
+| `no-finish` | 没看到 FINISHED（请求被打断/进程退出） |
+| `no-events` | 只有 action、没有状态事件 |
+
+`trace_health` 同步增加 `requests_total / requests_complete / requests_no_finish`。
+KVTiming 这类「伪请求 ID」（如 `prefill-7`）会被过滤，不会污染表。
