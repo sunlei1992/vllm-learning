@@ -1,0 +1,40 @@
+--- /Users/sunlei/code/gitcode/mxvllm-trace/tools/request_trace/request_logger_namelist.yml	2026-11-05 11:18:12
++++ tmp/trace-e2e/request_logger_namelist.yml	2026-11-07 10:44:41
+@@ -171,14 +171,15 @@
+       self._trace_step_id = f"{os.getpid()}-{self._trace_engine_step_start_time}"
+       self._trace_start_free_block_num = self.kv_cache_manager.block_pool.get_num_free_blocks()
+ 
++      _trace_sched = self
+       class CustomList(list):
+           def append(self, item):
+               if envs.REQUEST_PD_ROLE == "encode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "prefill":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "decode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               super().append(item)
+       self.running = CustomList(self.running)
+ 
+@@ -222,14 +223,15 @@
+       self._trace_step_id = f"{os.getpid()}-{self._trace_engine_step_start_time}"
+       self._trace_start_free_block_num = self.kv_cache_manager.block_pool.get_num_free_blocks()
+ 
++      _trace_sched = self
+       class CustomList(list):
+           def append(self, item):
+               if envs.REQUEST_PD_ROLE == "encode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "prefill":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "decode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               super().append(item)
+       self.running = CustomList(self.running)
+ 

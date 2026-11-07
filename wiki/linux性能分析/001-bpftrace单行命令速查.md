@@ -694,6 +694,9 @@ bpftrace 的 `@[ustack] = count()` 输出是 `@[ ... 多行栈 ... ]: 42` 的形
 14. **`ustack` 在该环境不可用**。Python 进程的用户栈输出全是裸地址
     （`0xffff...`）外加 `failed to look up stack id`，需要 frame pointer 或
     内核/perf 的 unwind 支持。看 Python 层请直接上 `py-spy`。
+15. **`printf("%d", nsecs)` 会 32 位截断**。nsecs 是 64 位，用 `%d` 打印出来会
+    变成负数或回绕（实测：`S -2147477185 ... 2147456072`），做时间轴对齐时全部
+    匹配失败。必须用 `%lld`。这个问题在 §13.1 的采样里看不出来，因为那里没有打印时间戳。
 
 ---
 

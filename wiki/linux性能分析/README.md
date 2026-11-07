@@ -5,6 +5,7 @@
 | 编号 | 主题 | 说明 |
 | :-- | :-- | :-- |
 | 001 | [bpftrace 单行命令速查](001-bpftrace单行命令速查.md) | 按子系统整理的 bpftrace 命令 + vLLM 专用配方，命令在本机 Docker 环境逐条验证 |
+| 002 | [request_trace 端到端验证与对齐](002-request-trace端到端与对齐.md) | mxllm 的请求级打点在 CPU 空跑上跑通，产出第一份 Excel，并和 bpftrace 做 StepID 级联合归因 |
 
 实测存档：
 
