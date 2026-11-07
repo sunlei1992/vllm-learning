@@ -294,6 +294,26 @@ $ python -m pytest -q
 下一步（Step 1 剩余）：接 `CommonAttentionMetadata` 与 `split_decodes_and_prefills`，
 再用真 Scheduler 跑一遍，确认单元测试构造不出来的真实 batch 形状。
 
+### 9.1 后续进展（同日）
+
+| 步骤 | 产出 | 本机验证 |
+| :-- | :-- | :-- |
+| Step 1 | `shardq_vllm.split_from_common_attn_metadata`（取字段 + 调纯函数） | vLLM 0.28 与 `a98247ab` 两版各跑一遍，37 passed |
+| Step 2 | `vllm_ascend/attention/shardq.py` + `AscendDSAMetadataBuilder` 钩子（默认关） | `tests/ut/attention` 1899 passed / 10 skipped，无回归 |
+| Step 3 | `plan_exchange` / `static_shard_q` / `static_unshard_out`（定长、可注入 all_to_all） | 40 个 CPU 用例，含置换方向的双向校验 |
+
+VA 代码在 worktree `tmp/va-shardq`（分支 `feat/shardq`，提交 `8edb38678`）。
+
+两个工程约束要记住：
+
+1. **VA 锁定的 vLLM `a98247ab` 早于 #63956**，没有 `sparse_mla_shard_q` 配置项，
+   所以开关先用环境变量 `VLLM_ASCEND_SPARSE_MLA_SHARD_Q`（默认关）顶着，
+   等 pin 越过 11-05 再换回上游配置。
+2. 当前钩子**只产出布局、不改执行**：attention 仍是 head-shard。
+   这样先把元数据路径测绿，把行为切换留到真机。
+
+还没做：attention 路径切换、真 Scheduler 联调、950DT 的 Step 4。
+
 ## 10. 参考
 
 - [PR #63956](https://github.com/vllm-project/vllm/pull/63956)（merged）
