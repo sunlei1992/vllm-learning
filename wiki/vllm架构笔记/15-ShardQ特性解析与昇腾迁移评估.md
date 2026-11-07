@@ -312,7 +312,21 @@ VA 代码在 worktree `tmp/va-shardq`（分支 `feat/shardq`，提交 `8edb38678
 2. 当前钩子**只产出布局、不改执行**：attention 仍是 head-shard。
    这样先把元数据路径测绿，把行为切换留到真机。
 
-还没做：attention 路径切换、真 Scheduler 联调、950DT 的 Step 4。
+### 9.2 Step 1 收尾：真 Scheduler 联调（2026-11-07）
+
+`assets/shardq/sched_integration.py` 用离线 v1 Scheduler（无前向、fake KV）跑真实
+batch 形状，再喂给适配器：
+
+```
+steps: 6 | prefill_steps: 5 | shardq_steps: 5 | fallback: 1（纯 decode 步）
+max_split_tokens: 4096 | max_seq_len: 6003
+```
+
+**踩到一个必须记住的坑**：这个版本的 `schedule()` 已经把本步 token 记进
+`num_computed_tokens`，所以 `seq_len` 就是它本身；写成 `base + n` 会重复计数，
+实测 seq_len 虚高到 9811，会掩盖阈值边界。这一点已写进给内网 agent 的规格文档。
+
+还没做：attention 路径切换（Step 2b）、950DT 的 Step 4。
 
 ## 10. 参考
 
