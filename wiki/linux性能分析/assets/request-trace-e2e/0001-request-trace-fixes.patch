@@ -1,0 +1,161 @@
+diff --git a/ascend_vllm/patch/platform/patch_request_trace.py b/ascend_vllm/patch/platform/patch_request_trace.py
+index 182879f..503c3b1 100644
+--- a/ascend_vllm/patch/platform/patch_request_trace.py
++++ b/ascend_vllm/patch/platform/patch_request_trace.py
+@@ -135,6 +135,7 @@ def _apply_single_wrap(
+                         wrapped = wrapper_method(original_function, params)
+                         setattr(target_class, function_name, wrapped)
+                     logger.info(f"<<<<{module_name}.{class_name}.{function_name} is wrapped")
++                    _TRACE_TARGET_STATS["wrapped"] += 1
+                     return True
+                 except AttributeError:
+                     _log_missing_target(
+diff --git a/tools/request_trace/parse_logs.py b/tools/request_trace/parse_logs.py
+index 54e732e..4ebcbdc 100644
+--- a/tools/request_trace/parse_logs.py
++++ b/tools/request_trace/parse_logs.py
+@@ -19,8 +19,10 @@ _COMPLETION_REQUEST_ID_RE = re.compile(
+ _CHAT_REQUEST_ID_HEX_RE = re.compile(r"^(?P<base>chatcmpl-[0-9a-f]{32})(?:-[0-9a-f]{8})*$")
+ _COMPLETION_REQUEST_ID_HEX_RE = re.compile(r"^(?P<base>cmpl-[0-9a-f]{32})(?:-[0-9a-f]{8})*$")
+ # Fallback: short hex IDs (e.g. chatcmpl-<16hex> without UUID dashes)
+-_CHAT_REQUEST_ID_SHORT_HEX_RE = re.compile(r"^(?P<base>chatcmpl-[0-9a-f]{8,31})(?:-[0-9a-f]{8})*$")
+-_COMPLETION_REQUEST_ID_SHORT_HEX_RE = re.compile(r"^(?P<base>cmpl-[0-9a-f]{8,31})(?:-[0-9a-f]{8})*$")
++_CHAT_REQUEST_ID_SHORT_HEX_RE = re.compile(r"^(?P<base>chatcmpl-[0-9a-f]{8,31})(?:-\d+)?(?:-[0-9a-f]{8})*$")
++_COMPLETION_REQUEST_ID_SHORT_HEX_RE = re.compile(r"^(?P<base>cmpl-[0-9a-f]{8,31})(?:-\d+)?(?:-[0-9a-f]{8})*$")
++# Engine-assigned ids without an API prefix (offline LLM.generate): "<n>-<8hex>"
++_ENGINE_NUMERIC_ID_RE = re.compile(r"^(?P<base>\d+)(?:-[0-9a-f]{8})*$")
+ 
+ 
+ def _normalize_request_id(request_id):
+@@ -50,6 +52,10 @@ def _normalize_request_id(request_id):
+     if match:
+         return match.group("base")
+ 
++    match = _ENGINE_NUMERIC_ID_RE.match(request_id)
++    if match:
++        return match.group("base")
++
+     return request_id
+ 
+ 
+@@ -271,6 +277,12 @@ def _select_timestamp(action: str, value):
+     return max(value) if _is_end_action(action) else min(value)
+ 
+ 
++_ENTRY_ONLY_STARTS = {
++    "Start append running sequence for encode",
++    "Start append running sequence for prefill",
++    "Start append running sequence for decode",
++}
++
+ _STAGE_PAIRS = (
+     ("Start append running sequence for prefill", "Prefill start execute_model", "P: running to schedule end"),
+     ("Prefill start execute_model", "Prefill done execute_model", "P: execute_model"),
+@@ -352,6 +364,9 @@ def _build_stage_timing_rows(data_by_request, data_by_request_steps=None):
+             for index in range(max(len(lefts), len(rights))):
+                 start = lefts[index] if index < len(lefts) else None
+                 end = rights[index] if index < len(rights) else None
++                if start is None and left in _ENTRY_ONLY_STARTS:
++                    # entry-only action: continuation steps have no start
++                    continue
+                 if start is None or end is None:
+                     status = "missing-start" if start is None else "missing-end"
+                     duration = None
+diff --git a/tools/request_trace/request_logger_namelist.yml b/tools/request_trace/request_logger_namelist.yml
+index f6e968a..6d4a9ed 100644
+--- a/tools/request_trace/request_logger_namelist.yml
++++ b/tools/request_trace/request_logger_namelist.yml
+@@ -6,7 +6,8 @@ targets:
+       import os, time
+       from request_trace.envs import envs
+       from request_trace.utils import ip_str, safe_print, trace_output_directory
+-      raw_request_id = "chatcmpl-" + (args[1].headers.get('X-Request-Id') or "unknown")
++      _rid = args[1].headers.get('X-Request-Id') or getattr(args[0], 'request_id', None) or "unknown"
++      raw_request_id = "chatcmpl-" + _rid
+       args[0].raw_request_id = raw_request_id
+       if envs.REQUEST_PD_ROLE == "encode":
+           safe_print(trace_output_directory, f"<<<Action: Encoder api server get request; Timestamp:{time.time()}; RequestID:{raw_request_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+@@ -21,7 +22,8 @@ targets:
+       import os, time
+       from request_trace.envs import envs
+       from request_trace.utils import ip_str, safe_print, trace_output_directory
+-      raw_request_id = "cmpl-" + (args[1].headers.get('X-Request-Id') or "unknown")
++      _rid = args[1].headers.get('X-Request-Id') or getattr(args[0], 'request_id', None) or "unknown"
++      raw_request_id = "cmpl-" + _rid
+       args[0].raw_request_id = raw_request_id
+       if envs.REQUEST_PD_ROLE == "encode":
+           safe_print(trace_output_directory, f"<<<Action: Encoder api server get request; Timestamp:{time.time()}; RequestID:{raw_request_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+@@ -171,14 +173,15 @@ targets:
+       self._trace_step_id = f"{os.getpid()}-{self._trace_engine_step_start_time}"
+       self._trace_start_free_block_num = self.kv_cache_manager.block_pool.get_num_free_blocks()
+ 
++      _trace_sched = self
+       class CustomList(list):
+           def append(self, item):
+               if envs.REQUEST_PD_ROLE == "encode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "prefill":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "decode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               super().append(item)
+       self.running = CustomList(self.running)
+ 
+@@ -200,13 +203,13 @@ targets:
+       scheduler_output_schedule.engine_step_start_time = self._trace_engine_step_start_time
+       scheduler_output_schedule.start_free_block_num = self._trace_start_free_block_num
+ 
+-      for req in scheduler_output_schedule.scheduled_new_reqs:
++      for req_id in scheduler_output_schedule.num_scheduled_tokens:
+           if envs.REQUEST_PD_ROLE == "encode":
+-              safe_print(trace_output_directory, f"<<<Action: Encoder start execute_model; Timestamp:{time.time()}; RequestID:{req.req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++              safe_print(trace_output_directory, f"<<<Action: Encoder start execute_model; Timestamp:{time.time()}; RequestID:{req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+           elif envs.REQUEST_PD_ROLE == "prefill":
+-              safe_print(trace_output_directory, f"<<<Action: Prefill start execute_model; Timestamp:{time.time()}; RequestID:{req.req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++              safe_print(trace_output_directory, f"<<<Action: Prefill start execute_model; Timestamp:{time.time()}; RequestID:{req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+           elif envs.REQUEST_PD_ROLE == "decode":
+-              safe_print(trace_output_directory, f"<<<Action: Decode start execute_model; Timestamp:{time.time()}; RequestID:{req.req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++              safe_print(trace_output_directory, f"<<<Action: Decode start execute_model; Timestamp:{time.time()}; RequestID:{req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+ 
+   # D node uses AsyncRecomputeScheduler (subclass of Scheduler) which overrides
+   # schedule() and update_from_output(). Wrap them too (delayed: vllm_ascend.* module).
+@@ -222,14 +225,15 @@ targets:
+       self._trace_step_id = f"{os.getpid()}-{self._trace_engine_step_start_time}"
+       self._trace_start_free_block_num = self.kv_cache_manager.block_pool.get_num_free_blocks()
+ 
++      _trace_sched = self
+       class CustomList(list):
+           def append(self, item):
+               if envs.REQUEST_PD_ROLE == "encode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for encode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "prefill":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for prefill; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               elif envs.REQUEST_PD_ROLE == "decode":
+-                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++                  safe_print(trace_output_directory, f"<<<Action: Start append running sequence for decode; Timestamp:{time.time()}; RequestID:{item.request_id}; StepID:{_trace_sched._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+               super().append(item)
+       self.running = CustomList(self.running)
+ 
+@@ -251,13 +255,13 @@ targets:
+       scheduler_output_schedule.engine_step_start_time = self._trace_engine_step_start_time
+       scheduler_output_schedule.start_free_block_num = self._trace_start_free_block_num
+ 
+-      for req in scheduler_output_schedule.scheduled_new_reqs:
++      for req_id in scheduler_output_schedule.num_scheduled_tokens:
+           if envs.REQUEST_PD_ROLE == "encode":
+-              safe_print(trace_output_directory, f"<<<Action: Encoder start execute_model; Timestamp:{time.time()}; RequestID:{req.req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++              safe_print(trace_output_directory, f"<<<Action: Encoder start execute_model; Timestamp:{time.time()}; RequestID:{req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+           elif envs.REQUEST_PD_ROLE == "prefill":
+-              safe_print(trace_output_directory, f"<<<Action: Prefill start execute_model; Timestamp:{time.time()}; RequestID:{req.req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++              safe_print(trace_output_directory, f"<<<Action: Prefill start execute_model; Timestamp:{time.time()}; RequestID:{req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+           elif envs.REQUEST_PD_ROLE == "decode":
+-              safe_print(trace_output_directory, f"<<<Action: Decode start execute_model; Timestamp:{time.time()}; RequestID:{req.req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
++              safe_print(trace_output_directory, f"<<<Action: Decode start execute_model; Timestamp:{time.time()}; RequestID:{req_id}; StepID:{self._trace_step_id}; Role:{envs.REQUEST_PD_ROLE}_{ip_str}")
+ 
+   - module: "vllm.v1.worker.gpu_model_runner:GPUModelRunner"
+     function_name: _update_states

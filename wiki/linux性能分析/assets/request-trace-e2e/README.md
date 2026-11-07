@@ -9,10 +9,14 @@
 | `run_e2e.py` | 驱动：按路径加载 `patch_request_trace.py` → `apply_all()` → `LLM(simulate_forward=True)`，并记录 `(t0_wall, t0_mono_ns)` 供对齐 |
 | `trace_bpf.sh` | 侧挂容器脚本：等进程出现后用 bpftrace 记录 `sched_switch` OUT/IN + 99Hz 采样 |
 | `analyze_align.py` | 把 `stage_timings` 的 StepID 窗口和 bpftrace 事件对齐，算每步 off-CPU |
-| `0001-fix-customlist-self-shadow.patch` | 修复 namelist 里 `CustomList.append` 的 `self` 遮蔽（P0，不打就崩） |
-| `results/time_analysis-run1.xlsx` | 第一次跑（未带 bpftrace）的报表 |
+| `0001-request-trace-fixes.patch` | 本次全部修复的完整 diff（P0 遮蔽 + 按 step 打点 + ID 归一 + coverage 计数） |
+| `run_server_traced.py` | 在线验证入口：先 `apply_all()` 再起 OpenAI server（需 `VLLM_ENABLE_V1_MULTIPROCESSING=0`） |
+| `online_client.py` | 发一条带 `request_id` 的流式 completion 请求 |
+| `results/time_analysis-run1.xlsx` | 第一次跑（修复前，含 P0 崩溃绕过后的问题）的报表 |
 | `results/time_analysis-run2-bpf.xlsx` | 对齐实验所用的报表 |
 | `results/align.csv` | 对齐结果（6 个 ok 窗口的 duration / off-CPU / on-CPU%） |
+| `results/time_analysis-fixed.xlsx` | 修复后离线复验：31 行 `stage_timings` 全部 `ok` |
+| `results/time_analysis-online.xlsx` | 在线复验：单请求 `ttft_ms=249.71`、`total_time_ms=249.94` |
 
 ## 复现要点
 

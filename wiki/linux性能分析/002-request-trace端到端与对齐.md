@@ -86,9 +86,39 @@ class CustomList(list):
         ... f"...StepID:{_trace_sched._trace_step_id}..."
 ```
 
-补丁：`assets/request-trace-e2e/0001-fix-customlist-self-shadow.patch`
+补丁：`assets/request-trace-e2e/0001-request-trace-fixes.patch`
 （只改 2 处别名 + 6 处引用；注意 yaml 里 `{self._trace_step_id}` 共 17 处，
 **不能全局替换**，只有 CustomList 块内那 6 处需要）。
+
+### 2.5 修复后复验（2026-11-07）
+
+| 项 | 修复前 | 修复后 |
+| :-- | :-- | :-- |
+| `stage_timings` | 31 行（6 ok / 25 missing-start） | **31 行全部 `ok`**（28 个 execute_model + 3 个 running→schedule） |
+| coverage | `wrapped=0` | **`wrapped=21`** |
+| RequestID | 3 个请求裂成 7 行 | 每个请求 1 行 |
+| 离线 `ttft_ms` / `total_time_ms` | `-` | 仍为 `-`（离线路径没有 OpenAI 服务层，属预期） |
+
+**为什么离线拿不到 ttft**：parser 的总时长/TTFT 固定在
+`PD api server get request` → `First decode output token` / `Finish decode pickle...`，
+这些 action 只在 OpenAI serving 层产生，`LLM.generate()` 不经过它。
+
+于是补跑了一次**在线**验证（OpenAI server + `--simulate-forward` + 流式请求，
+`VLLM_ENABLE_V1_MULTIPROCESSING=0`）：
+
+| 指标 | 值 |
+| :-- | :-- |
+| `total_time_ms` | **249.94** |
+| `ttft_ms` | **249.71** |
+| `RequestID` | `cmpl-95953438d507582e`（单行，未分裂） |
+
+关键点：请求体里显式带 `request_id`，API 层和引擎侧才会用同一个 ID
+（引擎会追加 `-0-<8hex>`，由 parser 归一）。
+
+已推送：`77e7c54`（运行时打点）、`92daf47`（parser）→ MR !146。
+
+一个遗留：在线单节点跑不出 P/D 的完整阶段（`D: engine first token to response`
+仍是 missing-start），因为 `decode` 侧的 action 需要真正的 D 节点，这是场景限制不是 bug。
 
 ---
 
@@ -164,17 +194,19 @@ profile:hz:99 /pid == $PID/ { printf("S %lld\n", nsecs); }
 
 ## 5. 结论与建议
 
-### 对 MR !146 的修改建议（按优先级）
+### 对 MR !146 的修改建议（已全部落地）
 
-1. **P0**：修 `CustomList` 的 `self` 遮蔽（补丁已给）。
-2. **P1**：`execute_model` 的 start 改成"每个 step 都打"，而不是只对 `scheduled_new_reqs`；
-   否则 chunked prefill 的 `stage_timings` 一半是 `missing-start`。
-3. **P1**：parser 侧做 RequestID 归一（`0` 与 `0-<uuid>` 合并，或统一在打点时用 engine id）。
-4. **P2**：`_apply_single_wrap` 的类方法分支补 `wrapped += 1`，否则 coverage 永远显示 0。
+1. **P0**：修 `CustomList` 的 `self` 遮蔽 → `77e7c54`。
+2. **P1**：`execute_model` 的 start 改成按 `num_scheduled_tokens` 每个 step 都打 → `77e7c54`。
+3. **P1**：RequestID 归一（引擎侧 `<n>-<8hex>`、`cmpl-<hex>-<n>-<8hex>`）→ `92daf47`。
+4. **P2**：类方法分支补 `wrapped += 1` → `77e7c54`。
+
+额外一条：无 `X-Request-Id` 时回退到请求体 `request_id`，否则 API 层永远是
+`cmpl-unknown`，和引擎 ID 对不上 → `77e7c54`。
 
 ### 下一步
 
-- [ ] 把 #2/#3 的修复也做出来，重跑一遍，确认 `stage_timings` 全部 `ok`、`ttft_ms` 有值。
+- [x] 修 #2/#3 并复验：`stage_timings` 全 `ok`，在线 `ttft_ms` 有值。
 - [ ] 用 `REQUEST_PD_ROLE=decode` 再跑一遍，补齐 D 侧阶段。
 - [ ] 内网真机按 DESIGN §8 跑 8.1–8.8，重点确认 target coverage 和 trace 开销。
 
