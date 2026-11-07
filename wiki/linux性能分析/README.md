@@ -6,6 +6,9 @@
 | :-- | :-- | :-- |
 | 001 | [bpftrace 单行命令速查](001-bpftrace单行命令速查.md) | 按子系统整理的 bpftrace 命令 + vLLM 专用配方，命令在本机 Docker 环境逐条验证 |
 | 002 | [request_trace 端到端验证与对齐](002-request-trace端到端与对齐.md) | mxllm 的请求级打点在 CPU 空跑上跑通，产出第一份 Excel，并和 bpftrace 做 StepID 级联合归因 |
+| 003 | [request_trace 设计复盘](003-request_trace设计复盘.md) | 对照两本书复盘：从算子级打点转向系统级等待观测，含 on_cpu / coverage / metrics 的实现记录 |
+| 004 | [trace 开销专题](004-trace开销专题.md) | 写盘机制的成本分析与候选方案（只记录，暂不修改） |
+| 005 | [数据与展示分离](005-数据与展示分离.md) | 数据层 schema 与「问题 → 图表」映射（设计稿） |
 
 实测存档：
 
