@@ -481,3 +481,50 @@ RequestID  Actions  Steps  StagesOK  StagesTotal  Coverage(%)  FirstState  LastS
 
 `trace_health` 同步增加 `requests_total / requests_complete / requests_no_finish`。
 KVTiming 这类「伪请求 ID」（如 `prefill-7`）会被过滤，不会污染表。
+
+### 9.12 换入换出接真机（2026-11-07）
+
+本机 P4 路径之外，把真机两条路径也接上了**字节**统计（原先只有耗时）。
+计算逻辑抽到 `kv_bytes.py`，用假 config 单测，不依赖 NPU。
+
+**接入点**
+
+| 路径 | hook | 产出 |
+| :-- | :-- | :-- |
+| Store 读 | `AscendStoreConnector.start_load_kv` | `KVTransfer_get_tokens/blocks/bytes` |
+| Store 写 | `AscendStoreConnector.wait_for_save`（非 layerwise） | `KVTransfer_put_blocks/bytes/ms` |
+| P2P 拉 | `KVCacheRecvingThread._transfer_kv_cache_all_groups` | `KVTransfer_get_blocks/bytes` |
+
+**计算方式**
+
+```text
+store:  tokens(load_spec.vllm_cached + kvpool_cached) → ceil(tokens/block_size) × page_size_bytes（按组累加）
+p2p:    sum(len(g) for g in local_block_ids) × page_size_bytes（按组累加）
+```
+
+`page_size_bytes` 取 `kv_cache_config.kv_cache_groups[i].kv_cache_spec.page_size_bytes`；
+拿不到时返回 **-1（未知）**，绝不猜一个数。P2P 线程没有 config 时用
+`kv_bytes.bytes_from_thread_blocks()` 从 kv cache 张量反推，仍失败则 -1。
+
+**三个已知限制**
+
+1. **layerwise 的 put 字节不统计**：`save_kv_layer` 是逐层调用，用整组 page_size 会 ×层数，
+   所以只在非 layerwise 的 `wait_for_save` 里统计；layerwise 下 `KVTransfer_put_*` 不出现。
+2. **P2P 线程可能没有 `_kv_cache_config`**：代码里它有 `kv_caches` 和 `kv_group2layeridx`，
+   走 fallback；若 fallback 也失败，报表里是 -1，需要把 config 传进线程。
+3. **MLA + SFA indexer 是两组 cache**：按组累加，不会漏；但若 `kv_cache_groups` 只有一个组，
+   说明模型只有一种 attention，属正常。
+
+**内网验证清单（8.1–8.8 之后加一步）**
+
+- [ ] 打印 `kv_cache_groups[i].kv_cache_spec` 的 `block_size` 与 `page_size_bytes`，确认非空；
+- [ ] 1P1D + 128K：`KVTransfer_get_bytes` ≈ `tokens × 每 token KV × 组数`，与启动日志
+      `GPU KV cache size` 对得上；
+- [ ] `KVTransfer_get_blocks` 与 connector 日志里的 block 数一致；
+- [ ] P2P 路径若 `bytes=-1`，把 `kv_cache_config` 加进 `KVCacheRecvingThread.__init__`；
+- [ ] `bytes / ms` 与 Mooncake/Store 带宽规格对比，确认数量级合理；
+- [ ] layerwise 开关切换时，确认 `KVTransfer_put_*` 只在该关掉时出现。
+
+**新增防护**：单测里加了「namelist 所有 entry/exit 片段必须能 compile」——
+这类片段是在 vLLM 启动时 exec 的，写错（比如在模块级写 `return`）只有真机才炸，
+本地一条 compile 就能拦住。
