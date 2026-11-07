@@ -223,7 +223,7 @@ stage:D: token 1 to 2.coverage  50.0%
 | 阶段 | 内容 | 状态 |
 | :-- | :-- | :-- |
 | P0 | on_cpu 列、dropped/coverage、metrics 模式骨架 | ✅ 本次完成（见 §9） |
-| P1 | 状态机事件 + reason code（替换算子级默认打点） | 待排期 |
+| P1 | 状态机事件 + reason code | ✅ 状态机已实现（算子级降级待做） |
 | P2 | span 模型 + 跨节点 trace_id | 待设计 |
 | P3 | 数据/展示分离 + 瀑布图 | 见 005 |
 | P4 | 开销治理 | 见 004 |
@@ -277,3 +277,42 @@ stage:P: running to schedule end.coverage 100.0%
 ### 9.4 回归
 
 `tests/patch/platform/test_request_trace.py`：18 passed。
+
+### 9.5 请求状态机（§4.3 的实现）
+
+新增 `state_machine.py`，挂在 5 个已有 target 上（`add_request` / `allocate_slots` /
+`schedule`×2 / `update_from_output`×2 / `_free_request`），没有新增被包装函数。
+
+- `RUNNING` 按 `num_computed_tokens >= num_prompt_tokens` 拆成 `PREFILL` / `DECODING`；
+- `WAITING` 在每次 `schedule()` 决策点重采样（其余时刻 100ms 节流），这样等待原因会随
+  调度决策更新；
+- `FINISHED` 在 `_free_request` 入口发出——等请求被移除后再扫描就看不到了。
+
+实测（3 请求，长 prompt 走 chunked prefill）：
+
+| Request | State | Reason | 时长 |
+| :-- | :-- | :-- | --: |
+| 0 | WAITING | NEW | 5.5 ms |
+| 0 | PREFILL | — | 243.9 ms（on-CPU 96.5%） |
+| 0 | DECODING | — | 25.4 ms |
+| 1/2 | WAITING | NEW | 3–4 ms |
+| 1/2 | WAITING | **CHUNK_BUDGET** | 244 ms（拆成多段） |
+| 1/2 | DECODING | — | 25.5 ms |
+
+`waiting_breakdown`：
+
+```text
+State   Reason        Intervals  Requests  Total(ms)  Max(ms)
+WAITING CHUNK_BUDGET         10         2    487.811  229.120
+WAITING NEW                   3         3     12.835    5.529
+```
+
+**一个反直觉的发现**：等待区间的 on-CPU 高达 97.6%。单线程引擎「等」的时候，
+CPU 正在为别的请求干活。所以：
+
+```text
+waiting + on_cpu 高  → 容量饱和（正常排队，该加并发/加机器）
+waiting + on_cpu 低  → 调度器/IO 问题（该查锁、查换入换出）
+```
+
+这正是 §4.6 想要的那一刀，现在有数据了。
