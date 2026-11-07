@@ -13,11 +13,17 @@ import json
 import logging
 import os
 import sys
+import resource
 import time
 
 TRACE_ROOT = os.environ.get("MXLLM_TRACE_ROOT", "/mxllm")
 OUT_DIR = os.environ.get("REQUEST_TRACE_OUTPUT_DIRECTORY", "/out/trace_e2e")
-os.environ["REQUEST_TRACE_OUTPUT_DIRECTORY"] = OUT_DIR
+TRACE_MODE = os.environ.get("TRACE_MODE", "trace").lower()
+os.environ["REQUEST_TRACE_MODE"] = TRACE_MODE
+if TRACE_MODE == "off":
+    os.environ.pop("REQUEST_TRACE_OUTPUT_DIRECTORY", None)
+else:
+    os.environ["REQUEST_TRACE_OUTPUT_DIRECTORY"] = OUT_DIR
 os.environ.setdefault("REQUEST_PD_ROLE", "prefill")
 os.environ.setdefault("VLLM_TARGET_DEVICE", "cpu")
 os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
@@ -71,7 +77,11 @@ meta = {
     "vllm_version": __import__("vllm").__version__,
     "outputs": [o.outputs[0].token_ids for o in outs],
     "pid": os.getpid(),
+    "trace_mode": TRACE_MODE,
 }
+ru = resource.getrusage(resource.RUSAGE_SELF)
+meta["cpu_s"] = round(ru.ru_utime + ru.ru_stime, 3)
+os.makedirs(OUT_DIR, exist_ok=True)
 with open(os.path.join(OUT_DIR, "meta.json"), "w") as f:
     json.dump(meta, f, indent=2)
 print("[meta]", json.dumps(meta, ensure_ascii=False))

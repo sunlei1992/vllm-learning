@@ -444,3 +444,16 @@ decode-7    put_count=2  put_bytes=3026  put_ms=0.670
 
 复现脚本：`tmp/trace-e2e/p4_run_traced.py`、`tmp/trace-e2e/mooncake_traced_transfer.py`
 （后者不需要 vLLM，直接验证 put/get 双向埋点）。
+
+### 9.10 单测、开销与字段修正（2026-11-07）
+
+- **单测**：新增 `tests/patch/platform/test_request_trace_observability.py`（18 条），覆盖
+  reason 分类、KV 计数与峰值、layer_transfer 聚合、stats 落盘、parser 的两个 sheet builder，
+  以及**同一函数叠加两个 wrapper 的调用顺序**（`e2e → e1 → body → x1 → x2`）。
+  合计 36 条 request_trace 单测通过。
+- **开销**：见 `006-trace开销实测.md`。`metrics` +1.0%、`trace` +7.2%；
+  默认值保持 `off`，建议部署显式开 `metrics`。
+- **reason 精度**：新增 `KV_PRESSURE`（`free_blocks == 0` 或本步有驱逐），
+  避免把「KV 快满但还没分配失败」误判成 `CHUNK_BUDGET`。
+- **字段修正**：删掉 `P4_save_kv_bytes`（整层 tensor 的 numel，实测高估 6 个数量级）；
+  字节数只保留 `P4_put_bytes` / `P4_get_bytes`（payload 级）。
