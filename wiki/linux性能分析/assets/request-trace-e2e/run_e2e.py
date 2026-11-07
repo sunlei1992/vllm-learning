@@ -33,6 +33,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 t0_wall = time.time()
 t0_mono = time.monotonic_ns()
 
+t_apply0 = time.process_time()
 spec = importlib.util.spec_from_file_location(
     "patch_request_trace",
     os.path.join(TRACE_ROOT, "ascend_vllm/patch/platform/patch_request_trace.py"),
@@ -40,6 +41,7 @@ spec = importlib.util.spec_from_file_location(
 patch = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(patch)
 patch.apply_all()
+apply_s = time.process_time() - t_apply0
 
 from vllm import LLM, SamplingParams  # noqa: E402
 
@@ -57,13 +59,13 @@ llm = LLM(
 init_s = time.time() - t_init0
 
 sp = SamplingParams(
-    max_tokens=8,
-    trace_decode_token_ids=[100, 101, 102, 103, 104, 105, 106, 107],
+    max_tokens=int(os.environ.get("MAX_TOKENS", "8")),
+    trace_decode_token_ids=list(range(100, 200)),
 )
 
 # one long prompt (forces chunked prefill with budget=64) + two short ones
 long_prompt = " ".join(["The quick brown fox jumps over the lazy dog."] * 30)
-prompts = [long_prompt, "Hello", "Hi there"]
+prompts = [long_prompt] * int(os.environ.get("N_REQS", "1")) + ["Hello", "Hi there"]
 
 t_gen0 = time.time()
 outs = llm.generate(prompts, sp)
@@ -78,6 +80,7 @@ meta = {
     "outputs": [o.outputs[0].token_ids for o in outs],
     "pid": os.getpid(),
     "trace_mode": TRACE_MODE,
+    "apply_s": round(apply_s, 3),
 }
 ru = resource.getrusage(resource.RUSAGE_SELF)
 meta["cpu_s"] = round(ru.ru_utime + ru.ru_stime, 3)

@@ -88,3 +88,40 @@ python -m request_trace.bench_safe_print --n 20000
 # 端到端（容器内）
 TRACE_MODE=off|metrics|trace python /out/run_e2e.py
 ```
+
+## 8. 优化后（同日，三项落地）
+
+| 优化 | 做法 |
+| :-- | :-- |
+| 移除按块热路径 | `_maybe_evict_cached_block` 不再默认包装；改为每次 `schedule` 采样 `cached_block_hash_to_block` 的下降量（下界估计） |
+| 预编译 snippet | `compile()` 一次，`_COMPILED_SNIPPETS` 缓存 code object，之后只 `exec(code)` |
+| 缓存 handler | `safe_print` 按文件缓存 logger + FileHandler（目录只 `mkdir` 一次），`atexit` 统一关闭 |
+
+**微基准**
+
+| 项 | 优化前 | 优化后 | 倍数 |
+| :-- | --: | --: | --: |
+| `safe_print` | 23.4 µs | **7.0 µs** | 3.3× |
+| `execute_operation` | 23.1 µs | **0.9 µs** | 25× |
+| 每事件合计（估） | ~69 µs | **~9 µs** | 7.7× |
+
+**端到端**（进程 CPU，3 次中位）
+
+| workload | off | trace | delta |
+| :-- | --: | --: | --: |
+| 132 事件 | 6.520 | 6.939 | +0.419 s |
+| 8,735 事件 | 6.643 | 7.191 | +0.548 s |
+
+拆解：**固定 +0.42 s + 每事件约 15 µs**（两次 workload 的差值 / 8603 事件）。
+
+固定那 0.42 s 来自 `apply_all()` 里 eager import
+`vllm.entrypoints.openai.chat_completion.serving`（冷导入 4.07 s，与后续导入部分重叠）。
+离线 `LLM.generate` 本来不需要这个模块；**生产走 OpenAI server 时这部分本来就要付，净开销接近 0**。
+这是 harness 假象，不是真实成本。
+
+**结论**：稳态从 ~69 µs/事件降到 ~15 µs/事件；按 5,700 事件/秒算，
+单核占用从 ~39% 降到 **~8.6%**。trace 已经进入「可以常开」的量级，
+剩下的大头是每事件 7 µs 的写盘（004 的 ring buffer 方案还能再降）。
+
+**下一步可做**：serving target 惰性包装（消掉 0.42 s 固定成本）；
+`sm.scan`/`kv.scan` 的频率也可以从「每 step」降到「每 N step」。
