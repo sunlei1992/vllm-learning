@@ -13,6 +13,11 @@
 | :-- | :-- |
 | `shardq_ref.py` | zigzag 切分、触发判定、run 划分、positions、query_start_loc 重编号、参考交换、定长 pad、最小 sparse MLA 参考实现 |
 | `test_shardq_ref.py` | 32 个单测，无 NPU / 无 vLLM 依赖 |
+| `shardq_vllm.py` | 接真实 `CommonAttentionMetadata` 的适配器 |
+| `sched_integration.py` | 真 Scheduler 联调 + 场景矩阵（APC/分块/抢占/投机） |
+| `cost_model.py` | 交换成本 vs 省下的 indexer 工作（带宽账 + Amdahl 账） |
+| `golden_trace.py` | 录制/比较每步调度形状与分片指纹 |
+| `test_tools.py` | 收益模型与 golden trace 的纯函数单测 |
 
 ## 跑法
 
@@ -72,3 +77,40 @@ Python 3.12.14 / numpy 2.3.5 / torch 2.13.0
 - `reference_*` 换成 HCCL 实现，**保持函数签名不变**，单测可以直接复用；
 - 交换按定长 pad 设计（`pad_to_static`），避免变长 all-to-all 和 AllToAllV；
 - 任何 host→device 的每步上传，都不要复用 pinned buffer（见上游 `#66052`）。
+
+
+## 工具
+
+```bash
+# 真 Scheduler 联调（单场景）
+python sched_integration.py
+
+# 场景矩阵：baseline / apc / chunked / preempt / spec
+python sched_integration.py --matrix
+
+# 收益模型：950DT 上什么上下文长度值得开
+python cost_model.py
+
+# golden trace：录制两次必须 identical，真机录一份再 compare
+python golden_trace.py record /path/gt1.json
+python golden_trace.py compare /path/gt1.json /path/gt2.json
+```
+
+### 2026-11-07 实测（本机 CPU）
+
+```
+scenario  steps  prefill  shardq  fallback  preempt  max_split
+baseline      6        5       5         1        0       4096
+     apc      5        2       2         3        0       4096
+ chunked      6        5       4         2        0       4096
+ preempt    177        1       0       177        2          0
+    spec      9        3       3         6        0       4096
+```
+
+两个值得注意的结论：
+
+1. **`chunked` 场景**：`long_prefill_token_threshold` 一旦小于
+   `SPARSE_MLA_SHARD_Q_MIN_TOKENS`，每步 prefill 就被切到阈值以下，ShardQ 永不触发。
+   这是配置交互，不是 bug——但线上调这两个参数时要一起看。
+2. **`preempt` 场景**：64-token prompt 全是 decode 步，ShardQ 正确回退，
+   177 步、2 次抢占下分片逻辑没有任何越界。

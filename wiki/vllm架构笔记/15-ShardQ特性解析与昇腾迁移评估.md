@@ -327,7 +327,20 @@ max_split_tokens: 4096 | max_seq_len: 6003
 `num_computed_tokens`，所以 `seq_len` 就是它本身；写成 `base + n` 会重复计数，
 实测 seq_len 虚高到 9811，会掩盖阈值边界。这一点已写进给内网 agent 的规格文档。
 
-还没做：attention 路径切换（Step 2b）、950DT 的 Step 4。
+### 9.3 本机工具补齐（2026-11-07）
+
+| 工具 | 作用 | 结论 |
+| :-- | :-- | :-- |
+| `sched_integration.py --matrix` | 5 个调度场景 | baseline/apc/chunked/spec 均触发分片；preempt 177 步 2 次抢占无越界 |
+| `cost_model.py` | 交换成本 vs 省下的 indexer 读 | 带宽账下 8K 上下文就 13x 回本；**Amdahl 账才是真门槛**：要 1.25x 需 indexer 占 prefill ≥ 25% |
+| `golden_trace.py` | 每步摘要录制/比较 | 两次录制 identical，可作为真机对拍基线 |
+
+**最有价值的一条**：收益模型说明交换不是问题（0.073ms），
+真正决定成败的是 indexer 在 prefill 里占多少。这直接定义了 Step 4 的判据：
+
+> 先 profile，若 `indexer + sparse attention` 占长上下文 prefill < 25%，不要做。
+
+还没做：attention 路径切换（Step 2b 的 builder 接线）、950DT 的 Step 4。
 
 ## 10. 参考
 
