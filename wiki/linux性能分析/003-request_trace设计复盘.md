@@ -224,6 +224,7 @@ stage:D: token 1 to 2.coverage  50.0%
 | :-- | :-- | :-- |
 | P0 | on_cpu 列、dropped/coverage、metrics 模式骨架 | ✅ 本次完成（见 §9） |
 | P1 | 状态机事件 + reason code | ✅ 状态机已实现（算子级降级待做） |
+| P1 | KV 视角（驱逐/峰值/换入换出） | 🟡 驱逐与峰值已实现，换入换出待接 `[KVTiming]` |
 | P2 | span 模型 + 跨节点 trace_id | 待设计 |
 | P3 | 数据/展示分离 + 瀑布图 | 见 005 |
 | P4 | 开销治理 | 见 004 |
@@ -316,3 +317,40 @@ waiting + on_cpu 低  → 调度器/IO 问题（该查锁、查换入换出）
 ```
 
 这正是 §4.6 想要的那一刀，现在有数据了。
+
+### 9.6 KV 视角（§4.5 的实现）
+
+新增 `kv_stats.py`，挂在四个位置：
+
+| 位置 | 采集 |
+| :-- | :-- |
+| `BlockPool._maybe_evict_cached_block` | 驱逐计数（块被复用时） |
+| `KVCacheManager.allocate_slots` | 分配失败计数 |
+| `Scheduler.schedule` 出口 | 每步 `free / usage / running / waiting` 时间序列 |
+| `Scheduler._free_request` 入口 | 每请求峰值 blocks、prefill 次数、抢占次数 |
+
+产出：`kv_series`（步级时间序列 + 驱逐/失败增量）、`kv_requests`（每请求峰值）、
+`trace_health` 里的 `kv:*` 汇总。
+
+**压力实测**（KV 128MB，8 请求 × 201 prompt + 64 output）：
+
+```text
+kv:evictions   4        kv:alloc_fail  61
+kv:min_free    0        kv:max_usage   1.0
+
+State   Reason            Intervals  Requests  Total(ms)  Max(ms)
+WAITING CHUNK_BUDGET             38         7   2366.938  302.771
+WAITING KV_INSUFFICIENT          52         1    655.714   59.803
+WAITING NEW                       8         8     92.483   16.157
+```
+
+两个结论：
+
+1. **原因是有优先级的**：8 个请求里只有 1 个被归因为 `KV_INSUFFICIENT`，其余 7 个是
+   `CHUNK_BUDGET`——它们根本没轮到分配 KV，是被 token 预算挡住的。如果只看「KV 用满」
+   就会误判，必须看每个请求在**哪一步、因为什么**被拒。
+2. **峰值 blocks 是近似值**：用 `ceil(num_computed_tokens / block_size)` 算，不依赖
+   vLLM 内部结构，代价是忽略 block 对齐误差（实测每请求 3 blocks，201 prompt tokens）。
+
+`kv_requests` 还显示 8 个请求里有 4 个 `Preemptions=1`——KV 压力下驱逐→重排队是真实发生的，
+这条链路现在可以从「等待原因」一路追到「抢占次数」。
