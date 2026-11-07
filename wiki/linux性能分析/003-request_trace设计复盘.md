@@ -400,3 +400,36 @@ WAITING NEW                       8         8     92.483   16.157
 
 注意：V2 的 action 本身还有 `"worker.v2.model_runner" in type(self).__module__` 判断，
 CPU 上即使开 deep 也不会出现——这是打点条件，不是 deep 开关的问题。
+
+### 9.9 换入换出本机验证：已接线，卡在 Mooncake store
+
+**接线完成**：
+
+- `layer_transfer.py`：按层累计 save/load 次数、字节、耗时，退出时输出一行
+  `<<<KVTiming: P4_save_kv_* / P4_load_kv_*`；
+- namelist 增加 `MooncakeExampleConnector.save_kv_layer` / `start_load_kv` 两个
+  `optional: true` 的 target；
+- parser 增加 5 个 `[KVTiming] P4_*` 字段（count / bytes / ms）。
+
+**卡点（2026-11-07 实测）**：
+
+```text
+mooncake_master  50051 / admin 9003 正常，service_ready=true，Clients: 2
+producer         走到 "Prefill start execute_model" 后卡住 > 8 分钟
+master 侧        PutStart=0  PutEnd=0  Keys=0
+```
+
+一次 put 都没发起（或阻塞在 put 之前），所以拿不到字节数。怀疑三处：
+
+1. master 的 segment 未注册（`Mem Storage 0 B / 4.00 GB`，Keys 0）；
+2. connector 的 put 是同步阻塞、没有超时；
+3. 极小概率是 CPU forward 本身卡住（1 token 的请求不该跑 8 分钟）。
+
+**下一步（按顺序）**：
+
+- [ ] 绕开 vLLM，直接 `transport.put_layer / get_layer` 单测，先证明 store 通路；
+- [ ] 再查 connector 的 put 路径与超时；
+- [ ] 备选：用 vLLM 原生 `CPUOffloadingConnector` 验证同一套 hook 接口，
+      不依赖 Mooncake，先把「bytes + 耗时」字段跑出来。
+
+复现脚本：`tmp/trace-e2e/p4_run_traced.py`（需把 `p4_mooncake_connector.py` 放到同目录）。
