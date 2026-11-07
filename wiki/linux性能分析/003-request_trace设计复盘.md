@@ -401,35 +401,46 @@ WAITING NEW                       8         8     92.483   16.157
 注意：V2 的 action 本身还有 `"worker.v2.model_runner" in type(self).__module__` 判断，
 CPU 上即使开 deep 也不会出现——这是打点条件，不是 deep 开关的问题。
 
-### 9.9 换入换出本机验证：已接线，卡在 Mooncake store
+### 9.9 换入换出：本机跑通（2026-11-07）
 
-**接线完成**：
+**先纠错**：上一版说「卡在 Mooncake store」是误判。用 `faulthandler` 抓栈后，
+卡点是 **Triton CPU JIT**（`block_table.compute_slot_mappings`），单次约 90 秒；
+看门狗从 90s 放宽到 480s 后，producer / consumer 都正常结束。store 一直是好的。
 
-- `layer_transfer.py`：按层累计 save/load 次数、字节、耗时，退出时输出一行
-  `<<<KVTiming: P4_save_kv_* / P4_load_kv_*`；
-- namelist 增加 `MooncakeExampleConnector.save_kv_layer` / `start_load_kv` 两个
-  `optional: true` 的 target；
-- parser 增加 5 个 `[KVTiming] P4_*` 字段（count / bytes / ms）。
+**传输通路（transport 直测，1 MiB）**：
 
-**卡点（2026-11-07 实测）**：
+| 方向 | 字节 | 耗时 |
+| :-- | --: | --: |
+| put | 1,048,576 | 0.796 ms |
+| get | 1,048,576 | 2.048 ms |
+
+内容一致（`match: True`）。
+
+**连接器级（Qwen2.5-tiny，2 层，1 token）**：
 
 ```text
-mooncake_master  50051 / admin 9003 正常，service_ready=true，Clients: 2
-producer         走到 "Prefill start execute_model" 后卡住 > 8 分钟
-master 侧        PutStart=0  PutEnd=0  Keys=0
+prefill-7   put_count=2  put_bytes=3026  put_ms=0.718
+decode-7    put_count=2  put_bytes=3026  put_ms=0.670
+            get_count=0
 ```
 
-一次 put 都没发起（或阻塞在 put 之前），所以拿不到字节数。怀疑三处：
+**两个必须记住的教训**：
 
-1. master 的 segment 未注册（`Mem Storage 0 B / 4.00 GB`，Keys 0）；
-2. connector 的 put 是同步阻塞、没有超时；
-3. 极小概率是 CPU forward 本身卡住（1 token 的请求不该跑 8 分钟）。
+1. `save_kv_layer` 收到的是**整层 KV cache tensor**（2.6 GB），不是本次要传的
+   slice。用它算字节会高估 6 个数量级（2.6 GB vs 实际 3026 B）。字节必须下沉到
+   `transport.put_layer/get_layer` 取 payload 长度。
+2. **standalone 跑 consumer 不会触发 get**：example connector 的 `is_store`
+   依赖 P→D 的 `kv_transfer_params` 握手，单跑时它把自己的请求也当成 store
+   （所以 decode-7 也有 put_count=2）。get 侧目前靠 transport 直测验证，
+   连接器级要真 P/D 并发才能看到。
 
-**下一步（按顺序）**：
+**新增字段**：
 
-- [ ] 绕开 vLLM，直接 `transport.put_layer / get_layer` 单测，先证明 store 通路；
-- [ ] 再查 connector 的 put 路径与超时；
-- [ ] 备选：用 vLLM 原生 `CPUOffloadingConnector` 验证同一套 hook 接口，
-      不依赖 Mooncake，先把「bytes + 耗时」字段跑出来。
+```text
+[KVTiming] P4_put_count / P4_put_bytes / P4_put_ms     ← 权威字节数
+[KVTiming] P4_get_count / P4_get_bytes / P4_get_ms
+[KVTiming] P4_save_kv_* / P4_load_kv_*                 ← 连接器级调用，仅计时可信
+```
 
-复现脚本：`tmp/trace-e2e/p4_run_traced.py`（需把 `p4_mooncake_connector.py` 放到同目录）。
+复现脚本：`tmp/trace-e2e/p4_run_traced.py`、`tmp/trace-e2e/mooncake_traced_transfer.py`
+（后者不需要 vLLM，直接验证 put/get 双向埋点）。
