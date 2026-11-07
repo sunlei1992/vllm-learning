@@ -224,7 +224,8 @@ stage:D: token 1 to 2.coverage  50.0%
 | :-- | :-- | :-- |
 | P0 | on_cpu 列、dropped/coverage、metrics 模式骨架 | ✅ 本次完成（见 §9） |
 | P1 | 状态机事件 + reason code | ✅ 状态机已实现（算子级降级待做） |
-| P1 | KV 视角（驱逐/峰值/换入换出） | 🟡 驱逐与峰值已实现，换入换出待接 `[KVTiming]` |
+| P1 | KV 视角（驱逐/峰值/换入换出） | 🟡 驱逐与峰值已实现；换入换出 timing 已有，bytes/层待补（§9.7） |
+| P1 | 算子级打点降级到 deep 模式 | ✅ 已实现（§9.8） |
 | P2 | span 模型 + 跨节点 trace_id | 待设计 |
 | P3 | 数据/展示分离 + 瀑布图 | 见 005 |
 | P4 | 开销治理 | 见 004 |
@@ -354,3 +355,48 @@ WAITING NEW                       8         8     92.483   16.157
 
 `kv_requests` 还显示 8 个请求里有 4 个 `Preemptions=1`——KV 压力下驱逐→重排队是真实发生的，
 这条链路现在可以从「等待原因」一路追到「抢占次数」。
+
+### 9.7 换入换出：先纠正 9.6 的说法
+
+**timing 其实早就接了**，缺的是 bytes 和层标识。已有（`request_logger_namelist.yml`）：
+
+| 位置 | 产出 |
+| :-- | :-- |
+| `AscendStoreConnector.start_load_kv` | `[KVTiming] P_ascend_store_load_kv_ms` / `D_...` |
+| `KVCacheRecvingThread._transfer_kv_cache_all_groups` | `[KVTiming] D_p2p_pull_kv_ms` |
+
+缺的三样：
+
+1. **bytes**：只知道"搬了多久"，不知道"搬了多少"，无法算带宽；
+2. **目标层**：HBM / CPU / Mooncake Store 没有区分；
+3. **本机路径没覆盖**：CPU + Mooncake 用的是
+   `p4_mooncake_connector.MooncakeExampleConnector`（`tmp/p4_run.py`），
+   不在 namelist 里，所以在空跑环境里跑不到这几个点。
+
+**本机验证是可行的**，两条路：
+
+- **A（推荐）**：用 `sim030:mooncake` + `mooncake-tcp-p2p` master 跑 `tmp/p4_run.py`，
+  给 `MooncakeExampleConnector.start_load_kv` / `save_kv_layer` 加 target；
+  `save_kv_layer(layer_name, kv_layer, ...)` 里直接有 tensor，
+  `bytes = kv_layer.numel() * kv_layer.element_size()`。
+- **B**：按 `004-...` 的思路把 vllm-ascend 加载进空跑环境（stub torch_npu），
+  直接复用现成的 ascend target。
+
+两条路都能在本机产出「bytes + 耗时」，前提是补 target / 补字段。
+
+### 9.8 算子级打点降级（§4.7 的实现）
+
+- 6 个 target 标记 `deep_only`（`_update_states`、`execute_model`、
+  `_execute_mm_encoder`、`_gather_mm_embeddings`）；
+- 默认跳过，`REQUEST_TRACE_DEEP=1` 才包装；
+- coverage 行会打印 `skipped_deep`，避免"静默没打"。
+
+实测：
+
+```text
+默认       wrapped=19  skipped_deep=6  (REQUEST_TRACE_DEEP=off)
+开 deep    wrapped=23  skipped_deep=0  (REQUEST_TRACE_DEEP=on)
+```
+
+注意：V2 的 action 本身还有 `"worker.v2.model_runner" in type(self).__module__` 判断，
+CPU 上即使开 deep 也不会出现——这是打点条件，不是 deep 开关的问题。
