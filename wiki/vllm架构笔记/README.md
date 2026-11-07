@@ -29,6 +29,7 @@
 | 12 | **mxllm 贡献规范与 CI** ✅已写 | 开源 main 怎么提 PR？patch ID/Target/Why/How 放哪？smoke-demo 为什么老挂？ | `mxllm/AGENTS.md`、PR #132/#137/#139 | `patch/__init__.py`、`smoke-demo` |
 | 13 | **性能调试方法论：分层归因** ✅已写 | TTFT/TPOT 高卡在哪一层？queue/batch/每步 wall-clock 怎么拆？ | `vllm/v1/metrics/loggers.py` | — |
 | 14 | **vLLM 统计与观测面全清单** ✅已写 | 有哪些指标/trace 点？语义和坑？ | `vllm/v1/metrics/` | — |
+| 16 | **ShardQ Step 2b 实现规格** ✅已写 | 内网 agent 怎么把 attention 真正切到 token-shard？ | `vllm_ascend/attention/shardq.py` | — |
 | 15 | **ShardQ 解析与昇腾迁移评估** ✅已写 | token-sharded prefill 是什么？能不能搬到 950DT？ | `vllm/v1/attention/ops/shardq.py`、`vllm_ascend/attention/dsa_v1.py` | — |
 | 实验A | **截断加载实验 GLM-5.2** ✅已写 | 大模型怎么本地跑？dense/MoE 两种调试模式怎么配？ | `models/zai-org_GLM-5.2` + 本地补丁 | `debug_glm52.py --moe` |
 | 实验B | **simulate-forward 仿真环境** ✅已写 | 没有 NPU/权重怎么跑真 Scheduler？Triton JIT 为什么让单次请求慢 146s？ | PR #47922 + `tmp/vllm-030`（分支 `sim`） | `vllm/v1/worker/simulated/model_runner.py:44` |
