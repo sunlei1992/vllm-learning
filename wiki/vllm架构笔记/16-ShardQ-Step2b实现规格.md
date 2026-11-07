@@ -46,7 +46,12 @@ decode token 全程保持 head 分片、不参与交换。
 
 ## 4. 改动清单
 
-### 4.1 `vllm_ascend/attention/shardq.py`：新增 3 个函数
+> **更新（2026-11-07 同日）**：§4.1 的 3 个函数**已经实现**（worktree 提交
+> `f52bc9c05`），10 个契约测试全绿，`tests/ut/attention` 1909 passed。
+> 所以真正剩下的是 **§4.2 builder 接线 + CANN 适配器 + 真机验证**。
+> §4.1 保留作为参考实现说明，**不要重写**。
+
+### 4.1 `vllm_ascend/attention/shardq.py`：3 个函数（已完成，勿重复实现）
 
 1. `validate_split(split, num_decode_tokens, num_prefill_tokens, world) -> None`
 2. `build_local_run_metadata(split, rank, query_lens, seq_lens, num_decodes) -> LocalRunMetadata`
@@ -95,6 +100,7 @@ def validate_split(
 6. `split.token_ids` 全部落在 `[0, num_prefill_tokens)`
 7. `split.token_ids` 组内升序（每个 rank 的切片）
 8. `split.num_tokens_per_rank.sum() == num_prefill_tokens`
+9. `len(split.token_ids) == split.num_tokens_per_rank.sum()`（长度和计数必须自洽）
 
 ### 5.2 `build_local_run_metadata`
 
@@ -235,7 +241,7 @@ else:
 | 1 | `test_round_trip_identity_op` | world=4，3 个请求 65/300/7000 | `run_sparse_mla = lambda q, m: q` 时，输出 == 输入 `q`（逐位） |
 | 2 | `test_decode_tokens_untouched` | num_decodes=2 | 输出的前 2 行与输入逐位相等 |
 | 3 | `test_padding_not_leaked` | 连跑两次不同 split | 第二次结果里不含第一次的残留（pad 位必须是 0） |
-| 4 | `test_exchange_shape_is_static` | 注入 all_to_all 记录形状 | 每次调用形状都是 `[world, plan.max_local_tokens, H, D]` |
+| 4 | `test_exchange_shape_is_static` | 注入 all_to_all 记录形状 | 每次调用形状都是 `[world, plan.max_local_tokens, H_local, D]`（注意是**本 rank 的** head 数，不是 `world*H`） |
 | 5 | `test_run_metadata_query_lens_sum` | 任意 split | `run_query_lens.sum() == T_rank` |
 | 6 | `test_run_metadata_seq_lens_use_last_position` | 构造 chunked prefill（seq_len > query_len） | `run_seq_lens[i] == positions[run.stop-1]+1`，**不是** `seq_lens[req]` |
 | 7 | `test_validate_split_rejects` | 参数化 8 种坏输入 | 每种都 `pytest.raises(ValueError)` |
@@ -261,7 +267,7 @@ else:
 ## 10. 验收标准
 
 1. `test_shardq.py` 40 个用例全绿；
-2. 新文件 8 个用例全绿；
+2. `test_shardq_token_shard.py` 10 个用例全绿；
 3. `tests/ut/attention/` 全量不回归（基线 1899 passed / 10 skipped）；
 4. `ruff check` + `ruff format --check` 通过；
 5. `VLLM_ASCEND_SPARSE_MLA_SHARD_Q=0` 时**逐位 no-op**（同一输入两次输出完全一致）。

@@ -301,6 +301,7 @@ $ python -m pytest -q
 | Step 1 | `shardq_vllm.split_from_common_attn_metadata`（取字段 + 调纯函数） | vLLM 0.28 与 `a98247ab` 两版各跑一遍，37 passed |
 | Step 2 | `vllm_ascend/attention/shardq.py` + `AscendDSAMetadataBuilder` 钩子（默认关） | `tests/ut/attention` 1899 passed / 10 skipped，无回归 |
 | Step 3 | `plan_exchange` / `static_shard_q` / `static_unshard_out`（定长、可注入 all_to_all） | 40 个 CPU 用例，含置换方向的双向校验 |
+| Step 2b 内核 | `validate_split` / `build_local_run_metadata` / `token_shard_prefill` | 10 个契约用例全绿，`tests/ut/attention` 1909 passed |
 
 VA 代码在 worktree `tmp/va-shardq`（分支 `feat/shardq`，提交 `8edb38678`）。
 
