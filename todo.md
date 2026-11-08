@@ -23,6 +23,7 @@
 | T-013 | ShardQ 迁移到 vllm-ascend | Step 0-3 本机已通（`tmp/va-shardq` @ `8edb38678`）；下一步把 attention 切到 token-shard + 真 Scheduler 联调 | 本机 UT 全绿 + 950DT 上 go/no-go（算子吃全 head） |
 | T-030 | request_trace：waiting 采样节流 | 加 `REQUEST_TRACE_WAIT_SAMPLE=N`（每 N 个 step 采一次），默认 1 保持现状 | 100 并发下 Sm 行数随 N 线性下降，waiting_breakdown 结论不变 |
 | T-031 | request_trace：CI 回归看板 | 把 CDF 的 p50/p99 抽成 JSON，按 commit 存时间序列 | 能指出"哪个 commit 让 p99 涨了" |
+| T-042 | P/D 下 store 的异步 load 纳入进度判定 | 在 `run_disaggregated` 里把 `_STORE_WORKERS[engine_id]` 的 pending 算作进度 | 异步模式跑通，TTFT 含 KV load 延迟 |
 
 ---
 
@@ -38,6 +39,8 @@
 | T-034 | request_trace：span 模型（trace_id/parent） | trace | P2 | 设计 span schema，替换 `_STAGE_PAIRS` 配对表 | 阶段关系由父子表达，不再维护配对元组 | 003 §3.3 |
 | T-035 | request_trace：parser 拆分 | trace | P2 | 拆成 parse / normalize / export 三段 | 加字段不再改 900 行单文件 | 005 |
 | T-036 | request_trace：P/D 跨节点时钟 offset | trace | P2 | 在 trace 里记录 boot_id + offset 估计 | P/D 合并报表能标出时钟不确定性 | 003 §3.3 |
+| T-043 | store 断言 guard 根因化 | trace | P2 | connector 侧跟踪 preemption，或在 get_finished 里按生命周期过滤 | 去掉整体替换 `_update_from_kv_xfer_finished` 的 shim | 实验C §17.5 |
+| T-044 | store connector 移植到 v0.30 线 | trace | P2 | 把 `local_store_connector.py` 需要的钩子搬进 sim030 | v0.30 镜像能跑 store 多轮实验 | 实验C §17 |
 
 ---
 
@@ -96,3 +99,6 @@
 | T-027 | KV 利用率×饱和、等待原因堆叠、多请求泳道三张图 | 2026-11-07 | `81adcc1`；005 §7 |
 | T-028 | 延迟 CDF 图（多分组 + 前后对比 + p50/p99） | 2026-11-07 | `8644b10`；005 §8 |
 | T-029 | 换入换出接真机（store/P2P 的 bytes+blocks，`kv_bytes.py`） | 2026-11-07 | `431b996`；003 §9.12（真机验证待 T-037） |
+| T-039 | 真 Mooncake 后端（4KB 占位）接入 fake connector | 2026-11-08 | `0351db4`、`14dee1f`；实验C §17.3/17.4（0.5G 49%、2G/4G 81.1%，avg_put 0.21ms） |
+| T-040 | KV 传输完成断言修复（容错替换，2G 连跑 3/3） | 2026-11-08 | 实验C §17.5（`14dee1f`） |
+| T-041 | 1P1D + MultiConnector(store) 跑通 | 2026-11-08 | 实验C §17.6/17.7（HBM 192MB：mean -10.1%、p99 -11.5%；`MC_SYNC` 绕过异步 deadlock） |

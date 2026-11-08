@@ -1,7 +1,7 @@
 # AGENTS.md — vLLM 学习/实验工作区
 
 > 给 AI agent 的工作记忆。`wiki/` 是写给人看的学习笔记，本文件是给 agent 接上下文用的。
-> 最近更新：2026-11-05
+> 最近更新：2026-11-08
 
 ## 1. 目录与仓库边界
 
@@ -255,6 +255,17 @@
   容量扫描：1G 以下无效、2G 66.3%、4G 饱和 81.1%，阈值≈工作集 2.8GiB。
   **传输计时已补齐**（`SimulatedStoreWorker` + 异步加载）：10/25/50 GB/s 下 TTFT 为
   21.0/13.4/10.9ms，与 offloading 的 21.7/13.7/11.1ms 基本重合。
+- **真 Mooncake 后端 + 小占位（实验C §17，2026-11-08）**：`assets/simulate-forward/store/`。
+  把 fake connector 的存储后端换成真实 master（`store_backend=mooncake`），每块只写 **4KB 占位**
+  （`payload_bytes`），容量仍按 `store_gb/block_bytes` 逻辑 LRU；`setup_mooncake_sim.sh` 一键起
+  master + 给 sim 镜像补客户端（含 5 个系统库）。实测 0.5G 49.0% / 2G 81.1% / 4G 81.1%，
+  `avg_put≈0.21ms`，master `Keys` 随运行增长（证明确实写了真 store）。
+  **断言修复**：`_update_from_kv_xfer_finished` 会因过期 load/store 完成断言；runner 里整体替换为
+  容错版（只处理 `WAITING_FOR_REMOTE_KVS` 或已 finished），2G 档连跑 3/3 通过（之前 3/3 失败）。
+  **1P1D + store**：MultiConnector 子项用 `kv_connector_module_path` 指到模拟 Nixl，消除 NIXL 运行时；
+  `next_transfer_completion` 取 nixl/store 复合。异步 load 仍会 deadlock（驱动器只认 nixl pending），
+  用 `MC_SYNC=1` 同步绕过；HBM 192MB（工作集 440MB）下 mean TTFT -10.1%、p99 -11.5%，
+  HBM 256MB（APC 已覆盖）时两者持平。剩余：T-042（把 store pending 纳入进度判定）。
 - **#61506 移植到 v0.30.0（实验C §16）**：分支 `sim-0.30-integrated`（基于 `ced6857af`，
   提交 `a5d8ccc654`，已推 fork），镜像 `sim030:int3`。9 文件 / 20 hunk（main 是 4/6）；
   冲突集中在 config、arg_utils、cpu.py、gpu_worker、gpu/model_runner、kv_connector；
