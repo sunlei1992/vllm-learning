@@ -1108,7 +1108,164 @@ GPU blocks: 19290
 
 > 只有这一栏全部打勾，"空跑得出的调度差异"才能拿去推断真实部署。
 
-## 19. 待办
+> 除了 KV 容量，**block_size / 前缀工作集 / 调度预算 / P/D 传输**同样会改变结论，
+> 完整清单见下一节。
+
+## 19. 参数对齐清单：复现真实行为前必须核对的参数（2026-11-08 追加）
+
+> 空跑（simulate-forward）复现出来的结论，**只对同一组参数成立**。
+> 参数不齐时，可能连「step 该不该填满 chunk」的结论都会反过来。
+> 这一节把所有会影响调度/KV 行为的参数集中列出，复现前逐项核对。
+
+### 19.1 为什么需要这张表
+
+同一个 workload，只改三个参数，结论就从「每步填满」变成「每步只填 39%」：
+
+| 改动 | 结果 |
+| :-- | :-- |
+| 96 请求 / 64 并发 / chunk 3276 / 90% 命中 | fill_mean 3273（99.9%） |
+| 只留 1 个请求（尾部） | 1280 / 3276（39%），KV 还剩 4580 blocks |
+| `long_prefill_token_threshold=512` | fill_min 360，KV 还剩 4570 blocks |
+
+所以「step 没填满」本身不是结论，**参数组合才是**。
+
+### 19.2 调度预算类（决定 chunk 多大、谁进得来）
+
+| 参数 | 作用 | 默认 | 不匹配的后果 |
+| :-- | :-- | :-- | :-- |
+| `max_num_batched_tokens` | 每步 token 预算（即常说的 chunk） | 视平台 | 直接决定填充上限 |
+| `max_num_scheduled_tokens` | 实际 `token_budget`；`None` 时才等于上一项 | `None` | 显式设小 → chunk 比预期小 |
+| `max_num_seqs` | running 上限 | 256 | 并发上限 |
+| `max_num_active_reqs` | running + streaming 等待的总上限 | 由 max_num_seqs 推 | 流式场景提前 break |
+| `long_prefill_token_threshold` | 单请求每步 token 上限；`0`=不限 | `0` | 设了会人为压 chunk |
+| `long_prefill_token_threshold_adaptive` | 阈值抬到公平份额 | `False` | 影响 cap 实际值 |
+| `enable_chunked_prefill` | 是否允许切 chunk | `True` | 关掉 → 放不下就 break |
+| `scheduler_reserve_full_isl` | 准入要求整段剩余 ISL | `True` | 长请求准入的「夹层」 |
+| `watermark` | 保留空闲块比例 | `0.0` | 非 0 抬高准入门槛 |
+| `scheduler_policy` | FCFS / PRIORITY | FCFS | 影响抢占选谁 |
+| `prefill_schedule_interval` | DP 下 prefill cadence | `1` | >1 周期性推迟 prefill |
+
+### 19.3 KV 容量与分块类（决定块够不够）
+
+| 参数 | 作用 | 默认 | 不匹配的后果 |
+| :-- | :-- | :-- | :-- |
+| `block_size` | 每块 token 数 | GPU 16 / CPU 32 / Ascend 常见 128 | **块数差 4 倍**，夹层宽度跟着变 |
+| `kv_cache_memory_bytes` | 直接指定 KV 字节 | 无 | 决定总块数 |
+| `gpu_memory_utilization` | 按显存比例算 KV | 0.9 | 与上者二选一 |
+| `num_gpu_blocks_override` | 强制总块数 | `None` | **复现时最该用它**，直接对齐块数 |
+| `cache_dtype` / `dtype` | 每 token KV 字节 | auto | 影响 `page_size_bytes` |
+| `kv_cache_groups` | 几组 KV（MLA + indexer = 2 组） | 由模型决定 | 组数不同 → 单组耗尽先发生 |
+| `num_lookahead_tokens` | 投机解码预留 | 0 | 非 0 额外占块 |
+
+### 19.4 前缀缓存与工作集（最容易忽略）
+
+| 参数 | 作用 |
+| :-- | :-- |
+| `enable_prefix_caching` | 是否开 APC（关了就没有命中率） |
+| `prefix_caching_hash_algo` | 块哈希算法（一般不影响） |
+| **前缀工作集** = 前缀数 × 命中 token 数 | 需要常驻的 token 总量 |
+| **KV 容量** | 能常驻的 token 总量 |
+
+**这两个数的比值决定命中率能不能维持**：
+
+```text
+例：24 个前缀 × 115.2K tokens = 2.76M tokens
+    真机 P 节点 KV = 760K tokens
+    → 2.76M / 760K = 3.6×，最多常驻 6.6 个前缀
+```
+
+前缀被驱逐后，请求在准入时 `total_computed_tokens` 远低于预期，
+`full_sequence_must_fit` 会按「剩余大段」要块 → 出现「KV 还有剩余但请求进不来」的夹层。
+
+**复现时这个比值必须一致，否则调度行为完全不同。**
+
+### 19.5 模型与并行类（决定每 token 字节、每 rank 块数）
+
+| 参数 | 作用 |
+| :-- | :-- |
+| `max_model_len` | 准入里 `min(num_tokens, max_model_len)`，钳住预留量 |
+| `num_hidden_layers` / `num_kv_heads` / `head_dim` | 每 token KV 字节 |
+| MLA（`kv_lora_rank` 等） | MLA 的每 token 字节与 MHA 不同 |
+| indexer（SFA）维度 | 第二组 KV 的大小 |
+| `tensor_parallel_size` / `pipeline_parallel_size` / `data_parallel_size` | 每 rank 的 KV 与调度器数量 |
+
+### 19.6 P/D 专属（分离部署才有）
+
+| 参数 | 作用 |
+| :-- | :-- |
+| `kv_role`（producer/consumer） | P 只 prefill、D 只 decode |
+| `kv_connector` | NIXL / AscendStore / Mooncake，决定 `has_pending_block_frees` 行为 |
+| `use_layerwise` | 逐层传输，传输速度成为节流阀 |
+| `delay_free_blocks` | 块要等 KV 发完才释放 |
+| `load_kv_async` | D 侧异步加载，`num_new_tokens=0` 的 step |
+| `kv_buffer_size` / `kv_connector_extra_config` | 缓冲与传输参数 |
+| `kv_transfer_timing`（空跑） | 模拟传输带宽，影响背压 |
+
+### 19.7 负载形状（决定「该不该填满」）
+
+| 参数 | 说明 |
+| :-- | :-- |
+| 输入长度 / 输出长度 | 每请求块数与 decode 时长 |
+| 命中比例 | 决定单请求剩余 prefill |
+| 前缀数 / 每前缀请求数 | 前缀工作集与复用频率 |
+| 客户端并发 | running 规模 |
+| 到达模式（均匀/突发） | 决定前缀是否被反复驱逐 |
+| 总请求数 | 稳态时长 |
+
+### 19.8 空跑与真机的固有差异
+
+| 差异 | 空跑 | 真机 |
+| :-- | :-- | :-- |
+| `block_size` | 32 | 常见 128（块数差 4×） |
+| KV 分组 | 1 组（CPU 关了 DSA indexer） | 2 组（MLA + SFA） |
+| 并行 | 单进程 | TP8 × DP2 |
+| 传输 | 无真实延迟（或模拟值） | 真实 RDMA/Store 带宽 |
+| KV 分配 | 虚拟，不占真实内存 | 真实 |
+| 图模式 | enforce_eager | graph / 异步调度 |
+
+### 19.9 对齐清单（复现前逐项填）
+
+```text
+1.  block_size                    （日志 "block_size" 或 config）
+2.  num_gpu_blocks / KV tokens     （"GPU KV cache size: N tokens"）
+3.  max_num_batched_tokens        （启动参数）
+4.  max_num_scheduled_tokens      （是否显式设置）
+5.  max_num_seqs
+6.  long_prefill_token_threshold  （是否 0）
+7.  enable_chunked_prefill
+8.  scheduler_reserve_full_isl
+9.  watermark
+10. 前缀工作集 = 前缀数 × 命中 token 数（对比 KV tokens）
+11. kv_cache_groups 组数
+12. kv_connector / use_layerwise
+13. DP 的 prefill_schedule_interval
+```
+
+空跑里用 **`num_gpu_blocks_override`** 直接对齐块数，比调 `kv_cache_memory_bytes` 准。
+
+### 19.10 从日志里取这些值
+
+```bash
+# KV 容量
+grep -E "GPU KV cache size|Available KV cache memory|CPU KV cache size" server.log
+
+# block_size / 并发 / 预算
+grep -E "block_size|max_num_batched_tokens|max_num_seqs" server.log
+
+# 前缀命中（vLLM 指标）
+grep -E "gpu_prefix_cache_hit_rate|prefix_cache" server.log
+```
+
+### 19.11 按「影响结论」排序
+
+1. **前缀工作集 / KV 容量** —— 决定命中能不能维持，最容易导致「结论反过来」；
+2. **block_size** —— 改变块数与夹层宽度的绝对量；
+3. **KV 分组数** —— 可能引入单组耗尽；
+4. **P/D 传输 / layerwise** —— 决定 `has_pending_block_frees` 频率；
+5. **max_num_scheduled_tokens / long_prefill_token_threshold** —— 可能悄悄改小 chunk；
+6. **DP cadence** —— 周期性空步。
+
+## 20. 待办
 
 1. ✅ 多请求 + step 级观测（`assets/simulate-forward/sim_steps.py`）
 2. ✅ 多轮实验 + KV block 观测（`assets/simulate-forward/sim_rounds.py`）
@@ -1126,7 +1283,7 @@ GPU blocks: 19290
 
 ---
 
-## 20. 参考
+## 21. 参考
 
 - PR #47922: https://github.com/vllm-project/vllm/pull/47922
 - RFC #61305: https://github.com/vllm-project/vllm/issues/61305
