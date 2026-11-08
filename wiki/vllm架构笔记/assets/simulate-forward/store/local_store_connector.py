@@ -12,6 +12,7 @@ not transfer performance.
 
 from __future__ import annotations
 
+import os
 import socket
 import time
 from collections import OrderedDict
@@ -211,8 +212,11 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
             return 0, False
         need = hit_tokens - num_computed_tokens
         self._pending[request.request_id] = need
-        # Async: the scheduler waits for get_finished() to report the load.
-        return need, True
+        # MC_SYNC=1: treat the load as synchronous. The P/D driver does not
+        # count the store worker's pending loads as progress yet, so async
+        # loads deadlock there; sync keeps the hit benefit without the wait.
+        sync = os.environ.get("MC_SYNC", "0") == "1"
+        return need, not sync
 
     def update_state_after_alloc(self, request, blocks, num_external_tokens):
         return None
