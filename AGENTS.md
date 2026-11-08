@@ -266,6 +266,10 @@
   `next_transfer_completion` 取 nixl/store 复合。异步 load 已跑通（`_loading` 去重 + 复合时钟）：
   8 前缀/5ms 间隔、HBM 192MB 下 280.08→276.85ms；本地 APC 命中时 +1.2ms（证明 load 进了关键路径）；
   `MC_SYNC=1` 同步模式保留作对照（早期的 -10.1% 来自重复查询，已废弃）。
+  **双模式（T-045）**：`store_backends.py` 抽了 `StoreBackend/StoreStats`，`memory`（纯 dict，零 IO）
+  和 `mooncake`（真内存）共用命中/容量/统计；`store_latency=zero|modeled|real` 控制是否记时；
+  `key_prefix` 隔离多次实验，`verify_lookups` 可回查真 store。单机 wall-clock 驱动下两模式数字会差
+  （真实 put 延迟扰动时序），P/D 虚拟时钟下逐位一致（255.79ms）。
 - **#61506 移植到 v0.30.0（实验C §16）**：分支 `sim-0.30-integrated`（基于 `ced6857af`，
   提交 `a5d8ccc654`，已推 fork），镜像 `sim030:int3`。9 文件 / 20 hunk（main 是 4/6）；
   冲突集中在 config、arg_utils、cpu.py、gpu_worker、gpu/model_runner、kv_connector；

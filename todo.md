@@ -102,3 +102,4 @@
 | T-040 | KV 传输完成断言修复（容错替换，2G 连跑 3/3） | 2026-11-08 | 实验C §17.5（`14dee1f`） |
 | T-041 | 1P1D + MultiConnector(store) 跑通 | 2026-11-08 | 实验C §17.6/17.7（HBM 192MB：mean -10.1%、p99 -11.5%；`MC_SYNC` 绕过异步 deadlock） |
 | T-042 | P/D 下 store 异步 load 跑通 | 2026-11-08 | 实验C §17.6（`_loading` 去重 + 复合 `next_transfer_completion`；8 前缀 280.08→276.85ms，TTFT 含 load 延迟） |
+| T-045 | store 双模式（memory / mooncake）+ 统一接口 | 2026-11-08 | 实验C §17.8（`store_backends.py`：StoreBackend/StoreStats/LRU/Mooncake；4 条单测；P/D 下两模式 255.79ms 逐位一致） |
