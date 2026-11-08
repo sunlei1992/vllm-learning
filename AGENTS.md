@@ -265,7 +265,8 @@
   **1P1D + store**：MultiConnector 子项用 `kv_connector_module_path` 指到模拟 Nixl，消除 NIXL 运行时；
   `next_transfer_completion` 取 nixl/store 复合。异步 load 仍会 deadlock（驱动器只认 nixl pending），
   用 `MC_SYNC=1` 同步绕过；HBM 192MB（工作集 440MB）下 mean TTFT -10.1%、p99 -11.5%，
-  HBM 256MB（APC 已覆盖）时两者持平。剩余：T-042（把 store pending 纳入进度判定）。
+  HBM 256MB（APC 已覆盖）时两者持平。**T-042 已完成**：连接器 `_loading` 去重 + 复合 `next_transfer_completion`，异步 load 跑通
+  （8 前缀 280.08→276.85ms，TTFT 含 KV load 延迟；`MC_SYNC=1` 保留作对照）。
 - **#61506 移植到 v0.30.0（实验C §16）**：分支 `sim-0.30-integrated`（基于 `ced6857af`，
   提交 `a5d8ccc654`，已推 fork），镜像 `sim030:int3`。9 文件 / 20 hunk（main 是 4/6）；
   冲突集中在 config、arg_utils、cpu.py、gpu_worker、gpu/model_runner、kv_connector；

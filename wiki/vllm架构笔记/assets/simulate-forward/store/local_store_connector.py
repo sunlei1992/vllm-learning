@@ -183,6 +183,7 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
         # Set by vllm's simulated_kv_connector: books transfer time.
         self.simulated_transfers = None
         self._pending: dict[str, int] = {}
+        self._loading: set[str] = set()
         logger.info(
             "Simulated AscendStore (backend=%s): block_size=%d block_bytes=%d payload=%s",
             backend,
@@ -250,6 +251,9 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
         if self.simulated_transfers is None or metadata is None:
             return
         for request_id, num_bytes in (metadata.loads or {}).items():
+            if request_id in self._loading:
+                continue
+            self._loading.add(request_id)
             self.simulated_transfers.submit_load(request_id, num_bytes)
 
     def wait_for_layer_load(self, layer_name):
@@ -268,6 +272,9 @@ class SimulatedAscendStoreConnector(KVConnectorBase_V1):
         # A load submitted for a request that was later preempted (KV pressure)
         # completes after the request left WAITING_FOR_REMOTE_KVS; the scheduler
         # asserts on that, so only report loads that are still pending.
+        if recving:
+            for rid in recving:
+                self._loading.discard(rid)
         scheduler = getattr(self, "_scheduler", None)
         if scheduler is not None and recving:
             from vllm.v1.request import RequestStatus
