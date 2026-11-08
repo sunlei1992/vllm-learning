@@ -1129,6 +1129,8 @@ GPU blocks: 19290
 
 所以「step 没填满」本身不是结论，**参数组合才是**。
 
+复现脚本：`assets/simulate-forward/sim_chunkfill.py`（env 可调 prefix/suffix/chunk/conc/KV/阈值）。
+
 ### 19.2 调度预算类（决定 chunk 多大、谁进得来）
 
 | 参数 | 作用 | 默认 | 不匹配的后果 |
