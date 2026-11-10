@@ -528,3 +528,35 @@ p2p:    sum(len(g) for g in local_block_ids) × page_size_bytes（按组累加�
 **新增防护**：单测里加了「namelist 所有 entry/exit 片段必须能 compile」——
 这类片段是在 vLLM 启动时 exec 的，写错（比如在模块级写 `return`）只有真机才炸，
 本地一条 compile 就能拦住。
+
+### 9.13 CPU 真实推理的 forward 打点（2026-11-10）
+
+空跑跳过前向，真实 CPU 推理才会走模型。补打点前先确认了 vLLM 0.31 的 runner 分叉：
+
+| runner | 条件 | forward 边界 |
+| :-- | :-- | :-- |
+| **V2**（CPU/GPU 默认） | `use_v2_model_runner=True` | 没有 `_model_forward`，只能挂 `execute_model`（含 update_states/forward/sample） |
+| **V1** | `VLLM_USE_V2_MODEL_RUNNER=0` | `GPUModelRunner._model_forward`，纯前向 |
+
+**新增/调整的打点**
+
+- `vllm.v1.worker.gpu.model_runner:GPUModelRunner.execute_model`
+  → `V2 execute_model start/done`，阶段名 `V2: execute_model`（原来只在 NPU target 上）；
+- `GPUModelRunner._model_forward` 增加 V1 分支
+  → `Model forward start/done`，阶段名 `model forward`（原来只有 V2/NPU 分支，CPU V1 静默）；
+- 旧 `GPUModelRunner.execute_model` 的 deep 门控改为「只对 V2 打点生效」，
+  非 deep 也设置 `_trace_step_id` / `_trace_forward_req_ids`，供 forward 使用。
+
+**实测（Qwen2.5-tiny28 合成模型，1 请求 2 token）**
+
+```text
+V2 路径：P: execute_model 276.4/19.5ms   V2: execute_model 255.7/17.1ms
+V1 路径：P: execute_model 170490/25.9ms  model forward 29.8/21.7ms
+```
+
+V2 的 `execute_model` ≈ 整个 step（forward + 采样）；V1 的 `model forward` 是纯前向，
+两者之差就是采样/更新开销——这正是之前看不到的那部分。
+
+**caveat**：NPU 上 `NPUModelRunner` 若 `super().execute_model()` 透传到上游 V2，
+会与 NPU 自己的 V2 target 叠加；需要真机确认是否重复，必要时给上游 target 加
+`type(self).__module__.startswith("vllm.")` 守卫。
