@@ -560,3 +560,27 @@ V2 的 `execute_model` ≈ 整个 step（forward + 采样）；V1 的 `model for
 **caveat**：NPU 上 `NPUModelRunner` 若 `super().execute_model()` 透传到上游 V2，
 会与 NPU 自己的 V2 target 叠加；需要真机确认是否重复，必要时给上游 target 加
 `type(self).__module__.startswith("vllm.")` 守卫。
+
+### 9.14 收敛冲突面（2026-11-11）
+
+**问题**：PR 近 8K 行，但冲突只来自两个「注册文件」——`platform/__init__.py`
+（分支和 main 都往列表末尾追加）和 `patch_envs.py`（两边都往同一个 dict 加条目）。
+main 很活跃，每次动这两处就要解一次冲突。
+
+**改动**：
+
+1. `patch_envs.py` 的两条 `REQUEST_TRACE_*` **无人消费**（补丁直接 `os.getenv`，
+   工具用自己的 `envs` 模块），删除并还原文件；
+2. 注册从 `platform/__init__.py` 末尾移到 `ascend_vllm.register_general_plugin_patch()`，
+   位置在 `from ascend_vllm.patch import platform` 之后，保证 PAQ 先于 trace 生效；
+3. 仍保留 env 门控 import：未设 `REQUEST_TRACE_OUTPUT_DIRECTORY` 时连模块都不加载。
+
+**结果**（相对 main）：
+
+```text
+既有文件改动：ascend_vllm/__init__.py (+11)
+              pyproject.toml (+7，纯 lint 配置)
+其余 27 个文件全部是新增（patch_request_trace.py / tools / tests）
+```
+
+`git merge origin/main` 一次干净通过，分支 0 落后；48 条单测通过，MR `mergeable: True`。
