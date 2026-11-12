@@ -584,3 +584,82 @@ main 很活跃，每次动这两处就要解一次冲突。
 ```
 
 `git merge origin/main` 一次干净通过，分支 0 落后；48 条单测通过，MR `mergeable: True`。
+
+### 9.15 engine_step 的三个关键字段是怎么来的（2026-11-12）
+
+`engine_step.xlsx` 里的 `engine_step_start_time` / `start_free_block_num` / `engine_core_str`
+**都不是引擎原生字段**——vLLM / vllm-ascend 源码里都搜不到这三个名字，是我们在
+`Scheduler.schedule` 上注入到 `scheduler_output` 的。
+
+**数据链路**
+
+```text
+Scheduler.schedule  entry
+  _trace_engine_step_start_time = time.time()
+  _trace_step_id                = f"{pid}-{_trace_engine_step_start_time}"
+  _trace_start_free_block_num   = kv_cache_manager.block_pool.get_num_free_blocks()
+
+Scheduler.schedule  exit
+  execute_model_start_time = time.time()
+  scheduler_output.engine_core_str       = f"{pid}-{execute_model_start_time}"
+  scheduler_output.step_id               = _trace_step_id
+  scheduler_output.engine_step_start_time = _trace_engine_step_start_time
+  scheduler_output.start_free_block_num   = _trace_start_free_block_num
+
+Scheduler.update_from_output  entry
+  execute_model_end_time = time.time()
+
+Scheduler.update_from_output  exit   （仅 total_num_scheduled_tokens != 0）
+  engine_step_finish_time = time.time()
+  算 execute time / block 增量 / stop reason
+  打 "profile: node|start|end|...|engine_core_str"
+
+parse_logs.py → engine_step.xlsx（prefill / encode / decode 三套表头）
+```
+
+`RecomputeScheduler.schedule`（decode 节点用的子类）挂的是同一套逻辑。
+
+**字段定义**
+
+| 字段 | 取值时机 | 计算 | 用途 |
+| :-- | :-- | :-- | :-- |
+| `engine_step_start_time` | schedule 入口 | `time.time()` | `execute time(ms) = finish - start`，覆盖整个 step（调度 + 执行 + 输出处理） |
+| `start_free_block_num` | schedule 入口 | `block_pool.get_num_free_blocks()` | 与 `end_free_block_num` 算 `cost_blocks_step_num`；与 `num_blocks` 算 `used_blocks_num` |
+| `engine_core_str` | schedule 出口 | `f"{pid}-{execute_model_start_time}"` | 跨表关联（schedule/forward/step）；decode 侧 `prefix = node + engine_core_str 里的数字` |
+
+其余由这三个派生：
+
+```text
+execute_model_start_time  = schedule 出口 time.time()
+execute_model_end_time    = update_from_output 入口 time.time()
+execute time(ms)          = engine_step_finish_time - engine_step_start_time
+execute_model_cost(ms)    = execute_model_end_time - execute_model_start_time
+cost_blocks_step_num      = start_free_block_num - end_free_block_num
+used_blocks_num           = kv_cache_config.num_blocks - start_free_block_num
+```
+
+**stop reason 判定顺序**（update_from_output 出口）：
+
+```text
+end_free_block_num == 0                      → kv_cache_insufficient
+total_tokens >= max_num_scheduled_tokens     → chunk_budget_exhausted
+waiting == 0 且 free > 0                     → running_queue_done
+len(running) >= max_num_running_reqs         → max_running_reqs
+其余 → other（再细分 other_kv_alloc_failed / other_time_budget_exhausted / other_waiting_blocked）
+```
+
+**开启方式**：没有独立开关，设了 `REQUEST_TRACE_OUTPUT_DIRECTORY` 且走 trace 模式就自动生成；
+`REQUEST_TRACE_MODE=metrics` 不跑 namelist，因此没有 engine_step。
+
+**已知问题（待修）**：`safe_print` 给每条消息追加 `; CPU:<thread_time_ns>`，
+`profile:` 行最后一个字段是 `engine_core_str=`，解析时 `split("=")[-1]` 会把它留下：
+
+```text
+58-1794470129.9613209; CPU:7045603243
+```
+
+这会影响按 `engine_core_str` 做 join / 去重。修法：解析时 strip `; CPU:\d+` 与换行，
+或让 `profile:` 行绕过 CPU 追加。
+
+**实测（空跑 4 请求）**：`profile:` 14 行 → `prefill_engine_step` 14 行 × 20 列，
+三列均 14/14 非空。
