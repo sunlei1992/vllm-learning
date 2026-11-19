@@ -31,6 +31,7 @@
 | 14 | **vLLM 统计与观测面全清单** ✅已写 | 有哪些指标/trace 点？语义和坑？ | `vllm/v1/metrics/` | — |
 | 16 | **ShardQ Step 2b 实现规格** ✅已写 | 内网 agent 怎么把 attention 真正切到 token-shard？ | `vllm_ascend/attention/shardq.py` | — |
 | 15 | **ShardQ 解析与昇腾迁移评估** ✅已写 | token-sharded prefill 是什么？能不能搬到 950DT？ | `vllm/v1/attention/ops/shardq.py`、`vllm_ascend/attention/dsa_v1.py` | — |
+| 17 | **`bench serve` 学习大纲** 📝大纲 | 在线压测的指标口径、负载模型、sweep 怎么用？ | `vllm/benchmarks/serve.py` | `serve.py:1966` `main_async` |
 | 实验A | **截断加载实验 GLM-5.2** ✅已写 | 大模型怎么本地跑？dense/MoE 两种调试模式怎么配？ | `models/zai-org_GLM-5.2` + 本地补丁 | `debug_glm52.py --moe` |
 | 实验B | **simulate-forward 仿真环境** ✅已写 | 没有 NPU/权重怎么跑真 Scheduler？Triton JIT 为什么让单次请求慢 146s？ | PR #47922 + `tmp/vllm-030`（分支 `sim`） | `vllm/v1/worker/simulated/model_runner.py:44` |
 | 实验C | **移植 PR #61506（时间模型 + P/D 分离）** ✅已写 | 不只是调度：能估 TTFT/TPOT，能跑 P/D 比例对比 | PR #61506 + `tmp/vllm-sim-int`（分支 `sim-integrated`） | `vllm/v1/worker/simulated/disaggregated.py:286` |
