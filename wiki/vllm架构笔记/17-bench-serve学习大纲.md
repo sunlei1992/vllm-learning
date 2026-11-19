@@ -4,6 +4,7 @@
 > 配套：[09-调度层可观测性与性能测量.md](09-调度层可观测性与性能测量.md)（服务端观测）、
 > [14-vLLM统计与观测面全清单.md](14-vLLM统计与观测面全清单.md)（指标清单）、
 > [实验D-bench-serve压P-D空跑.md](实验D-bench-serve压P-D空跑.md)（把 bench 用到 P/D 上的实战）
+> 全量参数与用法手册：[../vllm_serving_bench_百科全书.md](../vllm_serving_bench_百科全书.md)
 
 ---
 
