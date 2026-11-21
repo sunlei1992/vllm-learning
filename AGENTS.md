@@ -288,6 +288,11 @@
   140K 单请求 KV 从 12.0 GiB → 615 MiB。`apply_layerwise_kv_cache_plan` 只改 descriptor
   不改 `num_blocks`，默认是"占用变少"，要"容量变大"需同步调大 KV 预算。
   **Mooncake 存储池不省**；不设 `layerwise_num_shared_buffers`（默认=层数）则完全不复用。
+- **layerwise v0.30.0 移植（003 §24，2026-11-21）**：vllm-ascend fork 分支
+  `layerwise/v030-ascend-store`（base `origin/releases/v0.30.0` @ `5cb68ba64`，HEAD `72081f546`），
+  4 个提交 rebase；冲突 3 处（保留 `_group_pp_byte_offset`、取新 opt-in 测试、删 main 独有的
+  `_lw_block_hit_cache` 断言）。UT：881 passed / 12 skipped / 406 subtests。
+  **hook 顺序审计：mla_v1/sfa_v1/dsa_v1 都是 load 在 KV 写之前，生产路径不需要 §23 的顺序修复。**
 - **layerwise decode hook 修复（003 §23，2026-11-21）**：旧结论"decode 不触发 hook"作废。
   三个真因：① key 绑定太晚（`start_load_kv` 在 `post_forward`）→ 在 `bind_connector_metadata` 绑；
   ② 上游 hook 顺序是 update→wait→attention，load 会覆盖新 token → 改成 load-before-update；

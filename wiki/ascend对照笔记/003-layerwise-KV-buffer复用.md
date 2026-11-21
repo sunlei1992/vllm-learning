@@ -1968,3 +1968,67 @@ RESULT ALL PASS
   在 `bind_connector_metadata` 里绑
 - "decode 不触发 hook" 的旧结论作废；以后再遇到"decode 无 LOAD/SAVE 日志"，
   先查 `_current_key` 与 hook 顺序，而不是怀疑 attention 路径
+
+## 24. 移植到 vllm-ascend v0.30.0（2026-11-21）
+
+### 24.1 分支
+
+```text
+vllm-ascend  fork: sunlei1992/vllm-ascend
+branch: layerwise/v030-ascend-store
+base:   origin/releases/v0.30.0 @ 5cb68ba64
+HEAD:   72081f546 (4 个提交 rebase 后)
+```
+
+### 24.2 冲突处理
+
+| 文件 | 冲突 | 处理 |
+| :-- | :-- | :-- |
+| `pool_worker.py` | v0.30.0 仍有 `_group_pp_byte_offset`（GVA 路径在用），rebase 侧被新方法替换 | 保留该方法，再追加 `_layerwise_reuse_config` / `_validate_...` / `_apply_...` |
+| `test_layerwise_cache_layout.py` | 旧断言与被替换的 opt-in 测试 | 取新测试块（direct connector + block-key opt-in） |
+| `test_pool_scheduler.py` | 断言 `_lw_block_hit_cache`（main 独有优化，v0.30.0 没有） | 删除该断言并注释原因，amend 到第 4 个提交 |
+
+### 24.3 测试
+
+容器内（vLLM 0.30.0 venv）：
+
+```text
+tests/ut/distributed/ascend_store: 881 passed, 12 skipped, 406 subtests
+```
+
+### 24.4 hook 顺序审计：生产路径**没有** CPU 原型的顺序问题
+
+| 路径 | wait 位置 | 结论 |
+| :-- | :-- | :-- |
+| `mla_v1.py:2517` | 在 `reshape_and_cache` 写 KV 之前 | ✅ load-before-update |
+| `sfa_v1.py:2010/2053` | 在 fused preprocess 写 SFA/LI cache 之前 | ✅ |
+| `dsa_v1.py:1887` | 在 `_prepare_caches_before_attention` 之前 | ✅ |
+| `pool_worker.wait_for_layer_load` | 由 scheduler 规划的 `layer_load_tasks` 驱动，不依赖 `start_load_kv` 的 key | ✅ 无 key 绑定问题 |
+
+结论：§23 的修复是 **pure-vLLM CPU 参考实现**（上游通用 hook 顺序）的问题；
+Ascend 生产路径本来就满足"先 load 后写 KV"，不需要改。
+
+### 24.5 内网使用
+
+```bash
+git fetch sunlei1992 layerwise/v030-ascend-store
+git checkout layerwise/v030-ascend-store
+# 按 v0.30.0 正常安装 vllm-ascend
+```
+
+启动参数：
+
+```json
+"kv_connector_extra_config": {
+  "backend": "mooncake",
+  "use_layerwise": true,
+  "layerwise_num_shared_buffers": 3,
+  "layerwise_independent_layers": [0]
+}
+```
+
+验收日志：
+
+```text
+Layerwise KV cache reuse merged N descriptors into M descriptors ...
+```
