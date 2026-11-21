@@ -707,3 +707,42 @@ coverage (immediate): wrapped=21 missing=0 optional_missing=4 skipped_deep=3
 
 **已知风险**：`update_from_output` 返回的 `EngineCoreOutputs` 不一定带 `scheduler_stats`
 （由 `EngineCore.step` 后挂），拿不到时 `kv_cache_usage` 记 0，不会崩。
+
+### 9.17 0.33 本机 CPU 构建 + 空跑打通（2026-11-21）
+
+main 升到 v0.33.0 后，本机自建了一份 `VLLM_TARGET_DEVICE=cpu` 的 0.33，用来验证
+PR !149（simulate-forward 工具）和 request_trace。
+
+**构建配方（与 sim 镜像同源，改了 4 处）**
+
+| 坑 | 解法 |
+| :-- | :-- |
+| PyPI 的 torch 2.14 是 CUDA 构建（`libcublasLt.so` 缺失） | 用阿里云 `pytorch-wheels/cpu` 的 `+cpu` wheel |
+| sparse checkout 缺 `setup.py` / `tools/build_rust.py` | 关闭 sparse，取完整源码 |
+| ACL / oneDNN 源码缺失 | 克隆 ACL v52.6.0 + oneDNN `9c5be1cc`，`docker cp` 进容器 |
+| V2 runner 需要 Triton | 装 `triton-3.8.0+cpu` wheel |
+
+另外 vllm wheel 用 `--no-deps` 安装，缺的 `orjson`、`pandas/openpyxl` 按需补。
+
+**PR !149 的 0.33 适配**
+
+- 补丁重新生成：`patches/vllm-0.33.0-simulate-forward.patch`；
+- 两个 reject：`arg_utils.create_model_config`、`base_loader`（meta 设备跳过 repack）；
+- 一个运行期 API：0.33 的 V2 `prepare_inputs()` 新增 `num_active_loras` 参数，
+  模拟 runner 传 0；
+- 已推 `feat/simulate-forward-tooling`（`cd90e7d`）。
+
+**实测结果**
+
+```text
+simulate-forward smoke（0.33.0 CPU）
+  engine init 9.41s / generate 50.59s（首次含 Triton JIT）
+  token_ids [100, 101, 102, 103, 104, 105, 106, 107]
+
+request_trace e2e（同一构建，4 长 2 短）
+  coverage (immediate)            wrapped=21 missing=0 optional_missing=4 skipped_deep=3
+  coverage (delayed/V2GPUModelRunner.__init__)  wrapped=21 missing=0
+  → 新增的 V2 worker 锚点在 0.33 上生效
+  sheets 9 个，coverage 6/6 complete，stage_timings 60 行全 ok
+  engine_step 14 行 × 20 列：running_queue_done 8 / chunk_budget_exhausted 6
+```
