@@ -651,15 +651,18 @@ len(running) >= max_num_running_reqs         → max_running_reqs
 **开启方式**：没有独立开关，设了 `REQUEST_TRACE_OUTPUT_DIRECTORY` 且走 trace 模式就自动生成；
 `REQUEST_TRACE_MODE=metrics` 不跑 namelist，因此没有 engine_step。
 
-**已知问题（待修）**：`safe_print` 给每条消息追加 `; CPU:<thread_time_ns>`，
+**已修复（`9de3674`）**：`safe_print` 给每条消息追加 `; CPU:<thread_time_ns>`，
 `profile:` 行最后一个字段是 `engine_core_str=`，解析时 `split("=")[-1]` 会把它留下：
 
 ```text
-58-1794470129.9613209; CPU:7045603243
+58-1794470129.9613209; CPU:7045603243   ← 修复前
+58-1794470129.9613209                   ← 修复后
 ```
 
-这会影响按 `engine_core_str` 做 join / 去重。修法：解析时 strip `; CPU:\d+` 与换行，
-或让 `profile:` 行绕过 CPU 追加。
+修法：`parse_logs.py` 增加 `_clean_engine_core_str()`，在 prefill/encode/decode 三处
+表构建、`main/mtp` 模型信息收集、encode 关联键上统一 strip `; CPU:\d+`。
+新增单测 `test_clean_engine_core_str_strips_cpu_suffix`；空跑验证 14 行 engine_step
+无残留。原始日志里仍带后缀（不影响解析）。
 
 **实测（空跑 4 请求）**：`profile:` 14 行 → `prefill_engine_step` 14 行 × 20 列，
 三列均 14/14 非空。
