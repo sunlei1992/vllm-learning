@@ -1,11 +1,15 @@
 # 003 — layerwise KV buffer 复用（block-key / Mooncake 数据面）
 
-> 最后更新：2026-11-04
+> 最后更新：2026-11-21
+>
+> **内网开发请先看 [006 内网开发指南](006-layerwise-内网开发指南.md)**（分支矩阵、方案、步骤、验收）
 >
 > 历史 upstream 分支：`feature/mooncake-layerwise-reuse`（基于 `8237ee6d6`，4 个提交）
 >
-> 当前本地验证分支：`local/layerwise-pd-proto` @ `61af13975`，已推送到
-> [`sunlei1992/vllm-ascend`](https://github.com/sunlei1992/vllm-ascend/tree/local/layerwise-pd-proto)
+> 当前验证分支：`layerwise/v030-ascend-store` @ `72081f546`（v0.30.0 基线），已推送到
+> [`sunlei1992/vllm-ascend`](https://github.com/sunlei1992/vllm-ascend/tree/layerwise/v030-ascend-store)
+>
+> handoff / patches：mxllm `layerwise/shared-buffer-v030` @ `e8b9630`
 >
 > 代码索引：见文末 [§18.6 代码索引](#186-代码索引)
 >

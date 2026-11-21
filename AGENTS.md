@@ -288,6 +288,9 @@
   140K 单请求 KV 从 12.0 GiB → 615 MiB。`apply_layerwise_kv_cache_plan` 只改 descriptor
   不改 `num_blocks`，默认是"占用变少"，要"容量变大"需同步调大 KV 预算。
   **Mooncake 存储池不省**；不设 `layerwise_num_shared_buffers`（默认=层数）则完全不复用。
+- **layerwise 内网开发指南（006，2026-11-21）**：新增 `wiki/ascend对照笔记/006-layerwise-内网开发指南.md`，
+  内含仓库/分支矩阵（vllm-ascend `layerwise/v030-ascend-store` @72081f546、mxllm
+  `layerwise/shared-buffer-v030` @e8b9630）、方案设计、进度、Step 0–7 开发步骤、不变量/坑、验收 Checklist。
 - **layerwise v0.30.0 移植（003 §24，2026-11-21）**：vllm-ascend fork 分支
   `layerwise/v030-ascend-store`（base `origin/releases/v0.30.0` @ `5cb68ba64`，HEAD `72081f546`），
   4 个提交 rebase；冲突 3 处（保留 `_group_pp_byte_offset`、取新 opt-in 测试、删 main 独有的
