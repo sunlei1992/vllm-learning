@@ -666,3 +666,44 @@ len(running) >= max_num_running_reqs         → max_running_reqs
 
 **实测（空跑 4 请求）**：`profile:` 14 行 → `prefill_engine_step` 14 行 × 20 列，
 三列均 14/14 非空。
+
+### 9.16 适配 vLLM 0.33（2026-11-21）
+
+main 已把 vLLM 从 0.30 升到 **0.33.0**：
+
+```text
+mxllm pyproject.toml
+  vllm_version         = 4ba787ec9959e566d3b587a796dff07673324da5  → 恰好是 v0.33.0
+  vllm_ascend_version  = 760d7ecbb962135fff738726825cffacc74f5d2f  → "Main2Main v0.33.0"
+```
+
+**静态检查**（对着 tag v0.33.0 源码逐 target 核对）：
+
+```text
+namelist 37 个 target
+  required 全部存在（Scheduler.schedule/update_from_output、SchedulerOutput 字段、
+  CachedRequestData.req_ids/num_computed_tokens、block_pool.get_num_free_blocks、
+  V1/V2 GPUModelRunner、EngineCoreProc、serving 类路径、RequestStatus…）
+  仅 optional 缺失：vllm_ascend 旧模块路径（已修）、p4/mooncake 本地实验模块（本就缺）
+```
+
+**运行时检查**（在 vllm 0.33.0 venv 里 apply_all）：
+
+```text
+coverage (immediate): wrapped=21 missing=0 optional_missing=4 skipped_deep=3
+53 条单测通过
+```
+
+**发现并修复的两个兼容问题**（commit `ce9312f`）：
+
+1. **V2 worker 锚点缺失**：V2 runner（`vllm/v1/worker/gpu/model_runner.py`）是独立类，
+   不继承 V1 `GPUModelRunner`。原延迟包裹只挂了 V1 的 `__init__`，V2 worker 进程不会
+   wrap `vllm_ascend.*` 目标 → 加第二个锚点。
+2. **vllm-ascend 模块改名**：0.33 把 `worker/model_runner_v1.py` 改为
+   `worker/v1/model_runner.py` → 加模块别名回退，namelist 不变。
+
+**仍阻塞**：PyPI 的 0.33 wheel 里 CPU 后端缺 `torch.ops._C.init_cpu_memory_env`
+（`AttributeError`），所以本机跑不了完整 e2e；需要自建 CPU 版 vLLM 或真机验证。
+
+**已知风险**：`update_from_output` 返回的 `EngineCoreOutputs` 不一定带 `scheduler_stats`
+（由 `EngineCore.step` 后挂），拿不到时 `kv_cache_usage` 记 0，不会崩。
