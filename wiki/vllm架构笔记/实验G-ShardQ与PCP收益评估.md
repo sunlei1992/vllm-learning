@@ -97,3 +97,53 @@ python3 assets/shardq/shardq_sim.py
 ```
 
 输出存档：`assets/shardq/results.txt`
+
+## 10. 逻辑仿真验证（2026-11-21）
+
+> 目的：在写任何 Ascend 代码之前，先在 CPU 上验证 ShardQ 的**切分与寻址逻辑**。
+> 脚本：`assets/shardq/shardq_logic_sim.py`（纯 numpy，不跑算子）。
+
+### 10.1 验证的不变量
+
+| # | 不变量 | 结果 |
+| :-- | :-- | :-- |
+| 1 | 每个待算 token 恰好属于一个 rank | ✅ |
+| 2 | 全局 token id 不重不漏 | ✅ |
+| 3 | chunk→rank 映射符合 zigzag（前 w 正序、后 w 逆序） | ✅ |
+| 4 | 每个 rank 的 token id 升序 | ✅ |
+| 5 | rank 间负载均衡（差值 ≤ 请求数） | ✅ |
+| 6 | Q all-to-all 收发总量对称 | ✅ |
+| 7 | top-k buffer 每个 token 只写一次（`topk_start=num_decodes`） | ✅ |
+| 8 | 每个 token 的 causal KV 范围不跨请求 | ✅ |
+
+### 10.2 三个用例
+
+| 用例 | 待算 token | Q 交换（总/单 rank） | PCP ring 流量（单 rank） |
+| :-- | :-- | :-- | :-- |
+| 4 请求 × 1000 | 4,000 | 12.3 MB / 3.1 MB | 0.27 GB = 1 ms |
+| 24 前缀 × 40 条（90% APC，每条只算 350） | 336,000 | 1.03 GB / 129.8 MB | 26.4 GB = 132 ms |
+| **单条 140K** | 140,000 | **430 MB / 53.8 MB** | **11.0 GB = 55 ms** |
+
+### 10.3 读出来的结论
+
+1. **切分逻辑自洽**：zigzag 在"多请求 + 单大请求"下都做到不重不漏、升序、可寻址。
+2. **ShardQ 的通信确实小**：单条 140K 的 Q 交换总共 430 MB，单 rank 53.8 MB。
+3. **PCP 的 ring 也不大**：单条 140K 单 rank 11 GB ≈ 55 ms（200 GB/s），
+   远小于 10 秒级 TTFT——**PCP 的代价主要在卡数，不在带宽**。
+4. **只切"要算的 token"很关键**：90% APC 下 960 条请求只有 336K token 需要计算，
+   切分和通信量都按这个算，而不是按 3.36M 全量算。
+
+### 10.4 这个验证覆盖了什么 / 没覆盖什么
+
+| 覆盖 | 未覆盖 |
+| :-- | :-- |
+| token 归属、顺序、均衡 | 真实 kernel 行为 |
+| top-k buffer 偏移 | indexer 的 FLOPs 占比（解析模型的 f 仍是假设） |
+| causal KV 范围 | HCCL all-to-all 的真实延迟与抖动 |
+| 收发字节数 | SFA kernel 在"全 head + 少 token"下是否高效 |
+
+### 10.5 下一步
+
+- [ ] 用 msprof 实测 indexer / attention / MoE 占比，替换解析模型里的 `f`
+- [ ] microbench：HCCL `all_to_all_single` 在 50–130 MB 消息下的延迟
+- [ ] 若 `f ≥ 30%`，进入 ShardQ POC（先只做 metadata + all-to-all，不碰 kernel）

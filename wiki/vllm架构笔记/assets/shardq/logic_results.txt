@@ -1,0 +1,55 @@
+
+=== 小型结构用例: 4 requests, 4000 prefill tokens, world=4 ===
+[PASS] 每 token 恰好一个 rank  (4000 tokens)
+[PASS] 全局 token id 不重不漏
+[PASS] chunk->rank 映射符合 zigzag  (chunk owners [0, 1, 2, 3, 3, 2, 1, 0])
+[PASS] rank0 token id 升序
+[PASS] rank1 token id 升序
+[PASS] rank2 token id 升序
+[PASS] rank3 token id 升序
+[PASS] rank 间负载均衡  (min=1000 max=1000 diff=0 (requests=4, 允许 <= 4))
+[PASS] all-to-all 收发总量对称  (Q exchange 12.3 MB, max/rank 3.1 MB)
+[PASS] topk buffer 每个 token 只写一次  (topk_start=8)
+[PASS] causal KV 范围不跨请求
+[PASS] PCP 连续切分覆盖全部 token  (per-rank [1000, 1000, 1000, 1000]...)
+[PASS] PCP ring 流量  (computed KV 0.36 GB, ring/rank 0.27 GB @200GB/s = 1 ms)
+
+=== 24 前缀 x 40 条，90% APC 命中（每条只算 350）: 960 requests, 336000 prefill tokens, world=8 ===
+[PASS] 每 token 恰好一个 rank  (336000 tokens)
+[PASS] 全局 token id 不重不漏
+[PASS] chunk->rank 映射符合 zigzag  (chunk owners [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0])
+[PASS] rank0 token id 升序
+[PASS] rank1 token id 升序
+[PASS] rank2 token id 升序
+[PASS] rank3 token id 升序
+[PASS] rank4 token id 升序
+[PASS] rank5 token id 升序
+[PASS] rank6 token id 升序
+[PASS] rank7 token id 升序
+[PASS] rank 间负载均衡  (min=41280 max=42240 diff=960 (requests=960, 允许 <= 960))
+[PASS] all-to-all 收发总量对称  (Q exchange 1032.2 MB, max/rank 129.8 MB)
+[PASS] topk buffer 每个 token 只写一次  (topk_start=8)
+[PASS] causal KV 范围不跨请求
+[PASS] PCP 连续切分覆盖全部 token  (per-rank [42000, 42000, 42000, 42000]...)
+[PASS] PCP ring 流量  (computed KV 30.19 GB, ring/rank 26.42 GB @200GB/s = 132 ms)
+
+=== 单条 140K（你线上的形状）: 1 requests, 140000 prefill tokens, world=8 ===
+[PASS] 每 token 恰好一个 rank  (140000 tokens)
+[PASS] 全局 token id 不重不漏
+[PASS] chunk->rank 映射符合 zigzag  (chunk owners [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0])
+[PASS] rank0 token id 升序
+[PASS] rank1 token id 升序
+[PASS] rank2 token id 升序
+[PASS] rank3 token id 升序
+[PASS] rank4 token id 升序
+[PASS] rank5 token id 升序
+[PASS] rank6 token id 升序
+[PASS] rank7 token id 升序
+[PASS] rank 间负载均衡  (min=17500 max=17500 diff=0 (requests=1, 允许 <= 1))
+[PASS] all-to-all 收发总量对称  (Q exchange 430.1 MB, max/rank 53.8 MB)
+[PASS] topk buffer 每个 token 只写一次  (topk_start=8)
+[PASS] causal KV 范围不跨请求
+[PASS] PCP 连续切分覆盖全部 token  (per-rank [17500, 17500, 17500, 17500]...)
+[PASS] PCP ring 流量  (computed KV 12.58 GB, ring/rank 11.01 GB @200GB/s = 55 ms)
+
+ALL PASS

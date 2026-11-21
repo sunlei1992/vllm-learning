@@ -270,6 +270,12 @@
   和 `mooncake`（真内存）共用命中/容量/统计；`store_latency=zero|modeled|real` 控制是否记时；
   `key_prefix` 隔离多次实验，`verify_lookups` 可回查真 store。单机 wall-clock 驱动下两模式数字会差
   （真实 put 延迟扰动时序），P/D 虚拟时钟下逐位一致（255.79ms）。
+- **ShardQ vs PCP 评估（实验G，2026-11-21）**：解析模型 + CPU 逻辑仿真。
+  模型：ShardQ 收益 = indexer 冗余消除（`T0·(1−f)+T0·f/tp`），PCP = `T0/(pcp·η)+KV ring`。
+  T0=14s 时：ShardQ tp8 在 f=30%/40% → 10.55s/9.32s；PCP=2(η=.85) → 8.49s（卡×2）。
+  逻辑仿真（`assets/shardq/shardq_logic_sim.py`，纯 numpy）：8 条不变量全 PASS；
+  单条 140K 的 Q 交换 430MB（53.8MB/rank），PCP ring 11GB/rank≈55ms @200GB/s。
+  **未知数：VA 的 indexer 是否已冗余、f 占比多少——需 msprof 实测。**
 - **#61506 移植到 v0.30.0（实验C §16）**：分支 `sim-0.30-integrated`（基于 `ced6857af`，
   提交 `a5d8ccc654`，已推 fork），镜像 `sim030:int3`。9 文件 / 20 hunk（main 是 4/6）；
   冲突集中在 config、arg_utils、cpu.py、gpu_worker、gpu/model_runner、kv_connector；
