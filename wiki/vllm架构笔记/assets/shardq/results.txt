@@ -1,0 +1,42 @@
+L=140000 tokens, kv=87.8 KiB/token (11.7 GiB/request), tp=8, load=220ms
+
+=== baseline prefill T0=10s (target TTFT <= 10s) ===
+indexer% | ShardQ tp=2 | ShardQ tp=4 | ShardQ tp=8 | PCP=2(eff.85)
+     10% |       9.73s |       9.48s |       9.35s |         6.13s
+     20% |       9.23s |       8.73s |       8.47s |         6.13s
+     30% |       8.73s |       7.98s |       7.60s |         6.13s
+     40% |       8.23s |       7.23s |       6.72s |         6.13s
+
+=== baseline prefill T0=14s (target TTFT <= 10s) ===
+indexer% | ShardQ tp=2 | ShardQ tp=4 | ShardQ tp=8 | PCP=2(eff.85)
+     10% |      13.53s |      13.18s |      13.00s |         8.49s
+     20% |      12.83s |      12.13s |      11.77s |         8.49s
+     30% |      12.13s |      11.08s |      10.55s |         8.49s
+     40% |      11.43s |      10.03s |       9.32s |         8.49s
+
+=== baseline prefill T0=18s (target TTFT <= 10s) ===
+indexer% | ShardQ tp=2 | ShardQ tp=4 | ShardQ tp=8 | PCP=2(eff.85)
+     10% |      17.33s |      16.88s |      16.65s |        10.84s
+     20% |      16.43s |      15.53s |      15.07s |        10.84s
+     30% |      15.53s |      14.18s |      13.50s |        10.84s
+     40% |      14.63s |      12.83s |      11.92s |        10.84s
+
+=== ShardQ speedup = 1 / ((1-f) + f/tp), tp=8 ===
+  indexer 10% -> 1.10x
+  indexer 20% -> 1.21x
+  indexer 30% -> 1.36x
+  indexer 40% -> 1.54x
+
+=== sensitivity: if VA already shards the indexer (no replication) ===
+  indexer 30%: replicated 10.33s vs already-sharded 14.00s
+  indexer 40%: replicated 9.10s vs already-sharded 14.00s
+
+=== PCP: speedup vs extra cards (no efficiency loss) ===
+  PCP=2 @200GB/s: 7.25s, cards x2, speedup 1.93x
+  PCP=2 @400GB/s: 7.24s, cards x2, speedup 1.93x
+  PCP=4 @200GB/s: 3.77s, cards x4, speedup 3.72x
+  PCP=4 @400GB/s: 3.74s, cards x4, speedup 3.74x
+
+=== hypothetical: PCP x ShardQ combined (needs VA work) ===
+  indexer 30%, PCP=2 x TP8: 6.32s
+  indexer 40%, PCP=2 x TP8: 5.59s
