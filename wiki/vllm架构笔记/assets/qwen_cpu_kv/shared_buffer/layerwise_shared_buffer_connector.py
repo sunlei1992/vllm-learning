@@ -8,6 +8,7 @@ saved.  This is the missing fence between physical slot reuse and decode.
 from __future__ import annotations
 
 import hashlib
+import os
 
 from dataclasses import dataclass, field
 from typing import Any
@@ -47,6 +48,7 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
         self._store = {}
         self._kv_caches = {}
         self._current_key = None
+        self._loaded = set()
         extra = self._kv_transfer_config.kv_connector_extra_config
         self._mooncake = None
         self._versions: dict[tuple[str, str], int] = {}
@@ -96,6 +98,18 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
     def register_kv_caches(self, kv_caches):
         self._kv_caches = dict(kv_caches)
 
+    def bind_connector_metadata(self, connector_metadata):
+        """Bind the step's request key before forward.
+
+        ``start_load_kv`` runs in ``post_forward`` when the connector has no
+        sync loads, which is after every ``save_kv_layer`` of the step.  The
+        layer hooks therefore need the key earlier, at metadata bind time.
+        """
+        super().bind_connector_metadata(connector_metadata)
+        self._loaded.clear()
+        if isinstance(connector_metadata, Metadata) and connector_metadata.requests:
+            self._current_key = connector_metadata.requests[0].request_id
+
     def start_load_kv(self, forward_context, **kwargs):
         del forward_context, kwargs
         if not self.has_connector_metadata():
@@ -105,12 +119,47 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
             self._current_key = metadata.requests[0].request_id
             print("CONN_START", self._current_key, len(metadata.requests), flush=True)
 
+    @staticmethod
+    def _snapshot_step_slots(tensor, slot_mapping):
+        """Remember the KV slots this step just wrote.
+
+        ``Attention.forward`` updates the cache before the layer hook runs, so
+        loading historical KV must not clobber the new tokens' rows.
+        """
+        if slot_mapping is None or slot_mapping.numel() == 0:
+            return None
+        slots = slot_mapping.to(torch.long)
+        slots = slots[slots >= 0]
+        if slots.numel() == 0:
+            return None
+        block_size = tensor.shape[2]
+        blocks = torch.div(slots, block_size, rounding_mode="floor")
+        offsets = slots % block_size
+        rows = tensor[blocks, :, offsets, :].clone()
+        return blocks, offsets, rows
+
+    @staticmethod
+    def _restore_step_slots(tensor, snapshot):
+        if snapshot is None:
+            return
+        blocks, offsets, rows = snapshot
+        tensor[blocks, :, offsets, :] = rows
+
     def wait_for_layer_load(self, layer_name):
-        if self._current_key is None:
+        if os.environ.get("SKIP_WAIT") == "1":
+            return
+        if self._current_key is None or layer_name in self._loaded:
             return
         from vllm.forward_context import get_forward_context
-        ctx = get_forward_context()
-        tensor = getattr(ctx.no_compile_layers[layer_name], "kv_cache", None)
+        try:
+            ctx = get_forward_context()
+        except Exception:
+            ctx = None
+        tensor = (
+            getattr(ctx.no_compile_layers[layer_name], "kv_cache", None)
+            if ctx is not None
+            else None
+        )
         if tensor is None:
             tensor = self._kv_caches.get(layer_name)
         if tensor is None:
@@ -127,7 +176,8 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
             payload = self._store.get(object_key) if object_key is not None else None
         print("CONN_LOAD", layer_name, "hit" if payload is not None else "zero", flush=True)
         if payload is None:
-            tensor.zero_()
+            if os.environ.get("NO_ZERO") != "1":
+                tensor.zero_()
         else:
             if self._mooncake is not None:
                 saved = torch.load(__import__("io").BytesIO(payload), weights_only=True)["tensor"]
@@ -137,8 +187,11 @@ class LayerwiseSharedBufferConnector(KVConnectorBase_V1):
             actual = self._sum(tensor)
             expected = self._checksums.get(object_key)
             print("CONN_CHECK", layer_name, "ok" if actual == expected else "BAD", flush=True)
+        self._loaded.add(layer_name)
 
     def save_kv_layer(self, layer_name, kv_layer, attn_metadata, **kwargs):
+        if os.environ.get("SKIP_SAVE") == "1":
+            return
         if self._current_key is None:
             print("CONN_SAVE_SKIP", layer_name, "no_key", flush=True)
             return

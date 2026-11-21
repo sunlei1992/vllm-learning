@@ -1,158 +1,83 @@
 # Single-engine layerwise shared buffer (pure vLLM CPU)
 
-This is the missing combined test:
-
-```text
-4-layer Qwen2.5 tiny
-  + 2 physical KV tensors (layer0 independent, layers 1/2/3 shared)
-  + per-layer save/load connector
-  + decode
-```
+One engine, N layers alias a few physical KV slots, and a per-layer
+save/load connector fences slot reuse. The 2026-11-21 pass makes the decode
+path byte-correct on fixed weights.
 
 ## Result
 
-Baseline:
+`MAX_TOKENS=2`, `LOAD_FORMAT=auto`:
 
-```text
-TOKENS [34122, 147096, 136438, 147096]
-```
+| Model | baseline | shared buffer |
+| :-- | :-- | :-- |
+| Qwen2.5-tiny4-fixed | `[6212, 6212]` | **`[6212, 6212]`** |
+| Qwen2.5-tiny28-fixed | `[87630, 87630]` | **`[87630, 87630]`** |
 
-Shared buffer:
+28-layer counters: `load zero 28 / hit 28`, `save 112`, `save skip 0`,
+`checksum ok 28 / bad 0`.
 
-```text
-ALIAS_CONFIG layers 4 tensors_before 1 page 65536
-ALIAS_TENSORS 2 blocks 9047
+## Three root causes
 
-CONN_LOAD layer0 zero
-CONN_SAVE layer0
-...
-CONN_LOAD layer0 hit
-CONN_SAVE layer0
-...
-TOKENS [34122, 147096, 136438, 147096]
-```
+The earlier note claimed the CPU decode path never triggers the layerwise
+hook. That was wrong: `attn_metadata` is a dict and the hook runs. The real
+bugs were:
 
-The `zero` calls are the prefill pass; after that every decode pass loads the
-layer's saved KV before compute and saves it again after compute.
+1. **Key bound too late.** `start_load_kv` runs in `post_forward` for
+   connectors without sync loads, after the step's `save_kv_layer`. The first
+   prefill save was skipped (`_current_key is None`), so decode loaded zero.
+   Fix: bind the request key in `bind_connector_metadata` (`pre_forward`).
+2. **Load ran after the KV update.** Upstream wraps only
+   `unified_attention_with_output`, so the order is
+   `unified_kv_cache_update` -> `wait_for_layer_load` -> attention. Loading
+   history then overwrites the new tokens' rows. Fix: call
+   `wait_for_layer_load` before the update (the script wraps
+   `Attention.forward`) and dedupe per layer.
+3. **Alias patch gave every slot `offset=0`.** Upstream `allocate_kv_cache`
+   uses one backing allocation plus per-descriptor offsets, so all slots
+   aliased the same bytes. Fix: `size = total across slots`, cumulative
+   `offset`, `layer_stride=0` per shared slot.
+
+Note: vllm-ascend's GLM-Next path allocates one backing **per descriptor**,
+so it is not affected by (3); (1) and (2) still matter for any connector
+whose load must precede the layer's KV write.
 
 ## Files
 
-- `run_shared_buffer.py`: alias patch + offline LLM runner.
-- `layerwise_shared_buffer_connector.py`: per-layer save/load connector.
-- `make_tiny4_model.py`: create the 4-layer tiny model from Qwen2.5-0.5B config.
+- `run_shared_buffer.py`: alias patch (fixed offsets), load-before-update
+  wrapper, per-layer connector wiring.
+- `layerwise_shared_buffer_connector.py`: slot store, key binding, dedupe.
+- `test_layerwise_wait_order.py`: engine-free UT for the ordering contract.
+- `make_tiny4_model.py`: build the tiny model.
 
-## Runtime
+## Run
 
-`sim030:glm53` (vLLM 0.30 CPU) or `sim030:mooncake`, 16GB Docker VM.
+UT (no engine, ~seconds):
 
 ```bash
-docker run --rm --memory 14g --platform linux/arm64 \
-  -v "$PWD/models:/models:ro" \
+docker run --rm --platform linux/arm64 \
   -v "$PWD/wiki/vllm架构笔记/assets/qwen_cpu_kv/shared_buffer:/app:ro" \
   sim030:mooncake bash -lc \
-  'PYTHONPATH=/app VLLM_TARGET_DEVICE=cpu VLLM_ENABLE_V1_MULTIPROCESSING=0 ALIAS=1 \
-   /opt/v030/bin/python /app/run_shared_buffer.py'
+  'cd /app && PYTHONPATH=/app /opt/v030/bin/python test_layerwise_wait_order.py'
 ```
 
-## Scope
-
-This validates the single-engine shared-slot lifecycle and decode correctness
-on a tiny CPU model. It does not use Mooncake for the shared-buffer store, and
-it is not a GLM/Qwen3 full-model or performance test.
-
-## Mooncake store mode
-
-The same run can use Mooncake instead of the in-memory dict:
+4-layer:
 
 ```bash
-# mooncake-master must be running on the p4-net Docker network
-docker run --rm --network p4-net --memory 14g --platform linux/arm64 \
+docker run --rm --memory 6g --platform linux/arm64 \
   -v "$PWD/models:/models:ro" \
   -v "$PWD/wiki/vllm架构笔记/assets/qwen_cpu_kv/shared_buffer:/app:ro" \
   sim030:mooncake bash -lc \
   'PYTHONPATH=/app VLLM_TARGET_DEVICE=cpu VLLM_ENABLE_V1_MULTIPROCESSING=0 \
-   ALIAS=1 MOONCAKE=1 /opt/v030/bin/python /app/run_shared_buffer.py'
+   ALIAS=1 NUM_SHARED=3 MODEL_DIR=/models/Qwen2.5-tiny4-fixed \
+   LOAD_FORMAT=auto MAX_TOKENS=2 /opt/v030/bin/python /app/run_shared_buffer.py'
 ```
 
-Observed:
+28-layer: same with `MODEL_DIR=/models/Qwen2.5-tiny28-fixed`.
 
-```text
-ALIAS_TENSORS 2 blocks 256
-CONN_LOAD layer0 zero
-CONN_SAVE layer0
-...
-CONN_LOAD layer0 hit
-CONN_SAVE layer0
-...
-TOKENS [34122, 147096, 136438, 147096]
-```
+Baseline: `ALIAS=0` (no connector) with the same model.
 
-Notes:
+## Scope
 
-- `kv_cache_memory_bytes=64MiB` keeps each layer object small; otherwise Mooncake
-  `put session start` can hit segment-full / overwrite errors.
-- Each save uses a versioned key; load uses the latest version.
-
-## 28-layer known failure (2026-11-04)
-
-4-layer fixed random weights pass; 28-layer fixed weights fail after the
-first token:
-
-```text
-baseline: [87630, 87630, 87630, 87630]
-shared:   [87630, 47704, 539, 92925]
-```
-
-- The 28-layer model is `models/Qwen2.5-tiny28-fixed` (55M params, actual random
-  safetensors, not dummy).
-- `ALIAS_CONFIG layers=28 tensors=4`.
-- `CONN_LOAD`/`CONN_SAVE` are called; this is not a "connector not invoked" issue.
-- 28 layers with `NUM_SHARED=1` (2 slots) also fails; not specific to 4 slots.
-- The failure is still open; do not claim 28-layer decode passes.
-
-## 28-layer root cause (2026-11-04)
-
-UT trace:
-
-```text
-prefill:
-  CONN_LOAD zero -> CONN_SAVE for all 28 layers
-  CONN_CHECK all ok
-
-decode:
-  CONN_START <request>
-  ... no CONN_LOAD / CONN_SAVE ...
-```
-
-So the connector is not called on the decode attention path. The first token
-comes from prefill; decode runs on the stale shared slot and diverges.
-
-This is not an alias bug and not a save/load checksum bug. It means pure vLLM
-CPU's decode attention path bypasses `maybe_transfer_kv_layer` (the layerwise
-connector wrapper). The 4-layer pass is a false positive because the random
-tiny model emits a degenerate repeated token.
-
-Fix boundary:
-
-- pure vLLM CPU needs a decode-path hook/model-runner patch;
-- vllm-ascend NPU has its own `save_kv_layer`/`wait_for_layer_load` worker path,
-  so the NPU task must validate there rather than assume CPU P6 is complete.
-
-## Decode hook fix attempt (2026-11-04)
-
-UT confirmed the decode phase has `CONN_START` but no `CONN_LOAD`/`CONN_SAVE`.
-`maybe_transfer_kv_layer` sees `attn_metadata is None` and returns before the
-connector hooks.
-
-A local experiment replaced `get_attention_context` with a sentinel metadata
-for decode. It did not complete: the 28-layer process hung for >27 minutes and
-was killed. Do not use the sentinel patch as a fix.
-
-Correct fix boundary:
-
-- patch the pure-vLLM CPU decode attention/model-runner path so it supplies
-  real metadata and calls `wait_for_layer_load`/`save_kv_layer`; or
-- validate the decode path on vllm-ascend NPU, where the worker has its own
-  metadata and layer lifecycle.
-
-The CPU 4-layer pass remains a degenerate-model false positive.
+Validates the single-engine shared-slot lifecycle and decode correctness on a
+tiny CPU model. It does not use Mooncake for the shared-buffer store, and it
+is not a GLM/Qwen3 full-model or performance test.

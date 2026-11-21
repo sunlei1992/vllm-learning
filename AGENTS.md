@@ -288,6 +288,11 @@
   140K 单请求 KV 从 12.0 GiB → 615 MiB。`apply_layerwise_kv_cache_plan` 只改 descriptor
   不改 `num_blocks`，默认是"占用变少"，要"容量变大"需同步调大 KV 预算。
   **Mooncake 存储池不省**；不设 `layerwise_num_shared_buffers`（默认=层数）则完全不复用。
+- **layerwise decode hook 修复（003 §23，2026-11-21）**：旧结论"decode 不触发 hook"作废。
+  三个真因：① key 绑定太晚（`start_load_kv` 在 `post_forward`）→ 在 `bind_connector_metadata` 绑；
+  ② 上游 hook 顺序是 update→wait→attention，load 会覆盖新 token → 改成 load-before-update；
+  ③ 原型 alias patch offset 全 0（upstream 单 backing + offset 切片）→ size=总、offset 累积。
+  修复后 4 层 `[6212,6212]`、28 层 `[87630,87630]` 均等于 baseline；UT `test_layerwise_wait_order.py` 6 passed。
 - **P0/P1/P2 本机验证 layerwise（实验C §15）**：
   P1 把 `torch_npu` stub 的 `Event` 换成 threading 语义；
   P0 新增 `tests/ut/distributed/ascend_store/test_layerwise_fake_store.py`（CPU 张量 + fake address store +

@@ -1891,3 +1891,80 @@ decode hook ❌
 - 28 层失败和 decode hook 缺口已写入：
   - `wiki/.../assets/qwen_cpu_kv/shared_buffer/README.md`
   - `handoff/layerwise_pd/experiments/shared_buffer/README.md`
+
+### 22.6 更正（2026-11-21）
+
+重跑 28 层 fixed 权重并加 instrumentation 后，§22 的结论**不成立**：
+
+```text
+prefill: attn_metadata = dict，CONN_WAIT / CONN_SAVE 都触发
+decode : attn_metadata = dict，CONN_WAIT / CONN_SAVE 都触发
+CTX_NONE 计数 = 0
+```
+
+`attn_metadata is None` 不再复现。§22 之所以看起来"decode 没有 hook"，是被
+`CONN_SAVE_SKIP no_key` 误导：hook 确实执行了，但 `_current_key` 还是 None，
+save 直接 return，日志里看不到 `CONN_SAVE`。
+
+## 23. decode 路径修复与验收（2026-11-21）
+
+### 23.1 三个真根因
+
+| # | 根因 | 证据 |
+| :-- | :-- | :-- |
+| 1 | **key 绑定太晚**：`start_load_kv` 在 `post_forward` 才跑，第一步的 `save` 被跳过 | `CONN_SAVE_SKIP no_key` × 28；decode 的 `_latest` 为空 → `CONN_LOAD zero` |
+| 2 | **load 在 KV update 之后**：上游只装饰 `unified_attention_with_output`，顺序是 update → wait → attention，加载历史 KV 会覆盖本步新 token 的行 | `SKIP_WAIT=1` → `[6212]` 恢复 baseline；`SKIP_SAVE=1` → `[374]` 仍错 |
+| 3 | **原型 alias patch 的 offset 全 0**：upstream `allocate_kv_cache` 是"单 backing + offset 切片"，4 个 slot 叠在同一块内存 | 28 层 alias-only prefill `[87630]` 正确，说明 alias 本身对；带 connector 才错 |
+
+第 3 条只影响这个 pure-vLLM CPU 原型：vllm-ascend 的 GLM-Next 路径是
+**每个 descriptor 单独分配**（`descriptor.size == num_blocks * block_stride`，
+`offset == 0`），不受影响；第 1、2 条对任何"load 必须先于本层 KV 写"的连接器都成立。
+
+### 23.2 修复
+
+1. `bind_connector_metadata()`（`pre_forward` 里）提前设置 `_current_key`，
+   并清空本步的 `_loaded` 集合
+2. 在 `Attention.forward` 之前调用 `wait_for_layer_load()`（脚本层 wrap），
+   之后 `unified_kv_cache_update` 再写新 token；`_loaded` 去重，避免装饰器二次加载
+3. alias patch 改为：`size = 所有 slot 之和`、`offset = 累积偏移`、共享 slot
+   `layer_stride=0`
+
+### 23.3 验收结果
+
+`MAX_TOKENS=2`、fixed 权重：
+
+| 模型 | baseline | shared buffer |
+| :-- | :-- | :-- |
+| Qwen2.5-tiny4-fixed | `[6212, 6212]` | **`[6212, 6212]`** |
+| Qwen2.5-tiny28-fixed | `[87630, 87630]` | **`[87630, 87630]`** |
+
+28 层计数：
+
+```text
+load zero 28 / hit 28
+save 112 / skip 0
+checksum ok 28 / bad 0
+```
+
+### 23.4 固化成 UT
+
+`test_layerwise_wait_order.py`（引擎无关，秒级）：
+
+```text
+PASS test_bind_sets_key_before_forward
+PASS test_prefill_zero_then_update_then_save
+PASS test_decode_old_order_loses_new_token   # 记录旧顺序的 bug
+PASS test_decode_new_order_keeps_new_token
+PASS test_wait_is_deduplicated_per_step
+PASS test_save_without_bind_is_skipped
+RESULT ALL PASS
+```
+
+### 23.5 对 VA 的含义
+
+- 真实 Ascend 路径要把 `wait_for_layer_load` 放在 **KV update 之前**
+  （VA 的 attention impl 自有 hook 点，需确认顺序与这里一致）
+- `start_load_kv` 可能被延迟到 `post_forward`；不要依赖它设 key，
+  在 `bind_connector_metadata` 里绑
+- "decode 不触发 hook" 的旧结论作废；以后再遇到"decode 无 LOAD/SAVE 日志"，
+  先查 `_current_key` 与 hook 顺序，而不是怀疑 attention 路径
