@@ -193,6 +193,36 @@ GLM-5.3（L=78）：
 
 ---
 
+### 2.11 Mooncake TE PullTransport 原型（本地已跑通，2026-11-23）
+
+为了评估"Mooncake 版 SfaRemoteD2H"（D 单边读 P 的 HBM），先在本地做了
+**transport 层原型**：Mooncake TE + TCP + host 内存。
+
+```text
+assets/mooncake_te_pull/
+  pull_transport.py   PullTransport 接口 + MooncakeTransport
+  p_side.py           register_memory + 控制面发布地址 + 等 READ_DONE
+  d_side.py           batch_transfer_sync_read + 校验 + READ_DONE
+  run_demo.sh         一键起 metadata server + P + D
+```
+
+本地结果：
+
+```text
+RESULT PASS bytes=6291456 time=8.38ms
+```
+
+结论：**Mooncake TE 的 register/read/完成语义可以抽象成 PullTransport**；
+昇腾侧只需替换 `protocol="tcp" -> "ascend"`、host 内存 -> HBM、
+以及处理 NPU wheel 的 `batch_transfer_sync_read(session_id, ...)` 签名差异。
+
+下一步（详见 `assets/mooncake_te_pull/README.md`）：
+
+1. 注入 `sfa_pd_rd2h/read_thread.py` 的 `engine`（已是 duck-typed）
+2. 地址/会话接进 ZMQ `LayerMetadata`
+3. layerwise 双 fence：`store commit + READ_DONE`
+4. 失败注入 + 昇腾 HBM 注册
+
 ## 3. 代码地图（v0.30.0 分支）
 
 | 位置 | 作用 |
