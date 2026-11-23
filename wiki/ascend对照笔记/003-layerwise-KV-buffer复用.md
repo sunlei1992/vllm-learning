@@ -2036,3 +2036,19 @@ git checkout layerwise/v030-ascend-store
 ```text
 Layerwise KV cache reuse merged N descriptors into M descriptors ...
 ```
+
+
+## 25. step-end save fence 死锁修复（2026-11-23）
+
+内网发现：`layer_save_finished_events` 是一次性 Event，复用加载线程在槽位空出时
+`wait(prev_owner)` 后 `clear()`；step-end 的 `_wait_for_final_layer_save` 又逐层
+`wait(event)`，于是死等；反向时序则触发发送线程的 `assert not is_set()`。
+
+Plan B 修复（`vllm-ascend` 分支 `layerwise/v030-ascend-store` @ `116aacbc0`）：
+
+- step-end 只依赖 `request_queue` drain，不再逐层等待 Event
+- 发送线程对残留 Event 做 `clear()` + debug，而不是 assert
+- 回归测试 `test_layerwise_save_fence.py`（2 passed）；SFA P/D 回归 113 passed
+
+根治方案 A（单调计数 + Condition）尚未实施；当前为一次性 Event 的止血方案。
+详见 [006 §2.12](006-layerwise-内网开发指南.md)。

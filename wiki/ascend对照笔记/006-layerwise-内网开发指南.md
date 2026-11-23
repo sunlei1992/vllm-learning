@@ -242,6 +242,38 @@ RESULT PASS
 3. layerwise 双 fence：`store commit + READ_DONE`
 4. 失败注入 + 昇腾 HBM 注册
 
+### 2.12 step-end save fence 死锁修复（Plan B，2026-11-23）
+
+**现象**（内网实测）：
+
+```text
+layer_save_finished_events 是一次性 Event
+复用加载线程：wait(prev_owner) -> clear()
+step-end fence：逐层 wait(event) -> 永远等不到 set -> 死等 / 10s 重试日志
+反向时序还会触发发送线程的 assert not is_set()
+```
+
+**根因**：同一个一次性 `threading.Event` 被**两个消费者**共享——
+复用加载线程和 step-end fence；fence 假设"每层事件都能等到 set"，与"消费者会 clear"冲突。
+
+**修复（Plan B）**：
+
+- `_wait_for_final_layer_save` 只依赖 `request_queue` drain（已保证所有 PUT 完成），
+  **不再逐层等 Event**
+- 发送线程遇到残留 set 时 `clear()` + debug 日志，而不是 `assert`
+- 新增回归测试 `test_layerwise_save_fence.py`（2 passed），
+  SFA P/D 回归 113 passed
+
+**分支**：
+
+```text
+vllm-ascend layerwise/v030-ascend-store @ 116aacbc0   （含修复）
+vllm-ascend layerwise/v030-mooncake-pull @ 47ea9826a （含修复）
+```
+
+**遗留**：Plan A（单调计数 + Condition）尚未做；当前是一次性 Event 的止血方案，
+后续若增加 prefetch 深度/多消费者，建议继续做 A。
+
 ## 3. 代码地图（v0.30.0 分支）
 
 | 位置 | 作用 |
