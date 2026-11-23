@@ -229,6 +229,12 @@ RESULT PASS
 可以直接换成 Mooncake transport，**不需要改 read_thread**。
 复现：`assets/mooncake_te_pull/run_read_thread_demo.sh`。
 
+**worker 接入（同日追加）**：vllm-ascend 分支 `layerwise/v030-mooncake-pull`
+（@ `25f87d8d0`）新增 `utils/pull_engine.py`，worker 支持
+`transfer_backend=memfabric|mooncake`；Mooncake 参数：
+`mooncake_metadata` / `mooncake_transfer_protocol` / `mooncake_device_name`。
+新增单测 6 passed，SFA P/D 回归 113 passed。
+
 下一步（详见 `assets/mooncake_te_pull/README.md`）：
 
 1. 注入 `sfa_pd_rd2h/read_thread.py` 的 `engine`（已是 duck-typed）

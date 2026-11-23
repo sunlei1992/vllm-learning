@@ -96,6 +96,33 @@ RESULT PASS
 这证明：`_do_read_batch` 的 K/V 指针计算 + `engine.batch_transfer_sync_read` 契约
 可以直接换成 MooncakeTransport，不需要改 read_thread。
 
+## worker 接入（2026-11-23）
+
+vllm-ascend 分支 `layerwise/v030-mooncake-pull` @ `25f87d8d0`：
+
+| 改动 | 内容 |
+| :-- | :-- |
+| `utils/pull_engine.py` | `MemfabricPullEngine` / `MooncakePullEngine` / `make_pull_engine` |
+| `sfa_pd_rd2h/worker.py` | `transfer_backend=memfabric|mooncake`；`mooncake_metadata` / `mooncake_transfer_protocol` / `mooncake_device_name` |
+| 测试 | 新增 6 passed；SFA P/D 回归 113 passed |
+
+配置示例：
+
+```json
+{"kv_connector": "SfaRemoteD2HConnector",
+ "kv_connector_extra_config": {
+   "transfer_backend": "mooncake",
+   "mooncake_metadata": "http://pull-meta:8080/metadata",
+   "mooncake_transfer_protocol": "tcp"}}
+```
+
+昇腾上把 `mooncake_transfer_protocol` 改成 `ascend`、`mooncake_device_name`
+填 NIC/设备名，并换 NPU wheel。
+
+注意：P 的 `p_session` 现在取 `engine.unique_id`——TCP 下是 hostname，
+NPU wheel 下应是 session id，需要按 wheel 的 `batch_transfer_sync_read`
+签名确认。
+
 ## 下一步
 
 1. 把 `MooncakeTransport` 注入 `sfa_pd_rd2h/read_thread.py` 的 `engine`（它已是 duck-typed）
