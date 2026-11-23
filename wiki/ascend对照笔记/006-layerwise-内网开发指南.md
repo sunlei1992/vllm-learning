@@ -48,7 +48,28 @@
 
 ---
 
+### 1.3 详细设计在哪里（读完本节后按需跳转）
+
+006 是**入口**：一页纸 + 方案摘要 + 内网步骤 + 验收。更细的内容在：
+
+| 想看什么 | 去哪里 |
+| :-- | :-- |
+| 设计细节、实验数据、边界条件 | [003 §1–§12](003-layerwise-KV-buffer复用.md)（两个数据面、槽位规划、fence、partial tail、indexer、P/D） |
+| CPU 端到端验证、hook 顺序修复 | 003 §23（4 层/28 层验收、6 条 UT） |
+| v0.30.0 移植、冲突处理、881 passed | 003 §24 |
+| HBM 收益推导（公式 + GLM-5.3 数字） | 003 §11 |
+| 类关系、数据结构、不变量、agent 边界 | mxllm `handoff/layerwise_pd/ARCHITECTURE.md` |
+| NPU 实现说明（event / codec / transport） | mxllm `handoff/layerwise_pd/PSEUDOCODE.md` |
+| 内网任务与预期输出（T00–T09） | mxllm `handoff/layerwise_pd/TASKS.md` |
+| 结果记录模板 | mxllm `handoff/layerwise_pd/RESULTS_TEMPLATE.md` |
+| 2026-11-21 CPU 验收数据 | mxllm `handoff/layerwise_pd/RESULTS-2026-11-21.md` |
+| 代码地图（文件/函数） | 本文件 §3 |
+
+> 简记：**006 看入口与步骤，003 看设计与实验，handoff 看任务与接口。**
+
 ## 2. 方案设计
+
+> 本节是摘要；完整推导、实验和边界条件见 [003 §1–§12](003-layerwise-KV-buffer复用.md)。
 
 ### 2.1 问题
 
