@@ -66,6 +66,36 @@ class PullTransport:
 | read 首参 | `target_hostname` | NPU wheel 为 **`session_id`**（签名不同，需版本探测） |
 | metadata | HTTP server（`/metadata`） | 同上，或 connector 侧交换 session |
 
+## read_thread 类级注入（2026-11-23）
+
+用真实的 `MembPullReadThread._do_read_batch` 跑通 MooncakeTransport：
+
+```text
+block=0 k_match=True v_match=True
+block=1 k_match=True v_match=True
+RESULT PASS
+```
+
+| 文件 | 作用 |
+| :-- | :-- |
+| `p_kv_side.py` | P：K/V 各 2 个 block 注册 + 发布 base 地址 |
+| `d_read_thread_test.py` | 构造 `ConsumerReadState`，调用 `_do_read_batch` |
+| `run_read_thread_demo.sh` | 一键：拷 VA 源码 + `_build_info` stub + 起 meta/P + 跑 D |
+
+```bash
+./run_read_thread_demo.sh
+```
+
+要求：
+
+- VA 源码（默认 `tmp/vllm-ascend-layerwise-v030`），拷到 `/tmp/va_rt` 并补
+  `vllm_ascend/_build_info.py`（`__soc_version__ = "ASCEND910B1"`）
+- `torch_npu` stub（`assets/simulate-forward/va/torch_npu_stub`）
+- D 容器 `sim030:mooncake`（`/opt/v030`，vLLM 0.30.0）
+
+这证明：`_do_read_batch` 的 K/V 指针计算 + `engine.batch_transfer_sync_read` 契约
+可以直接换成 MooncakeTransport，不需要改 read_thread。
+
 ## 下一步
 
 1. 把 `MooncakeTransport` 注入 `sfa_pd_rd2h/read_thread.py` 的 `engine`（它已是 duck-typed）

@@ -216,6 +216,19 @@ RESULT PASS bytes=6291456 time=8.38ms
 昇腾侧只需替换 `protocol="tcp" -> "ascend"`、host 内存 -> HBM、
 以及处理 NPU wheel 的 `batch_transfer_sync_read(session_id, ...)` 签名差异。
 
+**类级注入（同日追加）**：用真实的 `MembPullReadThread._do_read_batch`
+（VA v0.30.0 源码）配 `MooncakeTransport`，2 个 block 的 K/V 校验 **PASS**：
+
+```text
+block=0 k_match=True v_match=True
+block=1 k_match=True v_match=True
+RESULT PASS
+```
+
+说明 `_do_read_batch` 的指针计算 + `engine.batch_transfer_sync_read` 契约
+可以直接换成 Mooncake transport，**不需要改 read_thread**。
+复现：`assets/mooncake_te_pull/run_read_thread_demo.sh`。
+
 下一步（详见 `assets/mooncake_te_pull/README.md`）：
 
 1. 注入 `sfa_pd_rd2h/read_thread.py` 的 `engine`（已是 duck-typed）

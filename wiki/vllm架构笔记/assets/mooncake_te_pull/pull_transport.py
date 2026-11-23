@@ -32,12 +32,16 @@ class MooncakeTransport(PullTransport):
             raise RuntimeError(f"batch_register_memory failed rc={rc}")
         self._registered = True
 
-    def read(self, peer: str, local_ptrs: list[int], peer_ptrs: list[int], lengths: list[int]) -> None:
-        rc = self.engine.batch_transfer_sync_read(
+    def read(self, peer: str, local_ptrs: list[int], peer_ptrs: list[int], lengths: list[int]) -> int:
+        return self.engine.batch_transfer_sync_read(
             peer, list(local_ptrs), list(peer_ptrs), list(lengths)
         )
-        if rc != 0:
-            raise RuntimeError(f"batch_transfer_sync_read failed rc={rc}")
+
+    def batch_transfer_sync_read(
+        self, peer: str, local_ptrs: list[int], peer_ptrs: list[int], lengths: list[int]
+    ) -> int:
+        """read_thread's engine contract (memfabric-style)."""
+        return self.read(peer, local_ptrs, peer_ptrs, lengths)
 
     def close(self) -> None:
         pass
