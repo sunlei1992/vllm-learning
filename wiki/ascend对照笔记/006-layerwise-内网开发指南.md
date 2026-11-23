@@ -326,10 +326,19 @@ KV blocks / 容量
 `layerwise_num_shared_buffers` 是否真的设了（默认 = 层数 = 不复用）、
 日志里 merged 的 M 是否小于 N。
 
-### Step 4 — P/D 组合（P 开 layerwise，D 不开）
+### Step 4 — P/D 组合（Mooncake store 路径，P 开 layerwise，D 不开）
 
-P 节点（MultiConnector：`SfaRemoteD2HConnector` 把同一批 buffer 暴露给 D，
-`AscendStoreConnector` 负责 layerwise offload）：
+先分清两个连接器的分工，别再混：
+
+| 连接器 | 通道 | 作用 |
+| :-- | :-- | :-- |
+| `AscendStoreConnector` | **Mooncake store** | layerwise offload / 前缀池；`use_layerwise` 只在 P |
+| `MooncakeConnectorV1` | P↔D 直传（Mooncake 传输） | P/D KV 直传，**不走 memfabric** |
+| `SfaRemoteD2HConnector` | **memfabric** | 仅用于 sparse decode offload 的 P→D 直拉，**不是 Mooncake P/D 的默认路径** |
+
+#### 4.1 推荐：MultiConnector（MooncakeConnectorV1 直传 + AscendStoreConnector layerwise）
+
+P：
 
 ```bash
 python -m vllm.entrypoints.openai.api_server \
@@ -341,50 +350,114 @@ python -m vllm.entrypoints.openai.api_server \
     "kv_role": "kv_producer",
     "kv_connector_extra_config": {
       "connectors": [
-        {"kv_connector": "SfaRemoteD2HConnector", "kv_role": "kv_producer"},
+        {"kv_connector": "MooncakeConnectorV1", "kv_role": "kv_producer",
+         "kv_port": 20001,
+         "kv_connector_extra_config": {
+           "prefill": {"dp_size": 1, "tp_size": 8},
+           "decode":  {"dp_size": 1, "tp_size": 8}}},
         {"kv_connector": "AscendStoreConnector", "kv_role": "kv_producer",
          "kv_connector_extra_config": {
            "backend": "mooncake",
+           "lookup_rpc_port": "0",
            "use_layerwise": true,
            "layerwise_num_shared_buffers": 3,
-           "layerwise_independent_layers": [0]
-         }}
+           "layerwise_independent_layers": [0]}}
       ]
     }
   }'
 ```
 
-- P 侧 **不要** 设 `sparse_kv_offload_config`
-
-D 节点：
+D：
 
 ```bash
 python -m vllm.entrypoints.openai.api_server \
   --model /path/to/GLM-5.3 \
-  --additional-config '{
-    "sparse_kv_offload_config": {"enabled": true, "dram_size_per_dp_GB": 110}
-  }' \
+  --tensor-parallel-size 8 \
   --kv-transfer-config '{
-    "kv_connector": "SfaRemoteD2HConnector",
+    "kv_connector": "MultiConnector",
     "kv_role": "kv_consumer",
-    "kv_port": 20050
+    "kv_connector_extra_config": {
+      "connectors": [
+        {"kv_connector": "MooncakeConnectorV1", "kv_role": "kv_consumer",
+         "kv_port": 20002,
+         "kv_connector_extra_config": {
+           "prefill": {"dp_size": 1, "tp_size": 8},
+           "decode":  {"dp_size": 1, "tp_size": 8}}},
+        {"kv_connector": "AscendStoreConnector", "kv_role": "kv_consumer",
+         "kv_connector_extra_config": {
+           "backend": "mooncake",
+           "lookup_rpc_port": "1",
+           "use_layerwise": false}}
+      ]
+    }
   }'
 ```
 
-- D 侧必须开 `sparse_kv_offload_config.enabled=true`
-- `kv_port` 起要预留 `decode_data_parallel_size * decode_tensor_parallel_size` 个连续端口
-- 传输是 **D 拉 P**（memfabric），P 的 TP 必须 ≥ D 的 TP 且能被 D 整除
-- `dram_size_per_dp_GB` 要能放下完整 KV（默认 110 GiB/DP rank），不够会报
-  `Sparse KV offload offload.initialize failed`
-- `SfaRemoteD2HConnector` 是 **vllm-ascend v0.30.0 里现成的 connector**
-  （`vllm_ascend/distributed/kv_transfer/kv_p2p/sfa_pd_rd2h/`），不是本特性新增的；
-  我们的 4 个提交没有改它
+要点：
 
-验收：
+- `use_layerwise` **只在 P 的 AscendStoreConnector 子项**打开；D 必须 `false`
+- `lookup_rpc_port` P/D 用不同值（示例 0 / 1）
+- `MooncakeConnectorV1` 的 `kv_port` P/D 也要不同（示例 20001 / 20002）
+- dp/tp 按实际部署填
 
-- D 日志出现 external cache hit / 从 P 拉取
-- D 输出与 P 本地 prefill 一致
-- P 的 layerwise merge 日志仍在
+#### 4.2 简化：只用 AscendStoreConnector（store 中转，无直传）
+
+P：
+
+```json
+{"kv_connector": "AscendStoreConnector", "kv_role": "kv_producer",
+ "kv_connector_extra_config": {"backend": "mooncake", "lookup_rpc_port": "0",
+   "use_layerwise": true, "layerwise_num_shared_buffers": 3,
+   "layerwise_independent_layers": [0]}}
+```
+
+D：
+
+```json
+{"kv_connector": "AscendStoreConnector", "kv_role": "kv_consumer",
+ "kv_connector_extra_config": {"backend": "mooncake", "lookup_rpc_port": "1",
+   "use_layerwise": false}}
+```
+
+> 这条路径没有 P↔D 直传，KV 全部经 Mooncake store。官方 KV Pool 文档的 P/D 示例是
+> 4.1 的 `MultiConnector`；4.2 更简单，但**建议先小规模验证 D 的加载行为**，
+> 异常就回到 4.1。
+
+#### 4.3 可选：sparse decode offload（MemFabric 直拉，另一条通道）
+
+只有当你需要 **SFA 稀疏 decode offload**、并且环境有 **memfabric** 时才用这条；
+它不是 Mooncake P/D 的默认配置。
+
+P：
+
+```json
+{"kv_connector": "MultiConnector", "kv_role": "kv_producer",
+ "kv_connector_extra_config": {"connectors": [
+   {"kv_connector": "SfaRemoteD2HConnector", "kv_role": "kv_producer"},
+   {"kv_connector": "AscendStoreConnector", "kv_role": "kv_producer",
+    "kv_connector_extra_config": {"backend": "mooncake", "use_layerwise": true,
+      "layerwise_num_shared_buffers": 3, "layerwise_independent_layers": [0]}}
+ ]}}
+```
+
+D：
+
+```json
+{"kv_connector": "SfaRemoteD2HConnector", "kv_role": "kv_consumer", "kv_port": 20050}
+```
+
+外加：
+
+```json
+--additional-config '{"sparse_kv_offload_config": {"enabled": true, "dram_size_per_dp_GB": 110}}'
+```
+
+约束：
+
+- `SfaRemoteD2HConnector` **只支持 memfabric**；没有 memfabric 就不要走这条
+- P 的 TP ≥ D 的 TP 且可整除
+- D 侧必须开 `sparse_kv_offload_config.enabled=true`；P 侧不要设
+- `SfaRemoteD2HConnector` 是 v0.30.0 现成组件（`sfa_pd_rd2h/`），不是本特性新增的
 
 ### Step 5 — 失败注入 / 边界
 
