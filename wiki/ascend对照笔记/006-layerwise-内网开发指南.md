@@ -261,18 +261,39 @@ python handoff/layerwise_pd/experiments/shared_buffer/test_layerwise_wait_order.
 
 任何一条不过，**停**，先修环境，不要往下走。
 
-### Step 2 — 单机 prefill 冒烟（P 节点）
+### Step 2 — 单机 prefill 冒烟（不涉及 P/D）
 
-最小配置：
+单机验证只需要 `AscendStoreConnector`（本地 offload / reload），**不需要**
+`SfaRemoteD2HConnector`——后者只在 P/D 组合里用（见 Step 4）。
 
-```json
-"kv_connector_extra_config": {
-  "backend": "mooncake",
-  "use_layerwise": true,
-  "layerwise_num_shared_buffers": 3,
-  "layerwise_independent_layers": [0]
-}
+```bash
+export MOONCAKE_CONFIG_PATH=/path/to/mooncake.json
+
+python -m vllm.entrypoints.openai.api_server \
+  --model /path/to/GLM-5.3 \
+  --tensor-parallel-size 8 \
+  --enforce-eager \
+  --kv-transfer-config '{
+    "kv_connector": "AscendStoreConnector",
+    "kv_role": "kv_both",
+    "kv_connector_extra_config": {
+      "backend": "mooncake",
+      "use_layerwise": true,
+      "layerwise_num_shared_buffers": 3,
+      "layerwise_independent_layers": [0],
+      "layerwise_prefetch_layers": 2
+    }
+  }'
 ```
+
+说明：
+
+- `kv_role` 用 **`kv_both`**（单机既存又取）；P/D 时才拆 producer/consumer
+- `layerwise_num_shared_buffers` 不设 = 不复用（默认等于层数）
+- 第一次硬件验证建议 **TP=1、`layerwise_prefetch_layers=1`**，再逐步放大 TP/预取深度
+  （官方 Mooncake layerwise 指南的建议）
+- Mooncake client 必须含 PR #2881 的 7 个 session/range 方法（>= 0.3.13），
+  否则启动即报 `Missing methods`
 
 启动后检查三件事：
 
@@ -305,27 +326,59 @@ KV blocks / 容量
 `layerwise_num_shared_buffers` 是否真的设了（默认 = 层数 = 不复用）、
 日志里 merged 的 M 是否小于 N。
 
-### Step 4 — P/D 组合
+### Step 4 — P/D 组合（P 开 layerwise，D 不开）
 
-P：
+P 节点（MultiConnector：`SfaRemoteD2HConnector` 把同一批 buffer 暴露给 D，
+`AscendStoreConnector` 负责 layerwise offload）：
 
-```json
-{"kv_connector": "MultiConnector", "kv_role": "kv_producer",
- "kv_connector_extra_config": {"connectors": [
-   {"kv_connector": "SfaRemoteD2HConnector", "kv_role": "kv_producer"},
-   {"kv_connector": "AscendStoreConnector", "kv_role": "kv_producer",
-    "kv_connector_extra_config": {"backend": "mooncake", "use_layerwise": true,
-      "layerwise_num_shared_buffers": 3, "layerwise_independent_layers": [0]}}
- ]}}
+```bash
+python -m vllm.entrypoints.openai.api_server \
+  --model /path/to/GLM-5.3 \
+  --tensor-parallel-size 8 \
+  --enforce-eager \
+  --kv-transfer-config '{
+    "kv_connector": "MultiConnector",
+    "kv_role": "kv_producer",
+    "kv_connector_extra_config": {
+      "connectors": [
+        {"kv_connector": "SfaRemoteD2HConnector", "kv_role": "kv_producer"},
+        {"kv_connector": "AscendStoreConnector", "kv_role": "kv_producer",
+         "kv_connector_extra_config": {
+           "backend": "mooncake",
+           "use_layerwise": true,
+           "layerwise_num_shared_buffers": 3,
+           "layerwise_independent_layers": [0]
+         }}
+      ]
+    }
+  }'
 ```
 
-D：
+- P 侧 **不要** 设 `sparse_kv_offload_config`
 
-```json
-{"kv_connector": "SfaRemoteD2HConnector", "kv_role": "kv_consumer"}
+D 节点：
+
+```bash
+python -m vllm.entrypoints.openai.api_server \
+  --model /path/to/GLM-5.3 \
+  --additional-config '{
+    "sparse_kv_offload_config": {"enabled": true, "dram_size_per_dp_GB": 110}
+  }' \
+  --kv-transfer-config '{
+    "kv_connector": "SfaRemoteD2HConnector",
+    "kv_role": "kv_consumer",
+    "kv_port": 20050
+  }'
 ```
 
-且 D 侧 `sparse_kv_offload_config.enabled=true`（P 侧 false）。
+- D 侧必须开 `sparse_kv_offload_config.enabled=true`
+- `kv_port` 起要预留 `decode_data_parallel_size * decode_tensor_parallel_size` 个连续端口
+- 传输是 **D 拉 P**（memfabric），P 的 TP 必须 ≥ D 的 TP 且能被 D 整除
+- `dram_size_per_dp_GB` 要能放下完整 KV（默认 110 GiB/DP rank），不够会报
+  `Sparse KV offload offload.initialize failed`
+- `SfaRemoteD2HConnector` 是 **vllm-ascend v0.30.0 里现成的 connector**
+  （`vllm_ascend/distributed/kv_transfer/kv_p2p/sfa_pd_rd2h/`），不是本特性新增的；
+  我们的 4 个提交没有改它
 
 验收：
 
